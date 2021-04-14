@@ -1,4 +1,8 @@
 <script lang="ts">
+  import type { Student } from "./students";
+  import type { Asset } from "./inventory";
+  import { searchForStudent, getStudent } from "./students";
+  import { searchForAsset, assetStore } from "./inventory";
   import { form } from "svelte-forms";
   import { onMount, tick } from "svelte";
   import { select_option, time_ranges_to_array } from "svelte/internal";
@@ -6,6 +10,13 @@
   let studentName = "";
   let signoutForm;
   let updateCount = 0;
+  let student: Student | null = null;
+  let asset: Asset | null = null;
+  let studentDropdown = [];
+  const cachedValidations = {
+    students: {},
+    assets: {},
+  };
 
   function sleep(ms) {
     return new Promise((resolve, reject) => {
@@ -21,6 +32,31 @@
           validators: [
             "required",
             (s) => ({ name: "4 or 5 digit code", valid: s.length > 3 }),
+            async (s) => {
+              if (s && s.length > 3) {
+                if ($assetStore[s]) {
+                  return {
+                    name: "Asset found",
+                    valid: true,
+                  };
+                }
+                if (cachedValidations.assets[s]) {
+                  return cachedValidations.assets[s];
+                }
+                let valid = false;
+                let results = await searchForAsset(s);
+                if (results.length) {
+                  valid = true;
+                }
+                if (results.length == 1) {
+                  assetTag = results[0].fields["Asset Tag"];
+                }
+                return {
+                  name: "Asset not found",
+                  valid,
+                };
+              }
+            },
           ],
         },
         studentName: {
@@ -32,22 +68,37 @@
               valid: s.indexOf(",") > -1,
             }),
             async (s) => {
+              studentDropdown = [];
               updateCount += 1;
               let myUpdateNumber = updateCount;
-              console.log("Update", myUpdateNumber);
+              if (cachedValidations.students[s]) {
+                return cachedValidations.students[s];
+              }
               await tick();
               await sleep(500);
-              console.log("Wake up and check!", myUpdateNumber, updateCount);
-              if (updateCount != myUpdateNumber) {
+              if (!s || updateCount != myUpdateNumber) {
                 return {
                   name: "still typing nevermind",
                   valid: true,
                 };
               } else {
-                return {
+                let valid = false;
+                let results = await searchForStudent(s);
+                if (results.length > 0) {
+                  valid = true;
+                }
+                let result = {
                   name: "Student not found",
-                  valid: s == "Hinkle, Thomas",
+                  valid,
                 };
+                cachedValidations[s] = result;
+                if (results.length == 1) {
+                  studentName = results[0].fields.Name;
+                  cachedValidations.students[studentName] = result;
+                } else if (results.length < 20) {
+                  studentDropdown = results.map((result) => result.fields.Name);
+                }
+                return result;
               }
             },
           ],
@@ -64,6 +115,8 @@
 
   $: assetTag && signoutForm.validate();
   $: studentName && signoutForm.validate();
+  $: student = getStudent(studentName);
+  $: asset = $assetStore[assetTag];
   /* afterUpdate(() => {
     console.log("validate?");
     signoutForm.validate();
@@ -85,10 +138,21 @@
       type="text"
       class="w3-input"
       placeholder="Asset Tag"
+      autocomplete="off"
     />
     {#if assetTag && $signoutForm?.fields?.assetTag?.errors}
       <span class="error">{$signoutForm.fields.assetTag.errors}</span>
     {/if}
+    <div class="details">
+      {#if asset}
+        {asset.Make}
+        {asset.Model} ({asset["Year of Purchase"]})
+        <small>
+          {asset.Serial}
+          {asset["MAC-Wireless"]}
+        </small>
+      {/if}
+    </div>
   </div>
   <div class="field">
     <label for="student">Student</label>
@@ -97,10 +161,31 @@
       id="student"
       type="text"
       class="w3-input"
+      autocomplete="off"
       placeholder="Last, First"
     />
     {#if studentName && $signoutForm?.fields?.studentName?.errors}
       <span class="error">{$signoutForm.fields.studentName.errors}</span>
+    {/if}
+
+    <div class="details">
+      {#if student}
+        {student.LASID}
+        <a href={`mailto:${student.Email}`}>{student.Email}</a>
+        {student.Advisor} Class of {student.YOG}
+      {/if}
+    </div>
+    {#if studentDropdown.length}
+      <ul class="w3-ul w3-border">
+        {#each studentDropdown as option}
+          <li
+            class="w3-bar-item w3-button"
+            on:click={() => (studentName = option)}
+          >
+            {option}
+          </li>
+        {/each}
+      </ul>
     {/if}
   </div>
   <div class="field">
@@ -116,6 +201,10 @@
 </form>
 
 <style>
+  ul {
+    flex-direction: column;
+    display: flex;
+  }
   form {
     display: flex;
     flex-direction: column;
