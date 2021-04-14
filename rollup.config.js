@@ -34,7 +34,7 @@ function serve() {
   };
 }
 
-export default {
+const svelteSetup = {
   input: "src/main.ts",
   output: {
     sourcemap: true,
@@ -85,3 +85,14 @@ export default {
     clearScreen: false,
   },
 };
+
+const functionSetup = {
+  input: "src/functions/index.ts",
+  output: {
+    sourcemap: true,
+    format: "cjs",
+    dir: "functions",
+  },
+  plugins: [typescript()],
+};
+export default [svelteSetup, functionSetup];
