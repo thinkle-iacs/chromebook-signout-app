@@ -5,6 +5,7 @@
   import router from "page";
   import LogIn from "./LogIn.svelte";
   import { loggedIn, user } from "./user";
+  import { l } from "./util";
   let page = Checkout;
   let params: {
     lasid?: string;

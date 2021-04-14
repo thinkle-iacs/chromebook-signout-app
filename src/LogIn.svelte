@@ -2,6 +2,7 @@
   import netlifyIdentity from "netlify-identity-widget";
   import { onMount } from "svelte";
   import { user, loggedIn } from "./user";
+  import { l } from "./util";
 
   onMount(() => {
     netlifyIdentity.init();
@@ -56,7 +57,7 @@
   {/if}
 
   {#if $loggedIn}
-    <a href="/" class="w3-buton"> Back to the App... </a>
+    <a href="/" on:click={l("/")} class="w3-buton"> Back to the App... </a>
   {/if}
 </div>
 {#if $user && !$loggedIn}
