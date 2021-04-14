@@ -27,6 +27,7 @@
   "dependencies": {
     "airtable": "^0.10.1",
     "aws-lambda": "^1.0.6",
+    "netlify-identity-widget": "^1.9.1",
     "page": "^1.11.6",
     "sirv-cli": "^1.0.0",
     "svelte-forms": "^1.1.51",

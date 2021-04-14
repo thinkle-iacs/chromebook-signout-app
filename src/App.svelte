@@ -3,11 +3,15 @@
   import Lookup from "./Checkout.svelte"; // fix me :)
   import Data from "./Checkout.svelte";
   import router from "page";
-
+  import LogIn from "./LogIn.svelte";
+  import { loggedIn, user } from "./user";
   let page = Checkout;
   let params: {
     lasid?: string;
   } = {};
+  router("/user", () => {
+    page = LogIn;
+  });
   router("/", () => {
     page = Checkout;
   });
@@ -28,15 +32,6 @@
     page = Data;
   });
   router.start();
-  function l(path) {
-    return (e) => {
-      router(path);
-      console.log("Linked to", path, "now don't click");
-      console.log("Event is", e);
-      e.preventDefault();
-      return false;
-    };
-  }
 </script>
 
 <nav class="w3-bar">
@@ -50,12 +45,20 @@
 </nav>
 
 <main class="w3-main">
-  {#if page}
+  {#if !$loggedIn}
+    <LogIn />
+  {:else if page}
     <svelte:component this={page} {...params} />
   {:else}
     Weird, nobody's home
   {/if}
 </main>
+{#if $loggedIn}
+  <footer class="w3-container">
+    Hi there, {$user?.user_metadata.full_name} ({$user.email})
+    <a href="/user" on:click={l("/user")}>(need to log out?)</a>
+  </footer>
+{/if}
 
 <style>
   nav :global(a) {
