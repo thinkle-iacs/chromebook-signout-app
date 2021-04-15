@@ -4,10 +4,16 @@ import { inventoryBase } from './Airtable'
 export async function handler(
   event : APIGatewayEvent, context : Context 
 ) {
-  const { tag } = event.queryStringParameters
+  const { tag, lasid } = event.queryStringParameters
+  let filterByFormula
+  if (tag) {
+    filterByFormula = `Search("${tag}",{Asset Tag})`;             
+  } else if (lasid) {
+    filterByFormula = `{Student (Current)}="${lasid}"`
+  }
   let query = inventoryBase.select({
     maxRecords:100,
-    filterByFormula : `Search("${tag}",{Asset Tag})`,              
+    filterByFormula,
     fields : [
       'Asset Tag',
       'Category',

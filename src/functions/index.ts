@@ -1,14 +1,14 @@
-import {studentsBase} from './Airtable';
 import type { APIGatewayEvent, Context } from 'aws-lambda'
 import {handler as studentHandler} from './students';
 import {handler as inventoryHandler} from './inventory';
 import {handler as signoutHandler} from './signout';
-
+import {handler as signoutHistoryHandler} from './signoutHistory'
 
 let modes = {
   student : studentHandler,
   asset : inventoryHandler,
   signout : signoutHandler,
+  signoutHistory : signoutHistoryHandler,
 }
 
 export async function handler(

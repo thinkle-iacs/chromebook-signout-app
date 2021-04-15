@@ -11,11 +11,21 @@ export type Asset {
   'Year of Purchase' : string;
   'MAC-Wireless' : string;
   _id : string;
+  Purpose : string;
+  'Staff User' : string;
+  'Email (from Student (Current))' : string;
+  'Student (Current)':string;
+  'Device Type' : string;
+  'Location': string;
 }
 
-export async function searchForAsset (tag) {
+export async function searchForAsset (tag, lasid) {
+  let params = {mode:'asset'}
+  if (tag) {params.tag = tag}
+  if (lasid) {params.lasid = lasid}
+  let paramString = new URLSearchParams(params);  
   let response = await fetch(
-    "/.netlify/functions/index?mode=asset&tag=" + encodeURIComponent(tag)
+    "/.netlify/functions/index?"+paramString
   );
   let json = await response.json();
   console.log("Got asset data:", json);

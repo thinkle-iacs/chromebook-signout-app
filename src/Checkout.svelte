@@ -1,8 +1,8 @@
 <script lang="ts">
-  import StudentDropdown from './StudentDropdown.svelte';
-
-  import FormField from './FormField.svelte';
-  import SimpleForm from './SimpleForm.svelte';
+  import StudentDropdown from "./StudentDropdown.svelte";
+  import AssetDisplay from "./AssetDisplay.svelte";
+  import FormField from "./FormField.svelte";
+  import SimpleForm from "./SimpleForm.svelte";
   import type { Student } from "./students";
   import type { Asset } from "./inventory";
   import { signoutAsset } from "./signout";
@@ -25,11 +25,11 @@
   let student: Student | null = null;
   let asset: Asset | null = null;
 
-  let validators = ()=>({
+  let validators = () => ({
     assetTag: {
-      value: $assetTag,      
+      value: $assetTag,
       validators: [
-        "required",        
+        "required",
         (s) => ({
           name: "4 or 5 digit code",
           valid: s.length > 3,
@@ -51,11 +51,11 @@
         validateStudent,
       ],
     },
-  })
-  $: console.log('Got signoutForm',signoutForm);
+  });
+  $: console.log("Got signoutForm", signoutForm);
   $: $assetTag && signoutForm && signoutForm.validate();
   $: $studentName && signoutForm && signoutForm.validate();
-  $: console.log('Time to validate?',$assetTag,$studentName)
+  $: console.log("Time to validate?", $assetTag, $studentName);
   $: student = getStudent($studentName);
   $: asset = $assetStore[$assetTag];
   /* afterUpdate(() => {
@@ -92,11 +92,13 @@
 <!-- svelte-ignore component-name-lowercase -->
 <SimpleForm
   {validators}
-  onFormCreated={(f)=>{signoutForm=f}}
+  onFormCreated={(f) => {
+    signoutForm = f;
+  }}
 >
-  <FormField name="Asset Tag"
-
-  errors={$assetTag && $signoutForm?.fields?.assetTag?.errors}
+  <FormField
+    name="Asset Tag"
+    errors={$assetTag && $signoutForm?.fields?.assetTag?.errors}
   >
     <input
       bind:value={$assetTag}
@@ -108,40 +110,33 @@
     />
     <div class="slot" slot="details">
       {#if asset}
-        {asset.Make}
-        {asset.Model}
-        {#if asset["Year of Purchase"]}({asset["Year of Purchase"]}){/if}
-        <small>
-          {asset.Serial || ""}
-          {asset["MAC-Wireless"] || ""}
-        </small>
-        {#if asset['Email (from Student (Current))']}
-          Currently signed out to
-          {asset['Email (from Student (Current))']}
-        {/if}
+        <AssetDisplay {asset}>
+          {#if asset["Email (from Student (Current))"]}
+            Currently signed out to
+            {asset["Email (from Student (Current))"]}
+          {/if}
+        </AssetDisplay>
       {/if}
     </div>
-  </FormField>  
-  <FormField 
-    errors={$signoutForm?.fields?.studentName?.errors}
-    name="Student">
-     <input
-          bind:value={$studentName}
-          id="student"
-          type="text"
-          class="w3-input"
-          autocomplete="off"
-          placeholder="Last, First"
-        />
+  </FormField>
+  <FormField errors={$signoutForm?.fields?.studentName?.errors} name="Student">
+    <input
+      bind:value={$studentName}
+      id="student"
+      type="text"
+      class="w3-input"
+      autocomplete="off"
+      placeholder="Last, First"
+    />
     <span slot="details">
       {#if student}
-          {student.LASID}
-          <a tabindex="-1" href={`mailto:${student.Email}`}>{student.Email}</a>
-          {student.Advisor} Class of {student.YOG}
-        {/if}
+        {student.LASID}
+        <a tabindex="-1" href={`mailto:${student.Email}`}>{student.Email}</a>
+        {student.Advisor} Class of {student.YOG}
+      {/if}
     </span>
     <div slot="dropdown">
-      <StudentDropdown/>
+      <StudentDropdown />
     </div>
   </FormField>
   <FormField name="Notes">
@@ -188,8 +183,6 @@
 {/if}
 
 <style>
-  
-
   @media (min-width: 640px) {
     main {
       max-width: none;
