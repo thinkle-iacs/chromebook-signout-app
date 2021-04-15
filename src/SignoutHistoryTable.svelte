@@ -23,7 +23,17 @@
         </div>
       </td>
       <td>
-        {item["Email (from Students)"]}
+        {#if item["Email (from Students)"] && item["Email (from Students)"].length}
+          <a href={`mailto:${item["Email (from Students)"][0]}`}>
+            {item["Email (from Students)"][0].replace(
+              "@innovationcharter.org",
+              ""
+            )}
+          </a>
+        {/if}
+      </td>
+      <td>
+        {item.Notes || ""}
       </td>
       <td>
         {item.Status}

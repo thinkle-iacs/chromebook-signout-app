@@ -83,27 +83,29 @@
   }
 </script>
 
-<SimpleForm
-  {validators}
-  onFormCreated={(f) => {
-    lookupForm = f;
-  }}
->
-  <FormField
-    name="Student"
-    errors={lookupForm && $lookupForm?.fields?.student?.errors}
+<div class="search w3-card-4" class:no-results={!student}>
+  <SimpleForm
+    {validators}
+    onFormCreated={(f) => {
+      lookupForm = f;
+    }}
   >
-    <input
-      autocomplete="off"
-      id="student"
-      bind:value={$studentName}
-      type="text"
-    />
-    <div slot="dropdown"><StudentDropdown /></div>
-  </FormField>
-</SimpleForm>
+    <FormField
+      name="Student"
+      errors={lookupForm && $lookupForm?.fields?.student?.errors}
+    >
+      <input
+        autocomplete="off"
+        id="student"
+        bind:value={$studentName}
+        type="text"
+      />
+      <div slot="dropdown"><StudentDropdown /></div>
+    </FormField>
+  </SimpleForm>
+</div>
 {#if student}
-  <article class="w3-card-4 w3-cell-middle ">
+  <article class="w3-card-4 w3-cell-middle">
     <header class="w3-container w3-blue w3-bar-block w3-padding-24">
       {student.Name}
     </header>
@@ -127,16 +129,36 @@
       <h3>Signout History:</h3>
       {#if !loans}
         <p class="w3-opacity w3-ital">Fetching...</p>
-      {:else}
+      {:else if loans.length}
         <SignoutHistoryTable signoutHistoryItems={loans} {student} />
+      {:else}
+        Never signed anything out.
       {/if}
     </div>
   </article>
 {/if}
 
 <style>
-  article {
+  article,
+  .search {
     max-width: 800px;
     margin: auto;
+  }
+
+  article {
+    padding-bottom: 32px;
+  }
+  .search {
+    padding: 16px;
+    transition: all 300ms;
+    box-sizing: border-box;
+    height: 64px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+  }
+  .no-results {
+    margin-top: calc(min(50vh - 150px, 75px));
+    height: 300px;
   }
 </style>
