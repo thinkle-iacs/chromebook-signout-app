@@ -15,7 +15,7 @@ export type Asset {
 
 export async function searchForAsset (tag) {
   let response = await fetch(
-    "./.netlify/functions/index?mode=asset&tag=" + encodeURIComponent(tag)
+    "/.netlify/functions/index?mode=asset&tag=" + encodeURIComponent(tag)
   );
   let json = await response.json();
   console.log("Got asset data:", json);

@@ -13,7 +13,7 @@ export type Student {
 
 export async function searchForStudent(name) {
   let response = await fetch(
-    "./.netlify/functions/index?mode=student&name=" + encodeURIComponent(name)
+    "/.netlify/functions/index?mode=student&name=" + encodeURIComponent(name)
   );
   let json = await response.json();
   console.log("Got data:", json);
