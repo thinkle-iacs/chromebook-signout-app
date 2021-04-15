@@ -10,6 +10,7 @@ export type Asset {
   Serial : string;
   'Year of Purchase' : string;
   'MAC-Wireless' : string;
+  _id : string;
 }
 
 export async function searchForAsset (tag) {
@@ -20,7 +21,7 @@ export async function searchForAsset (tag) {
   console.log("Got asset data:", json);
   assetStore.update(($assetStore) => {
     for (let result of json) {
-      $assetStore[result.fields['Asset Tag']] = result.fields;
+      $assetStore[result.fields['Asset Tag']] = {...result.fields, _id : result.id};
     }
     console.log('assetStore:',JSON.stringify($assetStore));
     return $assetStore;

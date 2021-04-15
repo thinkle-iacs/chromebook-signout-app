@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Student } from "./students";
   import type { Asset } from "./inventory";
+  import { signoutAsset } from "./signout";
   import { searchForStudent, getStudent } from "./students";
   import { searchForAsset, assetStore } from "./inventory";
   import { form } from "svelte-forms";
@@ -8,6 +9,7 @@
   import { select_option, time_ranges_to_array } from "svelte/internal";
   let assetTag = "";
   let studentName = "";
+  let notes = "";
   let signoutForm;
   let updateCount = 0;
   let student: Student | null = null;
@@ -121,8 +123,27 @@
     console.log("validate?");
     signoutForm.validate();
   });  */
-  function checkOut() {
+  let checkedOut: {
+    _id: string;
+    fields: {
+      Time: string;
+    };
+    asset: Asset;
+    student: Student;
+  }[] = [];
+  async function checkOut() {
     console.log("check out", assetTag, "to", studentName);
+    let result = await signoutAsset(student, asset, notes, "Out");
+    if (result && result.length == 1) {
+      let record = result[0];
+      record.student = student;
+      record.asset = asset;
+      record._id = record.id; // for consistency -- airtable IDs we call _id
+      checkedOut = [record, ...checkedOut];
+      studentName = "";
+      assetTag = "";
+      notes = "";
+    }
   }
 </script>
 
@@ -190,15 +211,47 @@
   </div>
   <div class="field">
     <label for="notes">Notes</label>
-    <textarea id="notes" class="w3-input" placeholder="Notes about the loan." />
+    <textarea
+      bind:value={notes}
+      id="notes"
+      class="w3-input"
+      placeholder="Notes about the loan."
+    />
   </div>
+
   <input
-    disabled={!$signoutForm?.valid}
+    class:w3-red={!!asset && !!student && signoutForm?.valid}
+    disabled={!asset || !student || !$signoutForm?.valid}
     on:click={checkOut}
     type="submit"
     value="Check out"
   />
 </form>
+{#if checkedOut.length}
+  <h4>You have just checked out...</h4>
+  <table class="w3-table w3-bordered">
+    <tr class="w3-blue">
+      <th>Time</th>
+      <th>Student</th>
+      <th>Tag</th>
+      <th>Make</th>
+      <th>Model</th>
+    </tr>
+    {#each checkedOut as record (record.id)}
+      <tr>
+        <td>{new Date(record.fields.Time).toLocaleTimeString()} </td>
+        <td>
+          <a href={`mailto:${record.student.Email}`}>
+            {record.student.Name}
+          </a>
+        </td>
+        <td>{record.asset["Asset Tag"]}</td>
+        <td>{record.asset.Make} </td>
+        <td>{record.asset.Model}</td>
+      </tr>
+    {/each}
+  </table>
+{/if}
 
 <style>
   ul {

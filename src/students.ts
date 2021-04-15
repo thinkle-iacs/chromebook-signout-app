@@ -8,6 +8,7 @@ export type Student {
   YOG : string;
   Advisor : string;
   Email : string;
+  _id : string;
 }
 
 export async function searchForStudent(name) {
@@ -18,7 +19,7 @@ export async function searchForStudent(name) {
   console.log("Got data:", json);
   studentsStore.update(($studentsStore) => {
     for (let result of json) {
-      $studentsStore[result.fields.LASID] = result.fields;
+      $studentsStore[result.fields.LASID] = {...result.fields, _id:result.id};
     }
     return $studentsStore;
   });
