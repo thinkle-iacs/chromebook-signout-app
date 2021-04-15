@@ -51,7 +51,7 @@
       Log In
     </button>
   {:else}
-    <button class="w3-button" on:click={() => netlifyIdentity.open("logout")}>
+    <button class="w3-button" on:click={() => netlifyIdentity.logout()}>
       Log Out
     </button>
   {/if}
