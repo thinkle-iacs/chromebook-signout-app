@@ -190,7 +190,7 @@
     }
   />
 </SimpleForm>
-Valid? {signoutForm && $signoutForm.valid}
+
 {#if checkedOut.length}
   <article class="w3-container">
     <h4>Recent Updates</h4>
