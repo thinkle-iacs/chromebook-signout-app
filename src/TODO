@@ -1,0 +1,9 @@
+Add "Look Up Asset" tab to get machine history
+Add "Look Up Student" tab to get student history
+Add "Full History" to get full asset history
+Add analogous process for staff:
+  - Add Staff field to SignoutHistory in AirTable
+  - Add Automation in AirTable to update Inventory based on staff entries
+  - Add staff lookup/autocomplete in Checkout.svelte
+
+Maybe add "Batch Sign In" ?
