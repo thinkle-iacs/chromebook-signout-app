@@ -11,7 +11,7 @@
       initCheck: true,
       validateOnChange: false,
       stopAtFirstError: false,
-      stopAtFirstFieldError: false,
+      stopAtFirstFieldError: true,
     });
     onFormCreated(formObject);
   });

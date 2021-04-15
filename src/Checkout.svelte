@@ -5,6 +5,7 @@
   import SimpleForm from "./SimpleForm.svelte";
   import type { Student } from "./students";
   import type { Asset } from "./inventory";
+  import type {CheckoutStatus } from './signout';
   import { signoutAsset } from "./signout";
   import { searchForStudent, getStudent } from "./students";
   import { searchForAsset, assetStore } from "./inventory";
@@ -18,7 +19,7 @@
     validateStudent,
     validateAsset,
   } from "./validators";
-
+  let status : CheckoutStatus = 'Out'
   let notes = "";
   let signoutForm;
   let updateCount = 0;
@@ -41,7 +42,19 @@
     studentName: {
       value: $studentName,
       validators: [
-        "required",
+         (s) => {
+          if (status=='Out' && !s) {
+            return {
+              name : 'Student required for check out',
+              valid : false
+            }
+          } else {
+            return {
+              name : 'Student required for check out',
+              valid : true
+            }
+          }
+        }, 
         (s) => ({
           name: "Enter name in format: Last, First",
           // show warning if there is a string with a space but no comma
@@ -49,12 +62,18 @@
           type: "warning",
         }),
         validateStudent,
+        (s) => ({
+          name : 'Choose a student',
+          valid : status != 'Out' || !!student
+        })
       ],
     },
   });
   $: console.log("Got signoutForm", signoutForm);
   $: $assetTag && signoutForm && signoutForm.validate();
   $: $studentName && signoutForm && signoutForm.validate();
+  $: student && signoutForm && signoutForm.validate();
+  $: status && signoutForm && signoutForm.validate();
   $: console.log("Time to validate?", $assetTag, $studentName);
   $: student = getStudent($studentName);
   $: asset = $assetStore[$assetTag];
@@ -73,11 +92,12 @@
 
   async function checkOut() {
     console.log("check out", $assetTag, "to", $studentName);
-    let result = await signoutAsset(student, asset, notes, "Out");
+    let result = await signoutAsset(student, asset, notes, status);
     if (result && result.length == 1) {
       let record = result[0];
       record.student = student;
       record.asset = asset;
+      record.status = status;
       record._id = record.id; // for consistency -- airtable IDs we call _id
       checkedOut = [record, ...checkedOut];
       $studentName = "";
@@ -85,6 +105,13 @@
       notes = "";
     }
   }
+
+  const statusToButtonName = {
+    'Out' : 'Sign Out',
+    'Returned' : 'Return',
+    'Lost' : 'Mark as Lost'
+  }
+
 </script>
 
 <h1 class="w3-center w3-blue">IACS Chromebook Signout</h1>
@@ -147,42 +174,60 @@
       placeholder="Notes about the loan."
     />
   </FormField>
-
+  <FormField name="Status">
+      <input type="radio" bind:group={status} value="Out"> Sign Out
+      <input type="radio" bind:group={status} value="Returned"> Returned
+      <input type="radio" bind:group={status} value="Lost"> Lost
+  </FormField>
   <input
-    class:w3-red={!!asset && !!student && signoutForm?.valid}
-    disabled={!asset || !student || !$signoutForm?.valid}
+    class:w3-red={!!asset && $signoutForm?.valid}
+    disabled={!asset || !$signoutForm?.valid}
     on:click={checkOut}
     type="submit"
-    value="Check out"
+    class="w3-button"
+    value={
+      statusToButtonName[status]
+    }
   />
 </SimpleForm>
+Valid? {signoutForm && $signoutForm.valid}
 {#if checkedOut.length}
-  <h4>You have just checked out...</h4>
-  <table class="w3-table w3-bordered">
-    <tr class="w3-grey">
-      <th>Time</th>
-      <th>Student</th>
-      <th>Tag</th>
-      <th>Make</th>
-      <th>Model</th>
-    </tr>
-    {#each checkedOut as record (record.id)}
-      <tr>
-        <td>{new Date(record.fields.Time).toLocaleTimeString()} </td>
-        <td>
-          <a href={`mailto:${record.student.Email}`}>
-            {record.student.Name}
-          </a>
-        </td>
-        <td>{record.asset["Asset Tag"]}</td>
-        <td>{record.asset.Make} </td>
-        <td>{record.asset.Model}</td>
+  <article class="w3-container">
+    <h4>Recent Updates</h4>
+    <table class="w3-table w3-bordered">
+      <tr class="w3-grey">
+        <th>Time</th>
+        <th>Student</th>
+        <th>Tag</th>
+        <th>Make</th>
+        <th>Model</th>
+        <th>Status</th>
       </tr>
-    {/each}
-  </table>
+      {#each checkedOut as record (record.id)}
+        <tr>
+          <td>{new Date(record.fields.Time).toLocaleTimeString()} </td>
+          <td>
+            {#if record.student}
+            <a href={`mailto:${record.student.Email}`}>
+              {record.student.Name}
+            </a>
+            {/if}
+          </td>
+          <td>{record.asset["Asset Tag"]}</td>
+          <td>{record.asset.Make} </td>
+          <td>{record.asset.Model}</td>
+          <td>{record.status}</td>
+        </tr>
+      {/each}
+    </table>
+  </article>
 {/if}
 
 <style>
+  article {
+    max-width: 1100px;
+    margin: auto;
+  }
   @media (min-width: 640px) {
     main {
       max-width: none;

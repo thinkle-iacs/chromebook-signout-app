@@ -8,15 +8,18 @@ export async function handler(
   console.log('Got params',JSON.stringify(
     { assetRecordId, studentRecordId, Notes, Status }
   ))
+  let fields = {
+    Asset : [assetRecordId],
+    Status,
+    Notes
+  }
+  if (studentRecordId) {
+    fields.Student = [studentRecordId]
+  }
   let result = await signoutHistoryBase.create([
     {
-      fields : {
-        Asset : [assetRecordId],
-        Status,
-        Student : [studentRecordId],
-        Notes,
-      }
-    }
+      fields 
+      }    
   ])
   return {
     statusCode: 200,

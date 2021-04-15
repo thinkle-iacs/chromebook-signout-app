@@ -43,7 +43,7 @@
     class="w3-bar-item w3-button"
     href="/checkout"
     on:click={l("/checkout")}
-    class:w3-blue={page == Checkout}>Sign Out Machines</a
+    class:w3-blue={page == Checkout}>Sign In/Out</a
   >
   <a
     class="w3-bar-item w3-button"

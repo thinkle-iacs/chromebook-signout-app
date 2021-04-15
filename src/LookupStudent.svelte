@@ -71,9 +71,7 @@
       }
     }
     console.log("Now sort", loans);
-    loans.sort(
-      (a, b) => new Date(b.Time).getTime() - new Date(a.Time).getTime()
-    );
+    loans.sort((a, b) => b.Num - a.Num);
     loans = loans;
   }
 
@@ -143,12 +141,14 @@
   .search {
     max-width: 800px;
     margin: auto;
+    margin-bottom: 32px;
   }
 
   article {
     padding-bottom: 32px;
   }
   .search {
+    margin-top: 16px;
     padding: 16px;
     transition: all 300ms;
     box-sizing: border-box;

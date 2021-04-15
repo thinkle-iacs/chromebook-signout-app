@@ -3,12 +3,14 @@
   import type { Student } from "./students";
   export let signoutHistoryItems: SignoutHistoryEntry[];
   export let student: Student | null;
+  $: console.log(signoutHistoryItems);
 </script>
 
 <table class="w3-table">
   {#each signoutHistoryItems as item}
     <tr
-      class:match={item["Email (from Students)"][0] == student.Email}
+      class:match={item["Email (from Students)"] &&
+        item["Email (from Students)"][0] == student.Email}
       class:w3-lime={item.Status == "Returned" && item["Is Latest Change"]}
       class:w3-amber={item.Status == "Out" && item["Is Latest Change"]}
       class:w3-red={item.Status == "Lost" && item["Is Latest Change"]}

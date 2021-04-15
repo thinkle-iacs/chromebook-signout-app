@@ -1,37 +1,33 @@
 <script lang="ts">
-  export let errors : string[]|null = null  
-  export let name : string|null;
+  export let errors: string[] | null = null;
+  export let name: string | null;
 </script>
 
-<div class="field">    
+<div class="field">
   <slot name="label">
-    <label for={name && name.toLowerCase().replace(/\s+/g,'')}>
+    <label for={name && name.toLowerCase().replace(/\s+/g, "")}>
       {name}
     </label>
-  </slot>    
+  </slot>
   <slot>
     <!-- Input goes here -->
   </slot>
-    {#if errors}
-      <div class="error">
-        {#each errors as error}
-          <span>{error}</span>
-        {/each}
-      </div>
-    {/if}
-    <div class="details">
-      <slot name="details">
-      </slot>      
+  {#if errors}
+    <div class="error w3-text-dark-gray">
+      {#each errors as error}
+        <span>{error}</span>
+      {/each}
     </div>
-    <div class="dropdown-container">
-      <slot name="dropdown">
-      </slot>
-    </div>
-
+  {/if}
+  <div class="details">
+    <slot name="details" />
   </div>
+  <div class="dropdown-container">
+    <slot name="dropdown" />
+  </div>
+</div>
 
 <style>
-  
   .field {
     position: relative;
     margin-top: 1em;
@@ -40,9 +36,8 @@
   .field:nth-child(1) {
     margin-top: 0;
   }
-  
+
   .field .error {
-    color: var(--red, red);
     position: absolute;
     top: 0;
     right: 5px;
@@ -50,7 +45,4 @@
   .dropdown-container {
     position: relative;
   }
-  
-
 </style>
-
