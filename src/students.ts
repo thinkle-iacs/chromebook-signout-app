@@ -1,6 +1,6 @@
 import { writable, get } from "svelte/store";
 
-let studentsStore = writable({});
+export let studentsStore = writable({});
 
 export type Student {
   Name : string;
