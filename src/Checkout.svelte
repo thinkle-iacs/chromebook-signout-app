@@ -226,11 +226,12 @@
 <style>
   label {
     display: inline;
-    color: #888;
-    transition: color 300ms;
+    color: #333;
+    transition: all 300ms;
   }
   .bold {
-    color: black;    
+    color: black;        
+    text-shadow: 0px 0px 1px #222;
   }
   input[type="radio"] {
     margin-left: 16px;

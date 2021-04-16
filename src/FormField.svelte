@@ -43,6 +43,9 @@
     top: 0;
     right: 5px;
   }
+  .error span {
+    margin-left: 1em;
+  }
   .dropdown-container {
     position: relative;
   }
