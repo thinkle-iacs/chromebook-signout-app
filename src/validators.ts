@@ -13,6 +13,29 @@ export let studentDropdown = writable([]);
 export let studentName = writable("");
 export let assetTag = writable("");
 
+function toTitleCase(s: string) {
+  if (s) {
+    s = s[0].toUpperCase() + s.substr(1);
+    let commaAt = s.indexOf(", ");
+    if (commaAt > -1 && commaAt < s.length - 2) {
+      console.log("Got comma", commaAt, s);
+      s =
+        s.substr(0, commaAt + 2) +
+        s[commaAt + 2].toUpperCase() +
+        s.substr(commaAt + 3);
+    }
+    return s;
+  } else {
+    return "";
+  }
+}
+
+studentName.subscribe((s) => {
+  if (s) {
+    studentName.update((s) => toTitleCase(s));
+  }
+});
+
 export const validateStudent = async (s) => {
   studentDropdown.set([]);
   updateCount += 1;
