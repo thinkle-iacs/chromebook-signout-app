@@ -1,5 +1,6 @@
 import type { APIGatewayEvent, Context } from 'aws-lambda'
 import {handler as studentHandler} from './students';
+import {handler as staffHandler} from './staff';
 import {handler as inventoryHandler} from './inventory';
 import {handler as signoutHandler} from './signout';
 import {handler as signoutHistoryHandler} from './signoutHistory'
@@ -9,6 +10,7 @@ let modes = {
   asset : inventoryHandler,
   signout : signoutHandler,
   signoutHistory : signoutHistoryHandler,
+  staff : staffHandler
 }
 
 export async function handler(

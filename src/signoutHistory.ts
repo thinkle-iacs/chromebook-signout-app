@@ -6,6 +6,7 @@ export type SignoutHistoryEntry {
   'Asset Tag (from Asset)':string[];,
   'Student':string[],
   'Email (from Students)':string[],
+  'Email (from Staff)':string[],
   'Notes':string,
   'Time':string,
   'Is Latest Change':number,

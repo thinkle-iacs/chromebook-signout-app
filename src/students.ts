@@ -10,8 +10,12 @@ export type Student {
   Email : string;
   _id : string;
 }
+let cachedSearch = {};
 
 export async function searchForStudent(name) {
+  if (cachedSearch[name]) {
+    return cachedSearch[name]
+  }
   let response = await fetch(
     "/.netlify/functions/index?mode=student&name=" + encodeURIComponent(name)
   );
@@ -23,7 +27,7 @@ export async function searchForStudent(name) {
     }
     return $studentsStore;
   });
-
+  cachedSearch[name] = json;
   return json;
 }
 

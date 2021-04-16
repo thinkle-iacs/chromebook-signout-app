@@ -4,9 +4,9 @@ import { signoutHistoryBase } from './Airtable'
 export async function handler(
   event : APIGatewayEvent, context : Context 
 ) {
-  const { assetRecordId, studentRecordId, Notes, Status } = event.queryStringParameters
+  const { assetRecordId, staffRecordId, studentRecordId, Notes, Status } = event.queryStringParameters
   console.log('Got params',JSON.stringify(
-    { assetRecordId, studentRecordId, Notes, Status }
+    { assetRecordId, staffRecordId, studentRecordId, Notes, Status }
   ))
   let fields = {
     Asset : [assetRecordId],
@@ -15,6 +15,9 @@ export async function handler(
   }
   if (studentRecordId) {
     fields.Student = [studentRecordId]
+  }
+  if (staffRecordId) {
+    fields.Staff = [staffRecordId]
   }
   let result = await signoutHistoryBase.create([
     {

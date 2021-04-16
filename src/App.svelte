@@ -93,6 +93,7 @@
 <style>
   main {
     min-height: calc(100vh - 128px);
+    padding-bottom: 96px;
   }
   nav :global(a) {
     text-decoration: none;
@@ -107,5 +108,6 @@
     bottom: 0;
     left: 0;
     width: 100%;
+    max-height: 64px;
   }
 </style>

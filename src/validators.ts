@@ -1,15 +1,18 @@
 import { writable, get } from "svelte/store";
 import { tick } from "svelte";
-import { searchForStudent, getStudent } from "./students";
+import { searchForStudent } from "./students";
+import { searchForStaff } from "./staff";
 import { searchForAsset, assetStore } from "./inventory";
 
 const cachedValidations = {
   assets: {},
   students: {},
+  staff: {},
 };
-let updateCount = 0;
 
+export let staffDropdown = writable([]);
 export let studentDropdown = writable([]);
+export let staffName = writable("");
 export let studentName = writable("");
 export let assetTag = writable("");
 
@@ -36,16 +39,24 @@ studentName.subscribe((s) => {
   }
 });
 
+staffName.subscribe((s) => {
+  if (s) {
+    staffName.update((s) => toTitleCase(s));
+  }
+});
+
+let studentUpdateCount = 0;
 export const validateStudent = async (s) => {
+  console.log("Validate student", s);
   studentDropdown.set([]);
-  updateCount += 1;
-  let myUpdateNumber = updateCount;
+  studentUpdateCount += 1;
+  let myUpdateNumber = studentUpdateCount;
   if (cachedValidations.students[s]) {
     return cachedValidations.students[s];
   }
   await tick();
   await sleep(500);
-  if (!s || updateCount != myUpdateNumber) {
+  if (!s || studentUpdateCount != myUpdateNumber) {
     return {
       name: "still typing nevermind",
       valid: true,
@@ -53,26 +64,86 @@ export const validateStudent = async (s) => {
   } else {
     let valid = false;
     let results = await searchForStudent(s);
-    if (results.length > 0) {
+    if (results.length == 0) {
+      return {
+        valid: false,
+        name: "No matching student",
+      };
+    } else if (results.length == 1) {
       valid = true;
-    }
-    let result = {
-      name: "Student not found",
-      valid,
-    };
-    cachedValidations[s] = result;
-    if (results.length == 1) {
       let name = results[0].fields.Name;
-      studentName.set(name);
-      cachedValidations.students[name] = result;
+      if (name != s) {
+        studentName.set(name);
+      }
+      return {
+        valid: true,
+        name: "Matching student",
+      };
     } else if (results.length < 20) {
       studentDropdown.set(results.map((result) => result.fields.Name));
+      return {
+        valid: false,
+        name: "Choose matching student",
+      };
+    } else {
+      return {
+        valid: false,
+        name: `${results.length} students found, keep typing...`,
+      };
     }
-    return result;
+  }
+};
+let staffUpdateCount = 0;
+export const validateStaff = async (s) => {
+  console.log("Validate staff", s);
+  staffDropdown.set([]);
+  staffUpdateCount += 1;
+  let myUpdateNumber = staffUpdateCount;
+  if (cachedValidations.staff[s]) {
+    return cachedValidations.staff[s];
+  }
+  await tick();
+  await sleep(500);
+  if (!s || staffUpdateCount != myUpdateNumber) {
+    return {
+      name: "still typing",
+      valid: true,
+    };
+  } else {
+    let valid = false;
+    let results = await searchForStaff(s);
+    if (results.length == 0) {
+      return {
+        valid: false,
+        name: "No matching staff member",
+      };
+    } else if (results.length == 1) {
+      valid = true;
+      let name = results[0]["Full Name"];
+      if (name != s) {
+        staffName.set(name);
+      }
+      return {
+        valid: true,
+        name: "Matching staff member",
+      };
+    } else if (results.length < 20) {
+      staffDropdown.set(results.map((r) => r["Full Name"]));
+      return {
+        valid: false,
+        name: "Find matching staff member",
+      };
+    } else {
+      return {
+        valid: false,
+        name: `${results.length} matches found, keep typing :)`,
+      };
+    }
   }
 };
 
 export const validateAsset = async (s) => {
+  console.log("Validate asset", s);
   if (s && s.length > 3) {
     let $assetStore = get(assetStore);
     if ($assetStore[s]) {

@@ -8,7 +8,7 @@
   import { validateStudent, studentName } from "./validators";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
-  import StudentDropdown from "./StudentDropdown.svelte";
+  import StudentDropdown from "./NameDropdown.svelte";
   import { getStudent } from "./students";
   import { assetStore, searchForAsset } from "./inventory";
   import { lookupSignoutHistory } from "./signoutHistory";

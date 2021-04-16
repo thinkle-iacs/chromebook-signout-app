@@ -1,4 +1,5 @@
 import type { Student } from "./students";
+import type { Staff } from './staff';
 import type { Asset } from "./inventory";
 import { assetStore } from "./inventory";]
 import { update, get } from "svelte/store";
@@ -6,6 +7,7 @@ export type CheckoutStatus = "Out" | "Returned" | "Lost";
 
 export async function signoutAsset(
   student: Student,
+  staff : Staff,
   asset: Asset,
   Notes: string = "",
   Status: CheckoutStatus = "Out"
@@ -14,6 +16,9 @@ export async function signoutAsset(
   if (student) {
     params.studentRecordId = student._id
   }  
+  if (staff) {
+    params.staffRecordId = staff._id;
+  }
   let response = await fetch(
     "/.netlify/functions/index?" +
       new URLSearchParams(params)

@@ -13,11 +13,7 @@ export async function handler(
   } else if (staffId) {
     filterByFormula=`{Staff}="${staffId}"`
   }
-  let query = signoutHistoryBase.select(
-    {
-      maxRecords : 100,
-      filterByFormula,
-      fields : [
+  let fields = [
         'Status',
         'Asset Tag (from Asset)',
         'Student',
@@ -26,8 +22,16 @@ export async function handler(
         'Time',
         'Is Latest Change',
         'LatestUpdate',
-        'Num'
-      ]      
+        'Num',
+        'Email (from Staff)'
+      ]  
+  console.log('Query is',filterByFormula)
+  console.log('Fields are',fields)
+  let query = signoutHistoryBase.select(
+    {
+      maxRecords : 100,
+      filterByFormula,
+      fields    
     }
   );
   let result = await query.firstPage();

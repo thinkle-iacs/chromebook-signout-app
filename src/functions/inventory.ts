@@ -28,6 +28,7 @@ export async function handler(
       'Year of Purchase',
       'Student (Current)',
       'Email (from Student (Current))',
+      'Full Name (from User)',
       'SignoutRecordNumber'
     ]
   })

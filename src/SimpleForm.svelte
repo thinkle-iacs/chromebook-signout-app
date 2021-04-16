@@ -17,6 +17,7 @@
   });
 </script>
 
+<!-- svelte-ignore component-name-lowercase -->
 <form class="w3-container" on:submit|preventDefault>
   <slot />
 </form>

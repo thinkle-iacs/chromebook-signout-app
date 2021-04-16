@@ -1,6 +1,8 @@
 <script type="ts">
   import { flip } from "svelte/animate";
   import { fade } from "svelte/transition";
+  import AssetDisplay from "./AssetDisplay.svelte";
+  import { assetStore } from "./inventory";
   import type { SignoutHistoryEntry } from "./signoutHistory";
   import type { Student } from "./students";
   export let signoutHistoryItems: SignoutHistoryEntry[];
@@ -15,7 +17,7 @@
     <th> Time </th>
     <th> Asset </th>
     <th>
-      Student
+      User
       {#if student}
         <div class="w3-small normal">
           <input type="checkbox" bind:checked={studentOnlyMode} /> only {student.Name}
@@ -47,14 +49,26 @@
         {new Date(item.Time).toLocaleTimeString()}
       </td>
       <td>
-        <div class="tag w3-round-xlarge w3-indigo">
-          {item["Asset Tag (from Asset)"]}
-        </div>
+        {#if $assetStore[item["Asset Tag (from Asset)"]]}
+          <AssetDisplay asset={$assetStore[item["Asset Tag (from Asset)"]]} />
+        {:else}
+          <div class="tag w3-round-xlarge w3-indigo">
+            {item["Asset Tag (from Asset)"]}
+          </div>
+        {/if}
       </td>
       <td>
         {#if item["Email (from Students)"] && item["Email (from Students)"].length}
           <a href={`mailto:${item["Email (from Students)"][0]}`}>
             {item["Email (from Students)"][0].replace(
+              "@innovationcharter.org",
+              ""
+            )}
+          </a>
+        {/if}
+        {#if item["Email (from Staff)"] && item["Email (from Staff)"].length}
+          <a href={`mailto:${item["Email (from Staff)"][0]}`}>
+            {item["Email (from Staff)"][0].replace(
               "@innovationcharter.org",
               ""
             )}
