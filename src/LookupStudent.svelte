@@ -1,24 +1,22 @@
 <script type="ts">
+  import router from "page";
   import type { Student } from "./students";
   import type { Asset } from "./inventory";
   import type { SignoutHistoryEntry } from "./signoutHistory";
   import AssetDisplay from "./AssetDisplay.svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
-  import { form } from "svelte-forms";
-  import {
-    validateStudent,
-    studentName,
-    studentDropdown,
-    assetTag,
-  } from "./validators";
+  import { validateStudent, studentName } from "./validators";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
   import StudentDropdown from "./StudentDropdown.svelte";
-  import { onMount } from "svelte";
   import { getStudent } from "./students";
   import { assetStore, searchForAsset } from "./inventory";
   import { lookupSignoutHistory } from "./signoutHistory";
   import App from "./App.svelte";
+  export let name;
+  $: if (name) {
+    $studentName = name;
+  }
 
   let lookupForm;
   let validators = () => ({
@@ -27,9 +25,21 @@
       validators: [validateStudent],
     },
   });
-  $: lookupForm && $studentName && lookupForm.validate();
+
+  function doValidation(...args) {
+    if (lookupForm) {
+      console.log("Validate!");
+      lookupForm.validate();
+    }
+  }
+  $: doValidation(lookupForm, $studentName);
+
   let student: Student | null;
   $: student = getStudent($studentName);
+
+  $: if (student) {
+    router(`/student/${student.Name}`);
+  }
 
   let loans: SignoutHistoryEntry[] | null;
   let current: Asset[] | null;
@@ -81,7 +91,7 @@
   }
 </script>
 
-<div class="search w3-card-4" class:no-results={!student}>
+<div class="search w3-xlarge w3-container">
   <SimpleForm
     {validators}
     onFormCreated={(f) => {
@@ -103,7 +113,7 @@
   </SimpleForm>
 </div>
 {#if student}
-  <article class="w3-card-4 w3-cell-middle">
+  <article class="w3-card w3-cell-middle">
     <header class="w3-container w3-blue w3-bar-block w3-padding-24">
       {student.Name}
     </header>
@@ -139,26 +149,17 @@
 <style>
   article,
   .search {
-    max-width: 800px;
+    max-width: 1100px;
     margin: auto;
     margin-bottom: 32px;
+    margin-top: 16px;
   }
 
   article {
     padding-bottom: 32px;
   }
-  .search {
-    margin-top: 16px;
-    padding: 16px;
-    transition: all 300ms;
-    box-sizing: border-box;
-    height: 64px;
-    align-items: center;
-    justify-content: center;
-    display: flex;
-  }
-  .no-results {
-    margin-top: calc(min(50vh - 150px, 75px));
-    height: 300px;
+
+  input {
+    width: min(100vh - 32px, 800px);
   }
 </style>

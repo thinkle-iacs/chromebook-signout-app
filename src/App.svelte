@@ -6,36 +6,43 @@
   import LogIn from "./LogIn.svelte";
   import { loggedIn, user } from "./user";
   import { l } from "./util";
+  import { onMount } from "svelte";
+
   let page = Checkout;
   let params: {
-    lasid?: string;
+    name?: string;
+    tag?: string;
   } = {};
-  router("/user", () => {
-    page = LogIn;
+  onMount(() => {
+    router("/user", () => {
+      page = LogIn;
+    });
+    router("/", () => {
+      page = Checkout;
+    });
+    router("/student/", (ctx) => {
+      page = LookupStudent;
+    });
+    router("/student/:name", (ctx) => {
+      params.name = ctx.params.name;
+      page = LookupStudent;
+    });
+    router("/asset/", (ctx) => {
+      params = {};
+      page = LookupAsset;
+    });
+    router("/asset/:tag", (ctx) => {
+      params = {};
+      params.tag = ctx.params.tag;
+      page = LookupAsset;
+    });
+    router("/checkout/", (ctx) => {
+      params = {};
+      page = Checkout;
+    });
+
+    router.start();
   });
-  router("/", () => {
-    page = Checkout;
-  });
-  router("/student/", (ctx) => {
-    page = LookupStudent;
-  });
-  router("/student/:lasid", (ctx) => {
-    params.lasid = ctx.params.lasid;
-    page = LookupStudent;
-  });
-  router("/asset/", (ctx) => {
-    params = {};
-    page = LookupAsset;
-  });
-  router("/checkout/", (ctx) => {
-    params = {};
-    page = Checkout;
-  });
-  router("/data/", (ctx) => {
-    params = {};
-    page = Data;
-  });
-  router.start();
 </script>
 
 <nav class="w3-bar w3-border w3-light-grey">

@@ -5,7 +5,7 @@
   import SimpleForm from "./SimpleForm.svelte";
   import type { Student } from "./students";
   import type { Asset } from "./inventory";
-  import type {CheckoutStatus } from './signout';
+  import type { CheckoutStatus } from './signout';
   import { signoutAsset } from "./signout";
   import { searchForStudent, getStudent } from "./students";
   import { searchForAsset, assetStore } from "./inventory";
@@ -69,18 +69,16 @@
       ],
     },
   });
-  $: console.log("Got signoutForm", signoutForm);
-  $: $assetTag && signoutForm && signoutForm.validate();
-  $: $studentName && signoutForm && signoutForm.validate();
-  $: student && signoutForm && signoutForm.validate();
-  $: status && signoutForm && signoutForm.validate();
-  $: console.log("Time to validate?", $assetTag, $studentName);
+
+  function validateOn (signoutForm, ...args) {
+    if (signoutForm) {      
+      signoutForm.validate();      
+    }
+  }
+
+  $: validateOn(signoutForm,$assetTag,$studentName,student,asset,status);
   $: student = getStudent($studentName);
   $: asset = $assetStore[$assetTag];
-  /* afterUpdate(() => {
-    console.log("validate?");
-    signoutForm.validate();
-  });  */
   let checkedOut: {
     _id: string;
     fields: {
@@ -111,12 +109,14 @@
     'Returned' : 'Return',
     'Lost' : 'Mark as Lost'
   }
-
+  let valid;
+  $: valid = !!asset && (status!='Out' || !!student)
 </script>
 
 <h1 class="w3-center w3-blue">IACS Chromebook Signout</h1>
 
 <!-- svelte-ignore component-name-lowercase -->
+
 <SimpleForm
   {validators}
   onFormCreated={(f) => {
@@ -174,14 +174,14 @@
       placeholder="Notes about the loan."
     />
   </FormField>
-  <FormField name="Status">
-      <input type="radio" bind:group={status} value="Out"> Sign Out
-      <input type="radio" bind:group={status} value="Returned"> Returned
-      <input type="radio" bind:group={status} value="Lost"> Lost
+  <FormField name="Action">
+      <label class:bold={status=='Out'}><input type="radio" bind:group={status} value="Out"> Sign Out</label>
+      <label class:bold={status=='Returned'}><input type="radio" bind:group={status} value="Returned"> Check Back In</label>
+      <label class:bold={status=='Lost'}><input type="radio" bind:group={status} value="Lost"> Mark as Lost</label>
   </FormField>
   <input
-    class:w3-red={!!asset && $signoutForm?.valid}
-    disabled={!asset || !$signoutForm?.valid}
+    class:w3-red={valid}
+    disabled={!valid}
     on:click={checkOut}
     type="submit"
     class="w3-button"
@@ -224,6 +224,17 @@
 {/if}
 
 <style>
+  label {
+    display: inline;
+    color: #888;
+    transition: color 300ms;
+  }
+  .bold {
+    color: black;    
+  }
+  input[type="radio"] {
+    margin-left: 16px;
+  }  
   article {
     max-width: 1100px;
     margin: auto;
