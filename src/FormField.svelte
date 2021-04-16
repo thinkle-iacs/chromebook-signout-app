@@ -1,6 +1,7 @@
 <script lang="ts">
   export let errors: string[] | null = null;
   export let name: string | null;
+  import { fade } from "svelte/transition";
 </script>
 
 <div class="field">
@@ -13,9 +14,9 @@
     <!-- Input goes here -->
   </slot>
   {#if errors}
-    <div class="error w3-text-dark-gray">
+    <div transition:fade class="error w3-text-dark-gray">
       {#each errors as error}
-        <span>{error}</span>
+        <span transition:fade>{error}</span>
       {/each}
     </div>
   {/if}
