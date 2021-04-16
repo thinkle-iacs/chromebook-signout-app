@@ -6,6 +6,6 @@ Airtable.configure({
 });
 export let base = Airtable.base("appFim2L4assVgjdk");
 export let studentsBase = base("Students");
-export let signoutHistoryBase = base("Student Signout History");
+export let signoutHistoryBase = base("Signout History");
 export let inventoryBase = base("Inventory");
 export let staffBase = base("Staff");
