@@ -7,7 +7,7 @@
   let formObject;
   onMount(() => {
     console.log("Create for mwith ", validators);
-    let formObject = form(validators, {
+    formObject = form(validators, {
       initCheck: true,
       validateOnChange: false,
       stopAtFirstError: false,
