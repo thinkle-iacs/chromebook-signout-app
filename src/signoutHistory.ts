@@ -14,8 +14,8 @@ export type SignoutHistoryEntry {
 }
 
 export async function lookupSignoutHistory (
-    {asset, student} : {asset : Asset;
-    student : Student}
+    {asset, student} : {asset? : Asset;
+    student? : Student }
 ) : SignoutHistoryEntry[] {
   let params : {
     mode : string;
