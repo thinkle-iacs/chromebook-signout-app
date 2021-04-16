@@ -14,9 +14,9 @@
     <!-- Input goes here -->
   </slot>
   {#if errors}
-    <div transition:fade class="error w3-text-dark-gray">
+    <div transition:fade|local class="error w3-text-dark-gray">
       {#each errors as error}
-        <span transition:fade>{error}</span>
+        <span transition:fade|local>{error}</span>
       {/each}
     </div>
   {/if}
