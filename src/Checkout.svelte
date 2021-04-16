@@ -179,16 +179,7 @@
   <div class="rowDetail">
     <div>
       {#if asset}
-        <AssetDisplay {asset}>
-          {#if asset["Email (from Student (Current))"]}
-            Currently signed out to
-            {asset["Email (from Student (Current))"]}
-          {/if}
-          {#if asset["Full Name (from User)"]}
-            Currently signed out to staff
-            {asset["Full Name (from User)"]}
-          {/if}
-        </AssetDisplay>
+        <AssetDisplay {asset} showOwner={true} />
       {/if}
     </div>
   </div>

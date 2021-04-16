@@ -76,7 +76,7 @@
     </FormField>
   </SimpleForm>
   {#if asset}
-    <AssetDisplay {asset} />
+    <AssetDisplay {asset} showOwner={true} />
     {#if history.length}
       <SignoutHistoryTable signoutHistoryItems={history} />
     {:else}
