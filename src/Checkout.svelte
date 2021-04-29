@@ -105,6 +105,15 @@
 
   async function checkOut() {
     console.log("check out", $assetTag, "to", $studentName);
+    if (powerNote) {
+      notes = `${powerNote}. ${notes}`;
+    }
+    if (keyboardNote) {
+      notes = `${keyboardNote}. ${notes}`;
+    }
+    if (screenNote) {
+      notes = `${screenNote}. ${notes}`;
+    }
     let result = await signoutAsset(
       studentMode && student,
       !studentMode && staff,
@@ -142,6 +151,22 @@
       (!studentMode && !!staff));
   let studentMode = true;
   let nameInput; // For passing to dropdown for focus tracking
+
+  let keyboardNote;
+  let screenNote;
+  let powerNote;
+  let notePlaceholder;
+
+  $: {
+    if (
+      (screenNote && screenNote.match(/damage/)) ||
+      (keyboardNote && keyboardNote.match(/damage/))
+    ) {
+      notePlaceholder = "Please describe damage";
+    } else {
+      notePlaceholder = "Type any notes about state of machine or return here.";
+    }
+  }
 </script>
 
 <h1 class="w3-center w3-blue">IACS Chromebook Signout</h1>
@@ -244,20 +269,45 @@
       >
     </FormField>
   </div>
-  <div class="rowDetail">
-    <div>
-      {#if asset}
+  {#if asset}
+    <div class="rowDetail">
+      <div>
         <AssetDisplay {asset} showOwner={true} />
-      {/if}
+      </div>
     </div>
+  {/if}
+  <div class="row">
+    <FormField name="Machine Notes">
+      <select class="w3-select" bind:value={screenNote}>
+        <option value={undefined}>Please check screen</option>
+        <option value="Screen intact when returned">Screen intact</option>
+        <option value="Screen damaged when returned">Screen damaged</option>
+      </select>
+      <select class="w3-select" bind:value={keyboardNote}>
+        <option value={undefined}>Please check keyboard</option>
+        <option value="Keyboard intact when returned">Keyboard intact</option>
+        <option value="Keyboard damaged when returned">Keyboard damaged</option>
+      </select>
+      <select class="w3-select" bind:value={powerNote}>
+        <option value={undefined}>Please check that screen comes on</option>
+        <option value="Screen displayed when returned"
+          >Screen displayed when opened</option
+        >
+        <option value="Machine not powered on when returned"
+          >Machine did not power on, may be out of battery.</option
+        >
+        <option value="Machine unable to power when returned (after charging)"
+          >Machine unable to power on, even after charging.</option
+        >
+      </select>
+    </FormField>
   </div>
-
-  <FormField name="Notes">
+  <FormField name="Other Notes">
     <textarea
       bind:value={notes}
       id="notes"
       class="w3-input"
-      placeholder="Notes about the loan."
+      placeholder={notePlaceholder}
     />
   </FormField>
 
