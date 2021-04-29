@@ -17,6 +17,7 @@ export type Asset {
   'Student (Current)':string;
   'Device Type' : string;
   'Location': string;
+  'Charger Type' : string | null;
 }
 
 export async function searchForAsset (tag, lasid) {

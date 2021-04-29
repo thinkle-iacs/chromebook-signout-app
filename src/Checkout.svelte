@@ -16,6 +16,7 @@
     studentName,
     staffName,
     assetTag,
+    chargerTag,
     validateStudent,
     validateStaff,
     validateAsset,
@@ -28,12 +29,12 @@
   let student: Student | null = null;
   let staff: Staff | null = null;
   let asset: Asset | null = null;
+  let charger: Asset | null = null;
 
   let validators = () => ({
     assetTag: {
       value: $assetTag,
       validators: [
-        "required",
         (s) => ({
           name: "4 or 5 digit code",
           valid: s.length > 3,
@@ -42,11 +43,23 @@
         validateAsset,
       ],
     },
+    charger: {
+      value: $chargerTag,
+
+      validators: [
+        (s) => ({
+          name: "3 digit code",
+          valid: !s || s.length == 3,
+          type: "warning",
+        }),
+        (s) => validateAsset(s, true),
+      ],
+    },
     staffName: {
       value: $staffName,
       validators: [
         (s) => {
-          let valid = !(status == "Out" && !studentMode && !s);
+          let valid = !(status == "Out" && !s);
           return {
             name: "Staff required for check out",
             valid,
@@ -88,6 +101,7 @@
     $staffName,
     staff,
     $assetTag,
+    $chargerTag,
     $studentName,
     student,
     asset,
@@ -96,6 +110,8 @@
   $: student = getStudent($studentName);
   $: staff = $staffStore[$staffName];
   $: asset = $assetStore[$assetTag];
+  $: charger = $assetStore[$chargerTag];
+
   let checkedOut: {
     _id: string;
     fields: {
@@ -104,6 +120,32 @@
     asset: Asset;
     student: Student;
   }[] = [];
+
+  async function doCheckout(assetObject, notes) {
+    let result = await signoutAsset(
+      studentMode && student,
+      !studentMode && staff,
+      assetObject,
+      notes,
+      status
+    );
+    if (result && result.length == 1) {
+      let record = result[0];
+      record = {
+        ...record,
+        ...record.fields,
+      };
+      record.student = student;
+      record.asset = assetObject;
+      record.status = status;
+      record._id = record.id; // for consistency -- airtable IDs we call _id
+      checkedOut = [record, ...checkedOut];
+      return true;
+    } else {
+      console.log("Unexpected result", result);
+      return false;
+    }
+  }
 
   async function checkOut() {
     console.log("check out", $assetTag, "to", $studentName);
@@ -116,24 +158,14 @@
     if (screenNote) {
       notes = `${screenNote}. ${notes}`;
     }
-    let result = await signoutAsset(
-      studentMode && student,
-      !studentMode && staff,
-      asset,
-      notes,
-      status
-    );
-    if (result && result.length == 1) {
-      let record = result[0];
-      record = {
-        ...record,
-        ...record.fields,
-      };
-      record.student = student;
-      record.asset = asset;
-      record.status = status;
-      record._id = record.id; // for consistency -- airtable IDs we call _id
-      checkedOut = [record, ...checkedOut];
+    let success: boolean = false;
+    if (asset) {
+      success = await doCheckout(asset, notes);
+    }
+    if (charger) {
+      success = await doCheckout(charger, (!asset && notes) || "");
+    }
+    if (success) {
       $studentName = "";
       $assetTag = "";
       notes = "";
@@ -150,7 +182,7 @@
   };
   let valid;
   $: valid =
-    !!asset &&
+    (!!asset || !!charger) &&
     (status != "Out" ||
       (studentMode && !!student) ||
       (!studentMode && !!staff));
@@ -263,6 +295,20 @@
           autocomplete="off"
         />
       </FormField>
+      <FormField
+        fullWidth={false}
+        name="Charger"
+        errors={$assetTag && $signoutForm?.fields?.assetTag?.errors}
+      >
+        <input
+          bind:value={$chargerTag}
+          id="charger"
+          type="text"
+          class="w3-input"
+          placeholder="Charger (3 digit number)"
+          autocomplete="off"
+        />
+      </FormField>
       <FormField name="Action" fullWidth={false}>
         <label class:bold={status == "Out"}
           ><input type="radio" bind:group={status} value="Out" /> Sign Out</label
@@ -276,11 +322,18 @@
         >
       </FormField>
     </div>
-    {#if asset}
-      <div in:fly={{ y: -30 }} out:fade class="rowDetail">
-        <div>
-          <AssetDisplay {asset} showOwner={true} />
-        </div>
+    {#if asset || charger}
+      <div in:fly={{ y: -30 }} out:fade class="rowDetail row">
+        {#if asset}
+          <div in:fade out:fade>
+            <AssetDisplay {asset} showOwner={true} />
+          </div>
+        {/if}
+        {#if charger}
+          <div in:fade out:fade>
+            <AssetDisplay asset={charger} showOwner={true} />
+          </div>
+        {/if}
       </div>
     {/if}
     {#if status == "Returned"}

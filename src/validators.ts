@@ -15,6 +15,7 @@ export let studentDropdown = writable([]);
 export let staffName = writable("");
 export let studentName = writable("");
 export let assetTag = writable("");
+export let chargerTag = writable("");
 
 function toTitleCase(s: string) {
   if (s) {
@@ -142,9 +143,9 @@ export const validateStaff = async (s) => {
   }
 };
 
-export const validateAsset = async (s) => {
+export const validateAsset = async (s, isCharger = false) => {
   console.log("Validate asset", s);
-  if (s && s.length > 3) {
+  if (s && s.length >= 3) {
     let $assetStore = get(assetStore);
     if ($assetStore[s]) {
       return {
@@ -161,7 +162,11 @@ export const validateAsset = async (s) => {
       valid = true;
     }
     if (results.length == 1) {
-      assetTag.set(results[0].fields["Asset Tag"]);
+      if (isCharger) {
+        chargerTag.set(results[0].fields["Asset Tag"]);
+      } else {
+        assetTag.set(results[0].fields["Asset Tag"]);
+      }
     }
     return {
       name: "Asset not found",
