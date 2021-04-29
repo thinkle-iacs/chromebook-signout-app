@@ -258,10 +258,10 @@
         {/if}
         <span slot="details">
           {#if studentMode && student}
-            {student.LASID}
             <a tabindex="-1" href={`mailto:${student.Email}`}>{student.Email}</a
             >
             {student.Advisor} Class of {student.YOG}
+            (LASID: {student.LASID})
           {/if}
           {#if !studentMode && staff}
             <a tabindex="-1" href={`mailto:${staff.Email}`}>{staff.Email}</a>
@@ -333,6 +333,17 @@
           <div in:fade out:fade>
             <AssetDisplay asset={charger} showOwner={true} />
           </div>
+        {/if}
+        {#if charger && asset["Charger Type"]}
+          {#if charger["Model"] == asset["Charger Type"]}
+            <span class="w3-text-blue">Correct charger!</span>
+          {:else}
+            <span class="w3-text-orange">
+              Machine requires
+              {asset["Charger Type"]}
+              but you have {charger["Model"] || "Unknown"}?
+            </span>
+          {/if}
         {/if}
       </div>
     {/if}
