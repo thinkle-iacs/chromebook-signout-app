@@ -29,7 +29,8 @@ export async function handler(
       'Student (Current)',
       'Email (from Student (Current))',
       'Full Name (from User)',
-      'SignoutRecordNumber'
+      'SignoutRecordNumber',
+      'Charger Type'
     ]
   })
   let result = await query.firstPage()

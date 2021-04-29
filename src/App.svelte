@@ -9,6 +9,7 @@
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
 
+  let title = "IACS Chromebook Signout";
   let page = Checkout;
   let params: {
     name?: string;
@@ -17,72 +18,107 @@
   onMount(() => {
     router("/user", () => {
       page = LogIn;
+      title = "IACS Chromebook Signout Log In";
     });
     router("/", () => {
       page = Checkout;
+      title = "IACS Chromebook Signout";
     });
     router("/student/", (ctx) => {
       page = LookupStudent;
+      title = "IACS Chromebook Student Lookup";
     });
     router("/student/:name", (ctx) => {
       params.name = ctx.params.name;
       page = LookupStudent;
+      title = "IACS Chromebook Student Lookup";
     });
     router("/asset/", (ctx) => {
       params = {};
       page = LookupAsset;
+      title = "IACS Chromebook Lookup";
     });
     router("/asset/:tag", (ctx) => {
       params = {};
       params.tag = ctx.params.tag;
       page = LookupAsset;
+      title = "IACS Chromebook Lookup";
     });
     router("/checkout/", (ctx) => {
       params = {};
       page = Checkout;
+      title = "IACS Chromebook Signout";
     });
 
     router.start();
   });
+  let navActive;
 </script>
 
-<nav class="w3-bar w3-border w3-light-grey">
-  <a
-    class="w3-bar-item"
-    href="/checkout"
-    on:click={l("/checkout")}
-    class:w3-button={page != Checkout}
-    class:w3-blue={page == Checkout}>Sign In/Out</a
-  >
-  <a
-    class="w3-bar-item"
-    class:w3-button={page != LookupAsset}
-    href="/asset/"
-    on:click={l("/asset/")}
-    class:w3-blue={page == LookupAsset}>Look Up Info</a
-  >
-  <a
-    class="w3-bar-item"
-    class:w3-button={page != LookupStudent}
-    class:w3-blue={page == LookupStudent}
-    href="/students/"
-    on:click={l("/student/")}>Look Up Student</a
-  >
-</nav>
+<div
+  class="w3-main"
+  on:click={() => {
+    navActive = false;
+    console.log("main click!");
+  }}
+>
+  <nav class="w3-sidebar w3-light-grey" class:navActive>
+    <button
+      on:click={() => {
+        navActive = false;
+      }}
+      class="mobileNav w3-button close-button">&times;</button
+    >
+    <a
+      class="w3-bar-item w3-button"
+      href="/checkout"
+      on:click={l("/checkout")}
+      class:active={page == Checkout}
+      class:w3-blue={page == Checkout}>Sign In/Out</a
+    >
+    <a
+      class="w3-bar-item w3-button"
+      class:active={page == LookupAsset}
+      href="/asset/"
+      on:click={l("/asset/")}
+      class:w3-blue={page == LookupAsset}>Look Up Info</a
+    >
+    <a
+      class="w3-bar-item w3-button"
+      class:active={page == LookupStudent}
+      class:w3-blue={page == LookupStudent}
+      href="/students/"
+      on:click={l("/student/")}>Look Up Student</a
+    >
+  </nav>
+  <main>
+    <header class="w3-bar w3-blue">
+      <button
+        class="mobileNav w3-bar-item w3-blue"
+        on:click={(e) => {
+          console.log("mobileNav click!");
+          navActive = true;
+          e.stopPropagation();
+        }}>☰</button
+      >
+      <h1 class="w3-bar-item w3-center w3-blue">
+        {title}
+      </h1>
+    </header>
 
-<main class="w3-main">
-  {#if !$loggedIn}
-    <LogIn />
-  {:else if page}
-    {#each [page] as page (page)}
-      <div in:fade>
-        <svelte:component this={page} {...params} />
-      </div>
-    {/each}
-  {:else}
-    Weird, nobody's home
-  {/if}
-</main>
+    {#if !$loggedIn}
+      <LogIn />
+    {:else if page}
+      {#each [page] as page (page)}
+        <div in:fade>
+          <svelte:component this={page} {...params} />
+        </div>
+      {/each}
+    {:else}
+      Weird, nobody's home
+    {/if}
+  </main>
+</div>
 {#if $loggedIn}
   <footer class="w3-container w3-cell w3-cell-bottom w3-white">
     Hi there, {$user?.user_metadata.full_name} ({$user.email})
@@ -91,14 +127,49 @@
 {/if}
 
 <style>
+  header {
+    display: flex;
+  }
+  header h1 {
+    margin-left: auto;
+    margin-right: auto;
+  }
   main {
-    min-height: calc(100vh - 128px);
     padding-bottom: 96px;
+    margin-left: 200px;
   }
   nav :global(a) {
     text-decoration: none;
+    width: 200px;
   }
 
+  .mobileNav {
+    display: none;
+  }
+  @media screen and (max-width: 960px) {
+    .mobileNav {
+      display: initial;
+    }
+    .close-button {
+      display: flex;
+      margin-left: auto;
+    }
+    main {
+      margin-left: 0px;
+    }
+
+    nav {
+      display: block;
+      overflow: hidden;
+      width: 0px;
+      transition: width 200ms;
+    }
+
+    nav.navActive {
+      display: block;
+      width: 200px;
+    }
+  }
   nav a {
     transition: background-color 500ms;
   }
@@ -109,5 +180,12 @@
     left: 0;
     width: 100%;
     max-height: 64px;
+  }
+
+  .active:hover {
+    background-color: #2196f3 !important;
+  }
+  h1 {
+    margin-top: 0;
   }
 </style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fly, fade } from "svelte/transition";
   import NameDropdown from "./NameDropdown.svelte";
   import AssetDisplay from "./AssetDisplay.svelte";
   import FormField from "./FormField.svelte";
@@ -20,6 +21,7 @@
     validateAsset,
   } from "./validators";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
+
   let status: CheckoutStatus = "Out";
   let notes = "";
   let signoutForm;
@@ -135,6 +137,9 @@
       $studentName = "";
       $assetTag = "";
       notes = "";
+      screenNote = null;
+      keyboardNote = null;
+      powerNote = null;
     }
   }
 
@@ -169,157 +174,167 @@
   }
 </script>
 
-<h1 class="w3-center w3-blue">IACS Chromebook Signout</h1>
-<SimpleForm
-  {validators}
-  onFormCreated={(f) => {
-    signoutForm = f;
-  }}
->
-  <div class="row">
-    <FormField
-      fullWidth={true}
-      errors={(studentMode && $signoutForm?.fields?.studentName?.errors) ||
-        $signoutForm?.fields?.staffName?.errors}
-      name={(studentMode && "Student") || "Staff"}
-    >
-      <nav slot="label" class="w3-bar w3-border-bottom">
-        <button
-          class:w3-button={studentMode == false}
-          class:w3-blue={studentMode == true}
-          class="w3-bar-item"
-          on:click={() => (studentMode = true)}>Student</button
-        >
-        <button
-          class:w3-button={studentMode == true}
-          class:w3-blue={studentMode == false}
-          class:w3-border={studentMode == false}
-          class="w3-bar-item w3-button"
-          on:click={() => (studentMode = false)}>Staff</button
-        >
-      </nav>
-      {#if studentMode}
+<article>
+  <SimpleForm
+    {validators}
+    onFormCreated={(f) => {
+      signoutForm = f;
+    }}
+  >
+    <div class="row">
+      <FormField
+        fullWidth={true}
+        errors={(studentMode && $signoutForm?.fields?.studentName?.errors) ||
+          $signoutForm?.fields?.staffName?.errors}
+        name={(studentMode && "Student") || "Staff"}
+      >
+        <nav slot="label" class="w3-bar w3-border-bottom">
+          <button
+            class:w3-button={studentMode == false}
+            class:w3-blue={studentMode == true}
+            class="w3-bar-item"
+            on:click={() => (studentMode = true)}>Student</button
+          >
+          <button
+            class:w3-button={studentMode == true}
+            class:w3-blue={studentMode == false}
+            class:w3-border={studentMode == false}
+            class="w3-bar-item w3-button"
+            on:click={() => (studentMode = false)}>Staff</button
+          >
+        </nav>
+        {#if studentMode}
+          <input
+            bind:value={$studentName}
+            bind:this={nameInput}
+            id="student"
+            type="text"
+            class="w3-input"
+            autocomplete="off"
+            placeholder="Last, First"
+          />
+        {:else}
+          <input
+            bind:value={$staffName}
+            bind:this={nameInput}
+            id="staff"
+            type="text"
+            class="w3-input"
+            autocomplete="off"
+            placeholder="Last, First"
+          />
+        {/if}
+        <span slot="details">
+          {#if studentMode && student}
+            {student.LASID}
+            <a tabindex="-1" href={`mailto:${student.Email}`}>{student.Email}</a
+            >
+            {student.Advisor} Class of {student.YOG}
+          {/if}
+          {#if !studentMode && staff}
+            <a tabindex="-1" href={`mailto:${staff.Email}`}>{staff.Email}</a>
+            {(staff.School &&
+              staff.School.replace(/Innovation Academy Charter/, "")) ||
+              ""}
+            {staff.Department}
+            {staff.Role}
+          {/if}
+        </span>
+        <div slot="dropdown">
+          <NameDropdown
+            inputElement={nameInput}
+            mode={(studentMode && "student") || "staff"}
+          />
+        </div>
+      </FormField>
+    </div>
+    <div class="row">
+      <FormField
+        fullWidth={false}
+        name="Asset Tag"
+        errors={$assetTag && $signoutForm?.fields?.assetTag?.errors}
+      >
         <input
-          bind:value={$studentName}
-          bind:this={nameInput}
-          id="student"
+          bind:value={$assetTag}
+          id="assettag"
           type="text"
           class="w3-input"
+          placeholder="Asset Tag"
           autocomplete="off"
-          placeholder="Last, First"
         />
-      {:else}
-        <input
-          bind:value={$staffName}
-          bind:this={nameInput}
-          id="staff"
-          type="text"
-          class="w3-input"
-          autocomplete="off"
-          placeholder="Last, First"
-        />
-      {/if}
-      <span slot="details">
-        {#if studentMode && student}
-          {student.LASID}
-          <a tabindex="-1" href={`mailto:${student.Email}`}>{student.Email}</a>
-          {student.Advisor} Class of {student.YOG}
-        {/if}
-        {#if !studentMode && staff}
-          <a tabindex="-1" href={`mailto:${staff.Email}`}>{staff.Email}</a>
-          {(staff.School &&
-            staff.School.replace(/Innovation Academy Charter/, "")) ||
-            ""}
-          {staff.Department}
-          {staff.Role}
-        {/if}
-      </span>
-      <div slot="dropdown">
-        <NameDropdown
-          inputElement={nameInput}
-          mode={(studentMode && "student") || "staff"}
-        />
+      </FormField>
+      <FormField name="Action" fullWidth={false}>
+        <label class:bold={status == "Out"}
+          ><input type="radio" bind:group={status} value="Out" /> Sign Out</label
+        >
+        <label class:bold={status == "Returned"}
+          ><input type="radio" bind:group={status} value="Returned" /> Check Back
+          In</label
+        >
+        <label class:bold={status == "Lost"}
+          ><input type="radio" bind:group={status} value="Lost" /> Mark as Lost</label
+        >
+      </FormField>
+    </div>
+    {#if asset}
+      <div in:fly={{ y: -30 }} out:fade class="rowDetail">
+        <div>
+          <AssetDisplay {asset} showOwner={true} />
+        </div>
       </div>
-    </FormField>
-  </div>
-  <div class="row">
-    <FormField
-      fullWidth={false}
-      name="Asset Tag"
-      errors={$assetTag && $signoutForm?.fields?.assetTag?.errors}
-    >
-      <input
-        bind:value={$assetTag}
-        id="assettag"
-        type="text"
+    {/if}
+    {#if status == "Returned"}
+      <div in:fly={{ y: -30 }} out:fade class="row">
+        <FormField name="Machine Notes">
+          <select class="w3-select" bind:value={screenNote}>
+            <option value={undefined}>Please check screen</option>
+            <option value="Screen intact when returned">Screen intact</option>
+            <option value="Screen damaged when returned">Screen damaged</option>
+          </select>
+          <select class="w3-select" bind:value={keyboardNote}>
+            <option value={undefined}>Please check keyboard</option>
+            <option value="Keyboard intact when returned"
+              >Keyboard intact</option
+            >
+            <option value="Keyboard damaged when returned"
+              >Keyboard damaged</option
+            >
+          </select>
+          <select class="w3-select" bind:value={powerNote}>
+            <option value={undefined}>Please check that screen comes on</option>
+            <option value="Screen displayed when returned"
+              >Screen displayed when opened</option
+            >
+            <option value="Machine not powered on when returned"
+              >Machine did not power on, may be out of battery.</option
+            >
+            <option
+              value="Machine unable to power when returned (after charging)"
+              >Machine unable to power on, even after charging.</option
+            >
+          </select>
+        </FormField>
+      </div>
+    {/if}
+    <FormField name={(status == "Returned" && "Other Notes") || "Notes"}>
+      <textarea
+        bind:value={notes}
+        id="notes"
         class="w3-input"
-        placeholder="Asset Tag"
-        autocomplete="off"
+        placeholder={notePlaceholder}
       />
     </FormField>
-    <FormField name="Action" fullWidth={false}>
-      <label class:bold={status == "Out"}
-        ><input type="radio" bind:group={status} value="Out" /> Sign Out</label
-      >
-      <label class:bold={status == "Returned"}
-        ><input type="radio" bind:group={status} value="Returned" /> Check Back In</label
-      >
-      <label class:bold={status == "Lost"}
-        ><input type="radio" bind:group={status} value="Lost" /> Mark as Lost</label
-      >
-    </FormField>
-  </div>
-  {#if asset}
-    <div class="rowDetail">
-      <div>
-        <AssetDisplay {asset} showOwner={true} />
-      </div>
-    </div>
-  {/if}
-  <div class="row">
-    <FormField name="Machine Notes">
-      <select class="w3-select" bind:value={screenNote}>
-        <option value={undefined}>Please check screen</option>
-        <option value="Screen intact when returned">Screen intact</option>
-        <option value="Screen damaged when returned">Screen damaged</option>
-      </select>
-      <select class="w3-select" bind:value={keyboardNote}>
-        <option value={undefined}>Please check keyboard</option>
-        <option value="Keyboard intact when returned">Keyboard intact</option>
-        <option value="Keyboard damaged when returned">Keyboard damaged</option>
-      </select>
-      <select class="w3-select" bind:value={powerNote}>
-        <option value={undefined}>Please check that screen comes on</option>
-        <option value="Screen displayed when returned"
-          >Screen displayed when opened</option
-        >
-        <option value="Machine not powered on when returned"
-          >Machine did not power on, may be out of battery.</option
-        >
-        <option value="Machine unable to power when returned (after charging)"
-          >Machine unable to power on, even after charging.</option
-        >
-      </select>
-    </FormField>
-  </div>
-  <FormField name="Other Notes">
-    <textarea
-      bind:value={notes}
-      id="notes"
-      class="w3-input"
-      placeholder={notePlaceholder}
-    />
-  </FormField>
 
-  <input
-    class:w3-red={valid}
-    disabled={!valid}
-    on:click={checkOut}
-    type="submit"
-    class="w3-button"
-    value={statusToButtonName[status]}
-  />
-</SimpleForm>
+    <input
+      class:w3-red={valid}
+      disabled={!valid}
+      on:click={checkOut}
+      type="submit"
+      class="w3-button"
+      value={statusToButtonName[status]}
+    />
+  </SimpleForm>
+</article>
 
 {#if checkedOut.length}
   <article class="w3-container">
@@ -344,6 +359,7 @@
   article {
     max-width: 1100px;
     margin: auto;
+    margin-top: 1em;
   }
   @media (min-width: 640px) {
     main {
