@@ -59,18 +59,21 @@
       </td>
       <td>
         {#if item["Email (from Students)"] && item["Email (from Students)"].length}
-          <a href={`mailto:${item["Email (from Students)"][0]}`}>
+          <a
+            href={`mailto:${item["Email (from Students)"][0]}`}
+            target="_blank"
+          >
             {item["Email (from Students)"][0].replace(
-              "@innovationcharter.org",
-              ""
+              "innovationcharter.org",
+              "..."
             )}
           </a>
         {/if}
         {#if item["Email (from Staff)"] && item["Email (from Staff)"].length}
-          <a href={`mailto:${item["Email (from Staff)"][0]}`}>
+          <a href={`mailto:${item["Email (from Staff)"][0]}`} target="_blank">
             {item["Email (from Staff)"][0].replace(
-              "@innovationcharter.org",
-              ""
+              "innovationcharter.org",
+              "..."
             )}
           </a>
         {/if}
