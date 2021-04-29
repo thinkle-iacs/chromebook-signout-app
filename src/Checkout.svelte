@@ -6,7 +6,9 @@
   import SimpleForm from "./SimpleForm.svelte";
   import type { Student } from "./students";
   import type { Staff } from "./staff";
+  import { getCurrentLoansForStudent } from "./inventory";
   import type { Asset } from "./inventory";
+  import { l } from "./util";
   import type { CheckoutStatus } from "./signout";
   import { signoutAsset } from "./signout";
   import { getStudent } from "./students";
@@ -91,7 +93,6 @@
 
   function validateOn(signoutForm, ...args) {
     if (signoutForm) {
-      console.log("validate!");
       signoutForm.validate();
     }
   }
@@ -148,7 +149,6 @@
   }
 
   async function checkOut() {
-    console.log("check out", $assetTag, "to", $studentName);
     if (powerNote) {
       notes = `${powerNote}. ${notes}`;
     }
@@ -204,6 +204,14 @@
       notePlaceholder = "Type any notes about state of machine or return here.";
     }
   }
+
+  let currentLoans = [];
+  $: updateCurrentLoans(status, student);
+  async function updateCurrentLoans(...reactiveArguments) {
+    if (status == "Out" && student) {
+      currentLoans = await getCurrentLoansForStudent(student);
+    }
+  }
 </script>
 
 <article>
@@ -211,6 +219,13 @@
     {validators}
     onFormCreated={(f) => {
       signoutForm = f;
+    }}
+    on:submit={() => {
+      if (valid) {
+        checkOut();
+      } else {
+        console.log("Not ready to check out!");
+      }
     }}
   >
     <div class="row">
@@ -256,12 +271,17 @@
             placeholder="Last, First"
           />
         {/if}
-        <span slot="details">
+        <div slot="details">
           {#if studentMode && student}
-            <a tabindex="-1" href={`mailto:${student.Email}`}>{student.Email}</a
+            <a
+              tabindex="-1"
+              href={`/student/${student.Name}`}
+              on:click={l(`/student/${student.Name}`)}
             >
-            {student.Advisor} Class of {student.YOG}
-            (LASID: {student.LASID})
+              {student.Email}
+              {student.Advisor} Class of {student.YOG}
+              (LASID: {student.LASID})
+            </a>
           {/if}
           {#if !studentMode && staff}
             <a tabindex="-1" href={`mailto:${staff.Email}`}>{staff.Email}</a>
@@ -271,7 +291,15 @@
             {staff.Department}
             {staff.Role}
           {/if}
-        </span>
+          {#if currentLoans.length}
+            <div in:fade class="w3-deep-orange w3-card w3-container">
+              <h3>Student already has loans out:</h3>
+              {#each currentLoans as loan}
+                <AssetDisplay asset={loan} />
+              {/each}
+            </div>
+          {/if}
+        </div>
         <div slot="dropdown">
           <NameDropdown
             inputElement={nameInput}
@@ -334,7 +362,7 @@
             <AssetDisplay asset={charger} showOwner={true} />
           </div>
         {/if}
-        {#if charger && asset["Charger Type"]}
+        {#if charger && asset && asset["Charger Type"]}
           {#if charger["Model"] == asset["Charger Type"]}
             <span class="w3-text-blue">Correct charger!</span>
           {:else}
@@ -408,6 +436,12 @@
 {/if}
 
 <style>
+  a {
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
   label {
     display: inline;
     color: #333;

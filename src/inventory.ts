@@ -41,4 +41,14 @@ export async function searchForAsset (tag, lasid) {
   return json;
 }
 
-
+export async function getCurrentLoansForStudent (student) {
+  let results = await searchForAsset(null, student.LASID);
+  if (results.length) {
+    let $assetStore = get(assetStore);
+    return results.map(
+      (result) => $assetStore[result.fields["Asset Tag"]]
+    );
+  } else {
+    return [];
+  }
+}
