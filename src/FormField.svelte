@@ -14,7 +14,7 @@
     <!-- Input goes here -->
   </slot>
   {#if errors}
-    <div transition:fade|local class="error w3-text-dark-gray">
+    <div transition:fade|local class="error w3-text-deep-orange">
       {#each errors as error}
         <span transition:fade|local>{error}</span>
       {/each}
@@ -31,8 +31,9 @@
 <style>
   .field {
     position: relative;
-    margin-top: 1em;
-    margin-bottom: 1em;
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+    padding-bottom: 1.5em;
   }
   .field:nth-child(1) {
     margin-top: 0;
@@ -40,8 +41,10 @@
 
   .field .error {
     position: absolute;
-    top: 0;
-    right: 5px;
+    bottom: 2px;
+    left: 5px;
+    pointer-events: none;
+    white-space: nowrap;
   }
   .error span {
     margin-left: 1em;

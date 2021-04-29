@@ -141,6 +141,7 @@
       (studentMode && !!student) ||
       (!studentMode && !!staff));
   let studentMode = true;
+  let nameInput; // For passing to dropdown for focus tracking
 </script>
 
 <h1 class="w3-center w3-blue">IACS Chromebook Signout</h1>
@@ -150,6 +151,71 @@
     signoutForm = f;
   }}
 >
+  <div class="row">
+    <FormField
+      errors={(studentMode && $signoutForm?.fields?.studentName?.errors) ||
+        $signoutForm?.fields?.staffName?.errors}
+      name={(studentMode && "Student") || "Staff"}
+    >
+      <nav slot="label" class="w3-bar w3-border-bottom">
+        <button
+          class:w3-button={studentMode == false}
+          class:w3-blue={studentMode == true}
+          class="w3-bar-item"
+          on:click={() => (studentMode = true)}>Student</button
+        >
+        <button
+          class:w3-button={studentMode == true}
+          class:w3-blue={studentMode == false}
+          class:w3-border={studentMode == false}
+          class="w3-bar-item w3-button"
+          on:click={() => (studentMode = false)}>Staff</button
+        >
+      </nav>
+      {#if studentMode}
+        <input
+          bind:value={$studentName}
+          bind:this={nameInput}
+          id="student"
+          type="text"
+          class="w3-input"
+          autocomplete="off"
+          placeholder="Last, First"
+        />
+      {:else}
+        <input
+          bind:value={$staffName}
+          bind:this={nameInput}
+          id="staff"
+          type="text"
+          class="w3-input"
+          autocomplete="off"
+          placeholder="Last, First"
+        />
+      {/if}
+      <span slot="details">
+        {#if studentMode && student}
+          {student.LASID}
+          <a tabindex="-1" href={`mailto:${student.Email}`}>{student.Email}</a>
+          {student.Advisor} Class of {student.YOG}
+        {/if}
+        {#if !studentMode && staff}
+          <a tabindex="-1" href={`mailto:${staff.Email}`}>{staff.Email}</a>
+          {(staff.School &&
+            staff.School.replace(/Innovation Academy Charter/, "")) ||
+            ""}
+          {staff.Department}
+          {staff.Role}
+        {/if}
+      </span>
+      <div slot="dropdown">
+        <NameDropdown
+          inputElement={nameInput}
+          mode={(studentMode && "student") || "staff"}
+        />
+      </div>
+    </FormField>
+  </div>
   <div class="row">
     <FormField
       name="Asset Tag"
@@ -183,64 +249,6 @@
       {/if}
     </div>
   </div>
-  <FormField
-    errors={(studentMode && $signoutForm?.fields?.studentName?.errors) ||
-      $signoutForm?.fields?.staffName?.errors}
-    name={(studentMode && "Student") || "Staff"}
-  >
-    <nav slot="label" class="w3-bar w3-border-bottom">
-      <button
-        class:w3-button={studentMode == false}
-        class:w3-blue={studentMode == true}
-        class="w3-bar-item"
-        on:click={() => (studentMode = true)}>Student</button
-      >
-      <button
-        class:w3-button={studentMode == true}
-        class:w3-blue={studentMode == false}
-        class:w3-border={studentMode == false}
-        class="w3-bar-item w3-button"
-        on:click={() => (studentMode = false)}>Staff</button
-      >
-    </nav>
-    {#if studentMode}
-      <input
-        bind:value={$studentName}
-        id="student"
-        type="text"
-        class="w3-input"
-        autocomplete="off"
-        placeholder="Last, First"
-      />
-    {:else}
-      <input
-        bind:value={$staffName}
-        id="staff"
-        type="text"
-        class="w3-input"
-        autocomplete="off"
-        placeholder="Last, First"
-      />
-    {/if}
-    <span slot="details">
-      {#if studentMode && student}
-        {student.LASID}
-        <a tabindex="-1" href={`mailto:${student.Email}`}>{student.Email}</a>
-        {student.Advisor} Class of {student.YOG}
-      {/if}
-      {#if !studentMode && staff}
-        <a tabindex="-1" href={`mailto:${staff.Email}`}>{staff.Email}</a>
-        {(staff.School &&
-          staff.School.replace(/Innovation Academy Charter/, "")) ||
-          ""}
-        {staff.Department}
-        {staff.Role}
-      {/if}
-    </span>
-    <div slot="dropdown">
-      <NameDropdown mode={(studentMode && "student") || "staff"} />
-    </div>
-  </FormField>
 
   <FormField name="Notes">
     <textarea
