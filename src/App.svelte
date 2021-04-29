@@ -109,11 +109,16 @@
     {#if !$loggedIn}
       <LogIn />
     {:else if page}
-      {#each [page] as page (page)}
-        <div in:fade>
-          <svelte:component this={page} {...params} />
-        </div>
-      {/each}
+      <!-- This each logic had been there, presumably to 
+    try to fix some problem w/ stale data? At any rate, it seems that
+    by eliminating it I'm eliminating a buggy situation where I had multiple
+    pages rendering on top of each other.
+     -->
+      <!-- {#each [page] as page (page)} -->
+      <div in:fade>
+        <svelte:component this={page} {...params} />
+      </div>
+      <!-- {/each} -->
     {:else}
       Weird, nobody's home
     {/if}
