@@ -210,6 +210,8 @@
   async function updateCurrentLoans(...reactiveArguments) {
     if (status == "Out" && student) {
       currentLoans = await getCurrentLoansForStudent(student);
+    } else {
+      currentLoans = [];
     }
   }
 </script>
