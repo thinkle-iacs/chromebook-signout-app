@@ -1,5 +1,6 @@
 <script type="ts">
   import type { Asset } from "./inventory";
+  import { l } from "./util";
   export let asset: Asset;
   export let showOwner: boolean = false;
 </script>
@@ -11,7 +12,12 @@
     class:w3-red={asset["Asset Tag"].match(/A[0-9][0-9][0-9][0-9]/)}
     class:w3-black={asset["Asset Tag"].match(/^[0-9][0-9][0-9]$/)}
   >
-    {asset["Asset Tag"]}
+    <a
+      href={`/asset/${asset["Asset Tag"]}`}
+      on:click={l(`/asset/${asset["Asset Tag"]}`)}
+    >
+      {asset["Asset Tag"]}
+    </a>
   </div>
   <div class="column">
     <div class="model limit w3-small">
@@ -56,6 +62,12 @@
 </div>
 
 <style>
+  a {
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
   .charger {
     font-size: x-small;
   }
