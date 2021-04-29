@@ -108,8 +108,8 @@
     asset,
     status
   );
-  $: student = getStudent($studentName);
-  $: staff = $staffStore[$staffName];
+  $: student = studentMode && getStudent($studentName);
+  $: staff = !studentMode && $staffStore[$staffName];
   $: asset = $assetStore[$assetTag];
   $: charger = $assetStore[$chargerTag];
 
