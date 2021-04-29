@@ -8,7 +8,7 @@
   import { validateStudent, studentName } from "./validators";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
-  import StudentDropdown from "./NameDropdown.svelte";
+  import NameDropdown from "./NameDropdown.svelte";
   import { getStudent, studentsStore } from "./students";
   import { assetStore, searchForAsset } from "./inventory";
   import { lookupSignoutHistory } from "./signoutHistory";
@@ -92,6 +92,8 @@
     getCurrentLoans();
     getSignoutHistory();
   }
+
+  let nameInput: HTMLInputElement | null;
 </script>
 
 <div class="search w3-xlarge w3-container">
@@ -110,8 +112,9 @@
         id="student"
         bind:value={$studentName}
         type="text"
+        bind:this={nameInput}
       />
-      <div slot="dropdown"><StudentDropdown /></div>
+      <div slot="dropdown"><NameDropdown inputElement={nameInput} /></div>
     </FormField>
   </SimpleForm>
 </div>

@@ -153,6 +153,7 @@
 >
   <div class="row">
     <FormField
+      fullWidth={true}
       errors={(studentMode && $signoutForm?.fields?.studentName?.errors) ||
         $signoutForm?.fields?.staffName?.errors}
       name={(studentMode && "Student") || "Staff"}
@@ -218,6 +219,7 @@
   </div>
   <div class="row">
     <FormField
+      fullWidth={false}
       name="Asset Tag"
       errors={$assetTag && $signoutForm?.fields?.assetTag?.errors}
     >
@@ -230,7 +232,7 @@
         autocomplete="off"
       />
     </FormField>
-    <FormField name="Action">
+    <FormField name="Action" fullWidth={false}>
       <label class:bold={status == "Out"}
         ><input type="radio" bind:group={status} value="Out" /> Sign Out</label
       >

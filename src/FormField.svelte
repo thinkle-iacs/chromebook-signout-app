@@ -1,10 +1,11 @@
 <script lang="ts">
   export let errors: string[] | null = null;
   export let name: string | null;
+  export let fullWidth: boolean = true;
   import { fade } from "svelte/transition";
 </script>
 
-<div class="field">
+<div class="field" class:fullWidth>
   <slot name="label">
     <label for={name && name.toLowerCase().replace(/\s+/g, "")}>
       {name}
@@ -29,16 +30,14 @@
 </div>
 
 <style>
+  .fullWidth {
+    width: 100%;
+  }
   .field {
     position: relative;
-    margin-top: 2em;
-    margin-bottom: 0.5em;
+    margin-bottom: 1em;
     padding-bottom: 1.5em;
   }
-  .field:nth-child(1) {
-    margin-top: 0;
-  }
-
   .field .error {
     position: absolute;
     bottom: 2px;
