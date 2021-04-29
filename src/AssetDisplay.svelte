@@ -5,7 +5,12 @@
 </script>
 
 <div class="w3-container row">
-  <div class="tag w3-round-xlarge w3-indigo">
+  <div
+    class="tag w3-round-xlarge"
+    class:w3-indigo={asset["Asset Tag"].match(/^[0-9][0-9][0-9][0-9]$/)}
+    class:w3-red={asset["Asset Tag"].match(/A[0-9][0-9][0-9][0-9]/)}
+    class:w3-black={asset["Asset Tag"].match(/^[0-9][0-9][0-9]$/)}
+  >
     {asset["Asset Tag"]}
   </div>
   <div class="column">
@@ -19,6 +24,11 @@
       {/if}
     </div>
     <div class="limit w3-tiny">
+      {#if asset["Charger Type"]}
+        <span class="charger">
+          {asset["Charger Type"]}
+        </span>
+      {/if}
       {#if asset.Serial}
         <div class="w3-monospace">
           s/n: {asset.Serial}
@@ -46,6 +56,9 @@
 </div>
 
 <style>
+  .charger {
+    font-size: x-small;
+  }
   .limit {
     max-width: 100%;
     overflow: hidden;
