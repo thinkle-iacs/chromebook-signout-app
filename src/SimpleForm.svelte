@@ -7,13 +7,15 @@
   let formObject;
   onMount(() => {
     console.log("Create for mwith ", validators);
-    formObject = form(validators, {
-      initCheck: true,
-      validateOnChange: false,
-      stopAtFirstError: false,
-      stopAtFirstFieldError: true,
-    });
-    onFormCreated(formObject);
+    if (validators) {
+      formObject = form(validators, {
+        initCheck: true,
+        validateOnChange: false,
+        stopAtFirstError: false,
+        stopAtFirstFieldError: true,
+      });
+      onFormCreated(formObject);
+    }
   });
 </script>
 

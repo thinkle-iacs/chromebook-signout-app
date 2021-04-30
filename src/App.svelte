@@ -124,7 +124,7 @@
     by eliminating it I'm eliminating a buggy situation where I had multiple
     pages rendering on top of each other.
      -->
-      <!-- {#each [page] as page (page)} -->
+      <!-- <svelte:component this={page} {...params} /> -->
       {#if page == History}
         <div in:fade><History {...params} /></div>
       {:else if page == LookupAsset}
@@ -133,12 +133,13 @@
         <div in:fade><Checkout {...params} /></div>
       {:else if page == LookupStudent}
         <div in:fade><LookupStudent {...params} /></div>
+      {:else if page == History}
+        <div in:fade><History {...params} /></div>
       {:else}
         <div>
           Unknown Page? {page}
         </div>
       {/if}
-      <!-- {/each} -->
     {:else}
       Weird, nobody's home
     {/if}
