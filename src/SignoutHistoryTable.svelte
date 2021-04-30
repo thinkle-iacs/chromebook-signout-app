@@ -1,6 +1,7 @@
 <script type="ts">
   import { flip } from "svelte/animate";
   import { fade } from "svelte/transition";
+  import { l } from "./util";
   import AssetDisplay from "./AssetDisplay.svelte";
   import { assetStore } from "./inventory";
   import type { SignoutHistoryEntry } from "./signoutHistory";
@@ -35,8 +36,8 @@
   </tr>
   {#each signoutHistoryItems.filter((i) => (!currentOnlyMode || i["Is Latest Change"]) && (!studentOnlyMode || (i["Email (from Students)"] && i["Email (from Students)"][0] == student.Email))) as item (item.Num)}
     <tr
-      in:fade
-      out:fade
+      in:fade|local
+      out:fade|local
       class:match={student &&
         item["Email (from Students)"] &&
         item["Email (from Students)"][0] == student.Email}
@@ -49,13 +50,11 @@
         {new Date(item.Time).toLocaleTimeString()}
       </td>
       <td>
-        {#if $assetStore[item["Asset Tag (from Asset)"]]}
-          <AssetDisplay asset={$assetStore[item["Asset Tag (from Asset)"]]} />
-        {:else}
-          <div class="tag w3-round-xlarge w3-indigo">
-            {item["Asset Tag (from Asset)"]}
-          </div>
-        {/if}
+        <AssetDisplay
+          asset={$assetStore[item["Asset Tag (from Asset)"][0]] || {
+            "Asset Tag": item["Asset Tag (from Asset)"][0] || "",
+          }}
+        />
       </td>
       <td>
         {#if item["Email (from Students)"] && item["Email (from Students)"].length}

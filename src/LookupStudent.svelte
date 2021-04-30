@@ -108,48 +108,46 @@
         bind:this={nameInput}
       />
       <div slot="dropdown"><NameDropdown inputElement={nameInput} /></div>
-      <div slot="details">
-        {#if student}
-          <div class="w3-container">
-            <article class="w3-card w3-cell-middle">
-              <header class="w3-container w3-blue w3-bar-block w3-padding-24">
-                {student.Name}
-              </header>
-              <div class="w3-container">
-                <p>
-                  Name: {student.Name}
-                </p>
-                <p>Advisor: {student.Advisor}</p>
-                <p>YOG: {student.YOG}</p>
-                <p>
-                  Email: <a href={`mailto:${student.Email}`}>{student.Email}</a>
-                </p>
-                <h3>Current Loans:</h3>
-                {#if !current}
-                  <p class="w3-opacity w3-ital">Fetching...</p>
-                {:else}
-                  {#each current as asset}
-                    <AssetDisplay {asset} />
-                  {:else}
-                    No current loans
-                  {/each}
-                {/if}
-                <h3>Signout History:</h3>
-                {#if !loans}
-                  <p class="w3-opacity w3-ital">Fetching...</p>
-                {:else if loans.length}
-                  <SignoutHistoryTable signoutHistoryItems={loans} {student} />
-                {:else}
-                  Never signed anything out.
-                {/if}
-              </div>
-            </article>
-          </div>
-        {/if}
-      </div>
     </FormField>
   </SimpleForm>
 </div>
+{#if student}
+  <div class="w3-container">
+    <article class="w3-card w3-cell-middle">
+      <header class="w3-container w3-blue w3-bar-block w3-padding-24">
+        {student.Name}
+      </header>
+      <div class="w3-container">
+        <p>
+          Name: {student.Name}
+        </p>
+        <p>Advisor: {student.Advisor}</p>
+        <p>YOG: {student.YOG}</p>
+        <p>
+          Email: <a href={`mailto:${student.Email}`}>{student.Email}</a>
+        </p>
+        <h3>Current Loans:</h3>
+        {#if !current}
+          <p class="w3-opacity w3-ital">Fetching...</p>
+        {:else}
+          {#each current as asset}
+            <AssetDisplay {asset} />
+          {:else}
+            No current loans
+          {/each}
+        {/if}
+        <h3>Signout History:</h3>
+        {#if !loans}
+          <p class="w3-opacity w3-ital">Fetching...</p>
+        {:else if loans.length}
+          <SignoutHistoryTable signoutHistoryItems={loans} {student} />
+        {:else}
+          Never signed anything out.
+        {/if}
+      </div>
+    </article>
+  </div>
+{/if}
 
 <style>
   article,

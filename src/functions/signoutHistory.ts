@@ -4,7 +4,7 @@ import { signoutHistoryBase } from './Airtable'
 export async function handler(
   event : APIGatewayEvent, context : Context 
 ) {
-  const { assetTag, lasid, staffId } = event.queryStringParameters
+  const { assetTag, lasid, staffId, isLatest } = event.queryStringParameters
   let filterByFormula = ''
   if (assetTag) {
     filterByFormula=`{Asset Tag (from Asset)}="${assetTag}"`
@@ -12,6 +12,8 @@ export async function handler(
     filterByFormula=`{Student}="${lasid}"`
   } else if (staffId) {
     filterByFormula=`{Staff}="${staffId}"`
+  } else if (isLatest) {
+    filterByFormula=`{Is Latest Change}=1`
   }
   let fields = [
         'Status',
@@ -29,12 +31,12 @@ export async function handler(
   console.log('Fields are',fields)
   let query = signoutHistoryBase.select(
     {
-      maxRecords : 100,
+      maxRecords : 500,
       filterByFormula,
       fields    
     }
   );
-  let result = await query.firstPage();
+  let result = await query.all();  
   return {
     statusCode: 200,
     body: JSON.stringify(result);

@@ -14,6 +14,7 @@
   import { getStudent } from "./students";
   import { assetStore } from "./inventory";
   import { staffStore } from "./staff";
+  import { writable, get } from "svelte/store";
   import {
     studentName,
     staffName,
@@ -149,15 +150,8 @@
   }
 
   async function checkOut() {
-    if (powerNote) {
-      notes = `${powerNote}. ${notes}`;
-    }
-    if (keyboardNote) {
-      notes = `${keyboardNote}. ${notes}`;
-    }
-    if (screenNote) {
-      notes = `${screenNote}. ${notes}`;
-    }
+    getNote();
+    console.log("Updated note:", notes);
     let success: boolean = false;
     if (asset) {
       success = await doCheckout(asset, notes);
@@ -169,9 +163,9 @@
       $studentName = "";
       $assetTag = "";
       notes = "";
-      screenNote = null;
-      keyboardNote = null;
-      powerNote = null;
+      $screenNote = null;
+      $keyboardNote = null;
+      $powerNote = null;
     }
   }
 
@@ -189,16 +183,60 @@
   let studentMode = true;
   let nameInput; // For passing to dropdown for focus tracking
 
-  let keyboardNote;
-  let screenNote;
-  let powerNote;
+  let keyboardNote = writable("");
+  let screenNote = writable("");
+  let powerNote = writable("");
   let notePlaceholder;
+  let INTACT = "Intact";
+  let DAMAGED = "Damaged";
+  let UNKNOWN = "Unknown";
+
+  var noteTypes = [
+    { store: keyboardNote, name: "Keyboard" },
+    { store: screenNote, name: "Screen" },
+    {
+      store: powerNote,
+      damagedNote: "Does not power on, even when plugged in",
+      name: "Powers on",
+      unknownNote: "Did not power on; may be out of battery",
+    },
+  ];
+
+  function getNote() {
+    if (!$keyboardNote && !$powerNote && !$screenNote) {
+      return;
+    }
+    let additionalNote = "";
+    let intact = [];
+    let unknown = [];
+    let damaged = [];
+    let notchecked = [];
+    noteTypes.forEach(({ store, name, unknownNote, damagedNote }) => {
+      let val = get(store);
+      if (val == INTACT) {
+        intact.push(name);
+      } else if (val == DAMAGED) {
+        damaged.push(damagedNote || name);
+      } else if (val == UNKNOWN) {
+        unknown.push(unknownNote || name);
+      } else {
+        notchecked.push(name);
+      }
+    });
+    if (damaged.length) {
+      additionalNote += "Damaged: " + damaged.join(", ") + ".  ";
+    }
+    if (unknown.length) {
+      additionalNote += "Unknown: " + unknown.join(", ") + ".  ";
+    }
+    if (intact.length) {
+      additionalNote += "Intact: " + intact.join(", ") + ".  ";
+    }
+    notes = additionalNote + "  " + notes;
+  }
 
   $: {
-    if (
-      (screenNote && screenNote.match(/damage/)) ||
-      (keyboardNote && keyboardNote.match(/damage/))
-    ) {
+    if ($screenNote == DAMAGED || $keyboardNote == DAMAGED) {
       notePlaceholder = "Please describe damage";
     } else {
       notePlaceholder = "Type any notes about state of machine or return here.";
@@ -294,7 +332,7 @@
             {staff.Role}
           {/if}
           {#if currentLoans.length}
-            <div in:fade class="w3-deep-orange w3-card w3-container">
+            <div in:fade|local class="w3-deep-orange w3-card w3-container">
               <h3>Student already has loans out:</h3>
               {#each currentLoans as loan}
                 <AssetDisplay asset={loan} />
@@ -353,14 +391,14 @@
       </FormField>
     </div>
     {#if asset || charger}
-      <div in:fly={{ y: -30 }} out:fade class="rowDetail row">
+      <div in:fly|local={{ y: -30 }} out:fade class="rowDetail row">
         {#if asset}
-          <div in:fade out:fade>
+          <div in:fade|local out:fade|local>
             <AssetDisplay {asset} showOwner={true} />
           </div>
         {/if}
         {#if charger}
-          <div in:fade out:fade>
+          <div in:fade|local out:fade|local>
             <AssetDisplay asset={charger} showOwner={true} />
           </div>
         {/if}
@@ -378,32 +416,25 @@
       </div>
     {/if}
     {#if status == "Returned"}
-      <div in:fly={{ y: -30 }} out:fade class="row">
+      <div in:fly|local={{ y: -30 }} out:fade|local class="row">
         <FormField name="Machine Notes">
-          <select class="w3-select" bind:value={screenNote}>
+          <select class="w3-select" bind:value={$screenNote}>
             <option value={undefined}>Please check screen</option>
-            <option value="Screen intact when returned">Screen intact</option>
-            <option value="Screen damaged when returned">Screen damaged</option>
+            <option value={INTACT}>Screen intact</option>
+            <option value={DAMAGED}>Screen damaged</option>
           </select>
-          <select class="w3-select" bind:value={keyboardNote}>
+          <select class="w3-select" bind:value={$keyboardNote}>
             <option value={undefined}>Please check keyboard</option>
-            <option value="Keyboard intact when returned"
-              >Keyboard intact</option
-            >
-            <option value="Keyboard damaged when returned"
-              >Keyboard damaged</option
-            >
+            <option value={INTACT}>Keyboard intact</option>
+            <option value={DAMAGED}>Keyboard damaged</option>
           </select>
-          <select class="w3-select" bind:value={powerNote}>
+          <select class="w3-select" bind:value={$powerNote}>
             <option value={undefined}>Please check that screen comes on</option>
-            <option value="Screen displayed when returned"
-              >Screen displayed when opened</option
-            >
-            <option value="Machine not powered on when returned"
+            <option value={INTACT}>Screen displayed when opened</option>
+            <option value={UNKNOWN}
               >Machine did not power on, may be out of battery.</option
             >
-            <option
-              value="Machine unable to power when returned (after charging)"
+            <option value={DAMAGED}
               >Machine unable to power on, even after charging.</option
             >
           </select>
@@ -422,7 +453,6 @@
     <input
       class:w3-red={valid}
       disabled={!valid}
-      on:click={checkOut}
       type="submit"
       class="w3-button"
       value={statusToButtonName[status]}

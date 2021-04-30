@@ -2,6 +2,7 @@
   import Checkout from "./Checkout.svelte";
   import LookupAsset from "./LookupAsset.svelte";
   import LookupStudent from "./LookupStudent.svelte";
+  import History from "./History.svelte";
   import router from "page";
   import LogIn from "./LogIn.svelte";
   import { loggedIn, user } from "./user";
@@ -49,7 +50,10 @@
       page = Checkout;
       title = "IACS Chromebook Signout";
     });
-
+    router("/history/", (ctx) => {
+      page = History;
+      title = "IACS Chromebook Signout History";
+    });
     router.start();
   });
   let navActive;
@@ -59,7 +63,6 @@
   class="w3-main"
   on:click={() => {
     navActive = false;
-    console.log("main click!");
   }}
 >
   <nav class="w3-sidebar w3-light-grey" class:navActive>
@@ -90,6 +93,13 @@
       href="/students/"
       on:click={l("/student/")}>Look Up Student</a
     >
+    <a
+      class="w3-bar-item w3-button"
+      class:active={page == History}
+      class:w3-blue={page == History}
+      href="/history/"
+      on:click={l("/history/")}>Signout History</a
+    >
   </nav>
   <main>
     <header class="w3-bar w3-blue">
@@ -115,9 +125,19 @@
     pages rendering on top of each other.
      -->
       <!-- {#each [page] as page (page)} -->
-      <div in:fade>
-        <svelte:component this={page} {...params} />
-      </div>
+      {#if page == History}
+        <div in:fade><History {...params} /></div>
+      {:else if page == LookupAsset}
+        <div in:fade><LookupAsset {...params} /></div>
+      {:else if page == Checkout}
+        <div in:fade><Checkout {...params} /></div>
+      {:else if page == LookupStudent}
+        <div in:fade><LookupStudent {...params} /></div>
+      {:else}
+        <div>
+          Unknown Page? {page}
+        </div>
+      {/if}
       <!-- {/each} -->
     {:else}
       Weird, nobody's home
