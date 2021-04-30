@@ -13,7 +13,7 @@
   $: console.log(signoutHistoryItems);
 </script>
 
-<table class="w3-table">
+<table class="w3-table w3-small">
   <tr>
     <th> Time </th>
     <th> Asset </th>
