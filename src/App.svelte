@@ -135,10 +135,10 @@
         <div in:fade><LookupStudent {...params} /></div>
       {:else if page == History}
         <div in:fade><History {...params} /></div>
+      {:else if page == LogIn}
+        <LogIn {...params} />
       {:else}
-        <div>
-          Unknown Page? {page}
-        </div>
+        <div>Unknown Page?</div>
       {/if}
     {:else}
       Weird, nobody's home
@@ -164,6 +164,9 @@
     padding-bottom: 96px;
     margin-left: 200px;
   }
+  footer {
+    margin-left: 200px;
+  }
   nav :global(a) {
     text-decoration: none;
     width: 200px;
@@ -180,7 +183,8 @@
       display: flex;
       margin-left: auto;
     }
-    main {
+    main,
+    footer {
       margin-left: 0px;
     }
 
