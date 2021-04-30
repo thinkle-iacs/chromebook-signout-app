@@ -47,11 +47,30 @@
 
 <div class="w3-card w3-container w3-center w3-padding-64">
   {#if !$user}
-    <button class="w3-button" on:click={() => netlifyIdentity.open("login")}>
+    <p>
+      You will be logging in through <b>netlify.com</b>, the service that is
+      hosting this webpage.
+    </p>
+    <p>
+      You need to click the <b>"Continue with Google"</b> button and use your IACS
+      google account.
+    </p>
+    <p>DO NOT enter your email/password directly &mdash; it won't work.</p>
+    <p>
+      After you've logged in, you have to close the pop-up by clicking the "x"
+    </p>
+    <p>You will be tempted to just click "Log Out" - don't do that :)</p>
+    <button
+      class="w3-button w3-blue"
+      on:click={() => netlifyIdentity.open("login")}
+    >
       Log In
     </button>
   {:else}
-    <button class="w3-button" on:click={() => netlifyIdentity.logout()}>
+    <button
+      class="w3-button w3-border"
+      on:click={() => netlifyIdentity.logout()}
+    >
       Log Out
     </button>
   {/if}
