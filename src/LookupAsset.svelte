@@ -21,7 +21,7 @@
       validators: [
         (s) => ({
           name: "",
-          valid: s && s.length > 3,
+          valid: s && s.length >= 3,
         }),
         validateAsset,
       ],
