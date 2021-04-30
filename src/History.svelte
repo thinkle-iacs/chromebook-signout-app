@@ -84,9 +84,9 @@
 </script>
 
 {#if history.length}
-  <nav class="w3-bar">
-    <a class="w3-button" href="#loans"> Jump to Loan History </a>
-    <a class="w3-button" href="#users"> Jump to User List </a>
+  <nav class="w3-bar sticky">
+    <a class="w3-button w3-border" href="#loans"> Jump to Loan History </a>
+    <a class="w3-button w3-border" href="#users"> Jump to User List </a>
   </nav>
 
   <h4 id="users">User History, by Number of Loans</h4>
@@ -145,5 +145,10 @@
     margin: auto;
     margin-top: 2em;
     font-size: x-large;
+  }
+  .sticky {
+    position: sticky;
+    top: 2px;
+    background-color: white;
   }
 </style>
