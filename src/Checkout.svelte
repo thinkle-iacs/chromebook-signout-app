@@ -166,6 +166,7 @@
       $screenNote = null;
       $keyboardNote = null;
       $powerNote = null;
+      $chargerTag = "";
     }
   }
 
