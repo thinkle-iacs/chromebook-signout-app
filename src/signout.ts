@@ -3,6 +3,7 @@ import type { Staff } from './staff';
 import type { Asset } from "./inventory";
 import { assetStore } from "./inventory";]
 import { update, get } from "svelte/store";
+import { user } from './user';
 export type CheckoutStatus = "Out" | "Returned" | "Lost";
 
 export async function signoutAsset(
@@ -12,13 +13,15 @@ export async function signoutAsset(
   Notes: string = "",
   Status: CheckoutStatus = "Out"
 ) {
-  let params = {mode:'signout',Notes,Status, assetRecordId:asset._id}
+  let params = {mode:'signout',Notes,Status, assetRecordId:asset._id, FormUser:''}
+  let $user = get(user);
   if (student) {
     params.studentRecordId = student._id
   }  
   if (staff) {
     params.staffRecordId = staff._id;
   }
+  params.FormUser = $user.email;
   let response = await fetch(
     "/.netlify/functions/index?" +
       new URLSearchParams(params)
