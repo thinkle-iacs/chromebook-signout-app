@@ -419,26 +419,68 @@
     {#if status == "Returned"}
       <div in:fly|local={{ y: -30 }} out:fade|local class="row">
         <FormField name="Machine Notes">
-          <select class="w3-select" bind:value={$screenNote}>
-            <option value={undefined}>Please check screen</option>
-            <option value={INTACT}>Screen intact</option>
-            <option value={DAMAGED}>Screen damaged</option>
-          </select>
-          <select class="w3-select" bind:value={$keyboardNote}>
-            <option value={undefined}>Please check keyboard</option>
-            <option value={INTACT}>Keyboard intact</option>
-            <option value={DAMAGED}>Keyboard damaged</option>
-          </select>
-          <select class="w3-select" bind:value={$powerNote}>
-            <option value={undefined}>Please check that screen comes on</option>
-            <option value={INTACT}>Screen displayed when opened</option>
-            <option value={UNKNOWN}
-              >Machine did not power on, may be out of battery.</option
+          <div class="noteChoice">
+            <label class:bold={$screenNote == ""}>
+              <input
+                style="display: none"
+                type="radio"
+                bind:group={$screenNote}
+                value={undefined}
+              />
+              Check screen:
+            </label>
+            <label class:bold={$screenNote === INTACT}
+              ><input type="radio" bind:group={$screenNote} value={INTACT} /> Screen
+              intact</label
             >
-            <option value={DAMAGED}
-              >Machine unable to power on, even after charging.</option
+            <label class:bold={$screenNote === DAMAGED}
+              ><input type="radio" bind:group={$screenNote} value={DAMAGED} /> Screen
+              damaged
+            </label>
+          </div>
+          <div class="noteChoice">
+            <label class:bold={$keyboardNote == ""}>
+              <input
+                style="display:none"
+                type="radio"
+                bind:group={$keyboardNote}
+                value={undefined}
+              />
+              Check keyboard:
+            </label>
+            <label class:bold={$keyboardNote === INTACT}
+              ><input type="radio" bind:group={$keyboardNote} value={INTACT} /> Keyboard
+              intact</label
             >
-          </select>
+            <label class:bold={$keyboardNote === DAMAGED}
+              ><input type="radio" bind:group={$keyboardNote} value={DAMAGED} />
+              Keyboard damaged
+            </label>
+          </div>
+          <div class="noteChoice">
+            <label class:bold={$powerNote == ""}>
+              <input
+                style="display:none"
+                type="radio"
+                bind:group={$powerNote}
+                value={undefined}
+              />
+              Check power:
+            </label>
+
+            <label class:bold={$powerNote === INTACT}
+              ><input type="radio" bind:group={$powerNote} value={INTACT} /> Powered
+              on when opened</label
+            >
+            <label class:bold={$powerNote === UNKNOWN}
+              ><input type="radio" bind:group={$powerNote} value={UNKNOWN} />
+              Did not power on, may be out of battery
+            </label>
+            <label class:bold={$powerNote === DAMAGED}
+              ><input type="radio" bind:group={$powerNote} value={DAMAGED} /> Did
+              not power on, even after charging
+            </label>
+          </div>
         </FormField>
       </div>
     {/if}
@@ -476,9 +518,13 @@
     text-decoration: underline;
   }
   label {
-    display: inline;
+    display: inline-flex;
+    align-items: center;
     color: #333;
     transition: all 300ms;
+  }
+  label input[type="radio"] {
+    margin-right: 5px;
   }
   .bold {
     color: black;
@@ -513,5 +559,15 @@
   }
   .rowDetail {
     min-height: 72px;
+  }
+
+  .noteChoice > label:first-child {
+    position: absolute;
+    left: 0;
+    max-width: 10em;
+  }
+  .noteChoice {
+    margin-left: 10em;
+    margin-top: 5px;
   }
 </style>

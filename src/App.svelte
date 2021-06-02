@@ -111,9 +111,9 @@
           e.stopPropagation();
         }}>☰</button
       >
-      <h1 class="w3-bar-item w3-center w3-blue">
+      <h4 class="w3-bar-item w3-center w3-blue">
         {title}
-      </h1>
+      </h4>
     </header>
 
     {#if !$loggedIn}
@@ -156,7 +156,7 @@
   header {
     display: flex;
   }
-  header h1 {
+  header h4 {
     margin-left: auto;
     margin-right: auto;
   }
@@ -215,7 +215,7 @@
   .active:hover {
     background-color: #2196f3 !important;
   }
-  h1 {
+  h4 {
     margin-top: 0;
   }
 </style>
