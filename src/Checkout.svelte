@@ -26,7 +26,7 @@
   } from "./validators";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
 
-  let status: CheckoutStatus = "Out";
+  let status: CheckoutStatus = "Returned";
   let notes = "";
   let signoutForm;
   let student: Student | null = null;
@@ -367,7 +367,7 @@
       <FormField
         fullWidth={false}
         name="Charger"
-        errors={$assetTag && $signoutForm?.fields?.assetTag?.errors}
+        errors={$chargerTag && $signoutForm?.fields?.chargerTag?.errors}
       >
         <input
           bind:value={$chargerTag}
