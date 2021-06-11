@@ -66,7 +66,7 @@
   >
     <FormField
       name="Asset Tag"
-      errors={$assetTag && $lookupForm?.fields?.assetTag?.errors}
+      errors={$assetTag && $lookupForm?.fields?.asset?.errors}
     >
       <input
         id="assettag"
