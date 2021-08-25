@@ -1,11 +1,6 @@
 import { writable, derived } from "svelte/store";
 
-export let user = writable({
-  email: "thinkle@innovationcharter.org",
-  user_metadata: {
-    full_name: "Tom H",
-  },
-});
+export let user = writable({});
 export let loggedIn = derived([user], ([user]) => {
   if (user && user.email) {
     console.log("email is", user.email);
