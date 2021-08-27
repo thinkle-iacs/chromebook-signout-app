@@ -26,7 +26,7 @@
   } from "./validators";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
 
-  let status: CheckoutStatus = "Returned";
+  let status: CheckoutStatus = "Out";
   let notes = "";
   let signoutForm;
   let student: Student | null = null;
