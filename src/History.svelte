@@ -39,6 +39,12 @@
     history.sort((a, b) => (a.Status > b.Status && 1) || -1);
     history = history;
   }
+
+  function sortByNotes() {
+    history.sort((a, b) => (a.Notes > b.Notes && 1) || -1);
+    history = history;
+  }
+
   function reverse() {
     history.reverse();
     history = history; // react
@@ -116,6 +122,7 @@
     <button class="w3-button w3-border" on:click={sortByStatus}
       >By Status</button
     >
+    <button class="w3-button w3-border" on:click={sortByNotes}>By Notes</button>
     <button class="w3-button w3-border" on:click={sortAlpha}>
       By Student
     </button>
