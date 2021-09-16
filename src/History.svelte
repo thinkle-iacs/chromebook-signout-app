@@ -41,7 +41,11 @@
   }
 
   function getNotesForSort(historyItem: SignoutHistoryEntry) {
-    return historyItem.Notes.replace(/^\s*/, "").toUpperCase();
+    if (historyItem.Notes) {
+      return historyItem.Notes.replace(/^\s*/, "").toUpperCase();
+    } else {
+      return "ZZZZZZZZZZZZZZZZZZZZZZZZZ";
+    }
   }
 
   function sortByNotes() {
