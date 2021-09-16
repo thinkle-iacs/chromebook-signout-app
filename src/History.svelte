@@ -5,7 +5,7 @@
   import type { SignoutHistoryEntry } from "./signoutHistory";
   import { fetchFullHistory, fullHistory, fetching } from "./signoutHistory";
 
-  let history: SignoutHistoryEntry = [];
+  let history: SignoutHistoryEntry[] = [];
 
   onMount(async () => {
     if (!$fullHistory.length) {
@@ -40,8 +40,14 @@
     history = history;
   }
 
+  function getNotesForSort(historyItem: SignoutHistoryEntry) {
+    return historyItem.Notes.replace(/^\s*/, "").toUpperCase();
+  }
+
   function sortByNotes() {
-    history.sort((a, b) => (a.Notes > b.Notes && 1) || -1);
+    history.sort(
+      (a, b) => (getNotesForSort(a) > getNotesForSort(b) && 1) || -1
+    );
     history = history;
   }
 
