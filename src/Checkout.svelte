@@ -1,7 +1,9 @@
 <script lang="ts">
+  export let mode: "normal" | "it" = "normal";
   import { fly, fade } from "svelte/transition";
   import NameDropdown from "./NameDropdown.svelte";
   import AssetDisplay from "./AssetDisplay.svelte";
+  import ListInput from "./ListInput.svelte";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
   import type { Student } from "./students";
@@ -18,10 +20,11 @@
   import {
     studentName,
     staffName,
-    assetTag,
+    assetTags,
     chargerTag,
     validateStudent,
     validateStaff,
+    validateAssets,
     validateAsset,
   } from "./validators";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
@@ -31,20 +34,13 @@
   let signoutForm;
   let student: Student | null = null;
   let staff: Staff | null = null;
-  let asset: Asset | null = null;
-  let charger: Asset | null = null;
+  let assets: Asset[] | null = null;
+  let charger: null = null;
 
   let validators = () => ({
     assetTag: {
-      value: $assetTag,
-      validators: [
-        (s) => ({
-          name: "4 or 5 digit code",
-          valid: s.length > 3,
-          type: "warning",
-        }),
-        validateAsset,
-      ],
+      value: $assetTags,
+      validators: [validateAssets],
     },
     charger: {
       value: $chargerTag,
@@ -102,16 +98,16 @@
     signoutForm,
     $staffName,
     staff,
-    $assetTag,
+    $assetTags,
     $chargerTag,
     $studentName,
     student,
-    asset,
+    assets,
     status
   );
   $: student = studentMode && getStudent($studentName);
   $: staff = !studentMode && $staffStore[$staffName];
-  $: asset = $assetStore[$assetTag];
+  $: assets = $assetTags.map((assetTag) => $assetStore[assetTag]);
   $: charger = $assetStore[$chargerTag];
 
   let checkedOut: {
@@ -153,15 +149,17 @@
     getNote();
     console.log("Updated note:", notes);
     let success: boolean = false;
-    if (asset) {
-      success = await doCheckout(asset, notes);
+    if (assets) {
+      for (let asset of assets) {
+        success = await doCheckout(asset, notes);
+      }
     }
     if (charger) {
-      success = await doCheckout(charger, (!asset && notes) || "");
+      success = await doCheckout(charger, (!assets && notes) || "");
     }
     if (success) {
       $studentName = "";
-      $assetTag = "";
+      $assetTags = [];
       notes = "";
       $screenNote = null;
       $keyboardNote = null;
@@ -177,7 +175,7 @@
   };
   let valid;
   $: valid =
-    (!!asset || !!charger) &&
+    (!!assets || !!charger) &&
     (status != "Out" ||
       (studentMode && !!student) ||
       (!studentMode && !!staff));
@@ -352,11 +350,11 @@
     <div class="row">
       <FormField
         fullWidth={false}
-        name="Asset Tag"
-        errors={$assetTag && $signoutForm?.fields?.assetTag?.errors}
+        name={(mode == "it" && "Asset Tag(s)") || "Asset Tag"}
+        errors={$assetTags && $signoutForm?.fields?.assetTag?.errors}
       >
-        <input
-          bind:value={$assetTag}
+        <ListInput
+          bind:value={$assetTags}
           id="assettag"
           type="text"
           class="w3-input"
@@ -364,21 +362,32 @@
           autocomplete="off"
         />
       </FormField>
-      <FormField
-        fullWidth={false}
-        name="Charger"
-        errors={$chargerTag && $signoutForm?.fields?.chargerTag?.errors}
-      >
-        <input
-          bind:value={$chargerTag}
-          id="charger"
-          type="text"
-          class="w3-input"
-          placeholder="Charger (3 digit number)"
-          autocomplete="off"
-        />
-      </FormField>
+      {#if mode != "it"}
+        <FormField
+          fullWidth={false}
+          name="Charger"
+          errors={$chargerTag && $signoutForm?.fields?.chargerTag?.errors}
+        >
+          <input
+            bind:value={$chargerTag}
+            id="charger"
+            type="text"
+            class="w3-input"
+            placeholder="Charger (3 digit number)"
+            autocomplete="off"
+          />
+        </FormField>
+      {/if}
       <FormField name="Action" fullWidth={false}>
+        {#if mode == "it"}
+          <label class:bold={status == "Repairing"}
+            ><input type="radio" bind:group={status} value="Repairing" /> In for
+            Repair</label
+          >
+          <label class:bold={status == "Retire"}
+            ><input type="radio" bind:group={status} value="Retire" /> Retire
+          </label>
+        {/if}
         <label class:bold={status == "Out"}
           ><input type="radio" bind:group={status} value="Out" /> Sign Out</label
         >
@@ -391,25 +400,27 @@
         >
       </FormField>
     </div>
-    {#if asset || charger}
+    {#if assets || charger}
       <div in:fly|local={{ y: -30 }} out:fade class="rowDetail row">
-        {#if asset}
-          <div in:fade|local out:fade|local>
-            <AssetDisplay {asset} showOwner={true} />
-          </div>
-        {/if}
+        {#each assets as asset}
+          {#if asset}
+            <div in:fade|local out:fade|local>
+              <AssetDisplay {asset} showOwner={true} />
+            </div>
+          {/if}
+        {/each}
         {#if charger}
           <div in:fade|local out:fade|local>
             <AssetDisplay asset={charger} showOwner={true} />
           </div>
         {/if}
-        {#if charger && asset && asset["Charger Type"]}
-          {#if charger["Model"] == asset["Charger Type"]}
+        {#if charger && assets && assets[0] && assets[0]["Charger Type"]}
+          {#if charger["Model"] == assets[0]["Charger Type"]}
             <span class="w3-text-blue">Correct charger!</span>
           {:else}
             <span class="w3-text-orange">
               Machine requires
-              {asset["Charger Type"]}
+              {assets[0]["Charger Type"]}
               but you have {charger["Model"] || "Unknown"}?
             </span>
           {/if}

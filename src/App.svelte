@@ -11,6 +11,23 @@
   import { fade } from "svelte/transition";
 
   let title = "IACS Chromebook Signout";
+
+  let itUsers = [
+    "thinkle@innovationcharter.org",
+    "ntroy@innovationcharter.org",
+  ];
+
+  let isIt: boolean = false;
+  $: if (loggedIn) {
+    console.log("Weird we have", itUsers);
+    let email = $user.email;
+    if (email) {
+      console.log("look for", email);
+      let found = itUsers.find((e) => e == email);
+      isIt = !!found;
+    }
+  }
+
   let page = Checkout;
   let params: {
     name?: string;
@@ -53,6 +70,13 @@
     router("/history/", (ctx) => {
       page = History;
       title = "IACS Chromebook Signout History";
+    });
+    router("/it/", (ctx) => {
+      page = Checkout;
+      params = {
+        mode: "it",
+      };
+      title = "IACS Chromebook IT-Guy Tool";
     });
     router.start();
   });
@@ -100,6 +124,15 @@
       href="/history/"
       on:click={l("/history/")}>Signout History</a
     >
+    {#if loggedIn && isIt}
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == History}
+        class:w3-blue={page == History}
+        href="/it/"
+        on:click={l("/it/")}>IT Tool</a
+      >
+    {/if}
   </nav>
   <main>
     <header class="w3-bar w3-blue">
@@ -147,7 +180,7 @@
 </div>
 {#if $loggedIn}
   <footer class="w3-container w3-cell w3-cell-bottom w3-white">
-    Hi there, {$user?.user_metadata.full_name} ({$user.email})
+    Hi there, {$user?.user_metadata?.full_name} ({$user.email})
     <a href="/user" on:click={l("/user")}>(need to log out?)</a>
   </footer>
 {/if}

@@ -15,6 +15,7 @@ export let studentDropdown = writable([]);
 export let staffName = writable("");
 export let studentName = writable("");
 export let assetTag = writable("");
+export let assetTags = writable([]);
 export let chargerTag = writable("");
 
 function toTitleCase(s: string) {
@@ -143,7 +144,32 @@ export const validateStaff = async (s) => {
   }
 };
 
-export const validateAsset = async (s, isCharger = false) => {
+export const validateAssets = async (assets: string[], isCharger = false) => {
+  let aggregateResult = { name: "Asset found", valid: true };
+  let errors = [];
+  for (let asset of assets) {
+    let result = await validateAsset(asset, isCharger);
+    if (!result.valid) {
+      errors.push(result);
+    }
+  }
+  if (errors.length > 0) {
+    return {
+      valid: false,
+      name: errors.map((e) => !e.valid && e.name).join(", "),
+    };
+  } else {
+    return {
+      valid: true,
+      name: "Asset found",
+    };
+  }
+};
+
+export const validateAsset = async (
+  s,
+  isCharger = false
+): Promise<{ name: string; valid: boolean }> => {
   console.log("Validate asset", s);
   if (s && s.length >= 3) {
     let $assetStore = get(assetStore);
