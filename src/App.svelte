@@ -19,10 +19,8 @@
 
   let isIt: boolean = false;
   $: if (loggedIn) {
-    console.log("Weird we have", itUsers);
     let email = $user.email;
     if (email) {
-      console.log("look for", email);
       let found = itUsers.find((e) => e == email);
       isIt = !!found;
     }

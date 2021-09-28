@@ -1,10 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
-
   export let value: string[];
-
-  const dispatch = createEventDispatcher();
-
   let textValue;
   $: textValue = (value && value.join(", ")) || "";
 
