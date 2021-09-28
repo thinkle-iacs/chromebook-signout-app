@@ -31,6 +31,10 @@
     name?: string;
     tag?: string;
   } = {};
+
+  const SIGNOUT_TITLE = "IACS Chromebook Signout";
+  const IT_NAME = "IACS IT Super Tool";
+
   onMount(() => {
     router("/user", () => {
       page = LogIn;
@@ -38,7 +42,7 @@
     });
     router("/", () => {
       page = Checkout;
-      title = "IACS Chromebook Signout";
+      title = SIGNOUT_TITLE;
     });
     router("/student/", (ctx) => {
       page = LookupStudent;
@@ -74,7 +78,7 @@
       params = {
         mode: "it",
       };
-      title = "IACS Chromebook IT-Guy Tool";
+      title = IT_NAME;
     });
     router.start();
   });
@@ -98,8 +102,8 @@
       class="w3-bar-item w3-button"
       href="/checkout"
       on:click={l("/checkout")}
-      class:active={page == Checkout}
-      class:w3-blue={page == Checkout}>Sign In/Out</a
+      class:active={title == SIGNOUT_TITLE}
+      class:w3-blue={title == SIGNOUT_TITLE}>Sign In/Out</a
     >
     <a
       class="w3-bar-item w3-button"
@@ -125,8 +129,8 @@
     {#if loggedIn && isIt}
       <a
         class="w3-bar-item w3-button"
-        class:active={page == History}
-        class:w3-blue={page == History}
+        class:active={title == IT_NAME}
+        class:w3-blue={title == IT_NAME}
         href="/it/"
         on:click={l("/it/")}>IT Tool</a
       >
