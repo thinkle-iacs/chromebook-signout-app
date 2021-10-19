@@ -31,7 +31,7 @@ export async function handler(
   console.log('Fields are',fields)
   let query = signoutHistoryBase.select(
     {
-      maxRecords : 500,
+      /*maxRecords : 500,*/
       filterByFormula,
       fields    
     }
