@@ -63,6 +63,18 @@
   let userData = {};
   let users = [];
 
+  function isCharger(asset: { "Asset Tag (from Asset)": string[] }) {
+    if (asset["Asset Tag (from Asset)"] && asset["Asset Tag (from Asset)"][0]) {
+      if (asset["Asset Tag (from Asset)"][0].length < 4) {
+        // 3-digit assets are chargers
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      console.log("unexpected asset?", asset);
+    }
+  }
   function getUserData(h) {
     console.log("Get user data!", h);
     for (let entry of h) {
@@ -74,12 +86,21 @@
             currentLoans: [],
             allLoans: [],
             lost: [],
+            nonChargerLoans: [],
+            currentNonChargerLoans: [],
           };
         }
+        let isACharger = isCharger(entry);
         let currentUserData = userData[name];
         currentUserData.allLoans.push(entry);
+        if (!isACharger) {
+          currentUserData.nonChargerLoans.push(entry);
+        }
         if (entry["Is Latest Change"] && entry["Status"] == "Out") {
           currentUserData.currentLoans.push(entry);
+          if (!isACharger) {
+            currentUserData.currentNonChargerLoans.push(entry);
+          }
         }
         if (entry["Status"] == "Lost") {
           currentUserData.lost.push(entry);
@@ -87,58 +108,132 @@
       }
     }
     // react
-    users.sort(
-      (a, b) =>
-        userData[b].currentLoans.length - userData[a].currentLoans.length
-    );
-    userData = userData;
-    users = users;
+    sortUsers();
     console.log("userData", userData);
     history = $fullHistory;
   }
+
+  function sortUsers() {
+    users.sort((a, b) => {
+      if (excludeChargerMode) {
+        return (
+          userData[b].currentNonChargerLoans.length -
+          userData[a].currentNonChargerLoans.length
+        );
+      } else {
+        return (
+          userData[b].currentLoans.length - userData[a].currentLoans.length
+        );
+      }
+    });
+    users = users;
+    userData = userData;
+  }
+
   $: getUserData($fullHistory);
+  let excludeChargerMode = true;
+  let excludeStaffMode = true;
+  $: sortUsers(excludeChargerMode);
+
+  function getUsers(users, excludeStaffMode) {
+    console.log("Filtering users...", users);
+    let result = users.filter(
+      (u: "") => !excludeStaffMode || u.split("@")[0].includes(".")
+    );
+    console.log("Got ", result);
+    return result;
+  }
+  let loanHistoryMode = false;
 </script>
 
 {#if history.length}
-  <nav class="w3-bar sticky">
-    <a class="w3-button w3-border" href="#loans"> Jump to Loan History </a>
-    <a class="w3-button w3-border" href="#users"> Jump to User List </a>
-  </nav>
-
-  <h4 id="users">User History, by Number of Loans</h4>
-  <table class="w3-table">
-    <tr>
-      <th>User</th>
-      <th># Current Loans</th>
-      <th>Current Loan Info</th>
-    </tr>
-    {#each users as user}
-      <tr>
-        <td>{user}</td>
-        <td>
-          {userData[user].currentLoans.length}
-        </td>
-        <td>
-          {#each userData[user].currentLoans as loan}
-            <AssetDisplay asset={getAsset(loan)} />
-          {/each}
-        </td>
-      </tr>
-    {/each}
-  </table>
-  <h3 id="loans">Loan History</h3>
-  <nav class="w3-bar w3-container" style="padding-top:5px">
-    <button class="w3-button w3-border" on:click={sortByDate}> By Date </button>
-    <button class="w3-button w3-border" on:click={sortByStatus}
-      >By Status</button
+  <nav class="w3-bar sticky w3-white">
+    <a
+      class="w3-button w3-border"
+      class:w3-blue={loanHistoryMode == false}
+      href="#loans"
+      on:click={() => (loanHistoryMode = false)}
     >
-    <button class="w3-button w3-border" on:click={sortByNotes}>By Notes</button>
-    <button class="w3-button w3-border" on:click={sortAlpha}>
-      By Student
-    </button>
-    <button class="w3-button w3-border" on:click={reverse}> Reverse </button>
+      User List
+    </a>
+    <a
+      class="w3-button w3-border"
+      href="#users"
+      class:w3-blue={loanHistoryMode == true}
+      on:click={() => (loanHistoryMode = true)}
+    >
+      Loan History
+    </a>
   </nav>
-  <SignoutHistoryTable signoutHistoryItems={history} />
+  <div class:invisible={loanHistoryMode} class="container">
+    <div class="w3-bar sticky w3-white">
+      <h4 id="users">User History, by Number of Loans</h4>
+      <input bind:checked={excludeChargerMode} type="checkbox" /> Excude
+      chargers
+      <input bind:checked={excludeStaffMode} type="checkbox" /> Excude staff
+    </div>
+    <table class="w3-table">
+      <tr>
+        <th>#</th>
+        <th>User</th>
+        <th># Current Loans</th>
+        <th>Current Loan Info</th>
+      </tr>
+      {#each getUsers(users, excludeStaffMode) as user, n}
+        <tr>
+          <td>{n + 1}</td>
+          <td>{user}</td>
+          <td>
+            {#if excludeChargerMode}
+              {userData[user].currentNonChargerLoans.length}
+            {:else}
+              {userData[user].currentLoans.length}
+            {/if}
+          </td>
+          <td>
+            {#if excludeChargerMode}
+              {#each userData[user].currentNonChargerLoans as loan}
+                <div class="row">
+                  <AssetDisplay asset={getAsset(loan)} />
+                  <span class="w3-text-grey"
+                    >{new Date(loan.Time).toLocaleDateString()}</span
+                  >
+                </div>
+              {/each}
+            {:else}
+              {#each userData[user].currentLoans as loan}
+                <div class="row">
+                  <AssetDisplay asset={getAsset(loan)} />
+                  <span class="w3-text-grey"
+                    >{new Date(loan.Time).toLocaleDateString()}</span
+                  >
+                </div>
+              {/each}
+            {/if}
+          </td>
+        </tr>
+      {/each}
+    </table>
+  </div>
+  <div class:invisible={!loanHistoryMode} class="container">
+    <nav class="w3-bar w3-container sticky" style="padding-top:5px">
+      <h3 id="loans">Loan History</h3>
+      <button class="w3-button w3-border" on:click={sortByDate}>
+        By Date
+      </button>
+      <button class="w3-button w3-border" on:click={sortByStatus}
+        >By Status</button
+      >
+      <button class="w3-button w3-border" on:click={sortByNotes}
+        >By Notes</button
+      >
+      <button class="w3-button w3-border" on:click={sortAlpha}>
+        By Student
+      </button>
+      <button class="w3-button w3-border" on:click={reverse}> Reverse </button>
+    </nav>
+    <SignoutHistoryTable signoutHistoryItems={history} />
+  </div>
 {:else}
   <div class="big-card w3-card w3-center w3-yellow">
     {#if fetching}
@@ -163,9 +258,27 @@
     margin-top: 2em;
     font-size: x-large;
   }
+
   .sticky {
     position: sticky;
     top: 2px;
     background-color: white;
+    z-index: 3;
+  }
+  .invisible {
+    display: none;
+  }
+  .container .sticky {
+    z-index: 2;
+    padding-top: 40px;
+  }
+  .w3-bar h4 {
+    display: inline-block;
+  }
+  .row {
+    display: flex;
+    flex-direction: row;
+    justify-content: left;
+    align-items: center;
   }
 </style>

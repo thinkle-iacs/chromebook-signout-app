@@ -15,6 +15,7 @@
 
 <table class="w3-table w3-small">
   <tr>
+    <th>#</th>
     <th> Time </th>
     <th> Asset </th>
     <th>
@@ -34,7 +35,7 @@
       </div>
     </th>
   </tr>
-  {#each signoutHistoryItems.filter((i) => (!currentOnlyMode || i["Is Latest Change"]) && (!studentOnlyMode || (i["Email (from Students)"] && i["Email (from Students)"][0] == student.Email))) as item}
+  {#each signoutHistoryItems.filter((i) => (!currentOnlyMode || i["Is Latest Change"]) && (!studentOnlyMode || (i["Email (from Students)"] && i["Email (from Students)"][0] == student.Email))) as item, n}
     <tr
       in:fade|local
       out:fade|local
@@ -45,6 +46,9 @@
       class:w3-amber={item.Status == "Out" && item["Is Latest Change"]}
       class:w3-red={item.Status == "Lost" && item["Is Latest Change"]}
     >
+      <td>
+        {n}
+      </td>
       <td>
         {new Date(item.Time).toLocaleDateString()}
         {new Date(item.Time).toLocaleTimeString()}
