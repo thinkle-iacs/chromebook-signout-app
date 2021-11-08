@@ -19,7 +19,7 @@
 
   let isIt: boolean = false;
   $: if (loggedIn) {
-    let email = $user.email;
+    let email = $user?.email;
     if (email) {
       let found = itUsers.find((e) => e == email);
       isIt = !!found;
