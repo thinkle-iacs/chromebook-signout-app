@@ -25,7 +25,8 @@ export async function handler(
         'Is Latest Change',
         'LatestUpdate',
         'Num',
-        'Email (from Staff)'
+        'Email (from Staff)',
+        'DailyLoan'
       ]  
   console.log('Query is',filterByFormula)
   console.log('Fields are',fields)

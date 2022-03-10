@@ -31,6 +31,7 @@
 
   let status: CheckoutStatus = "Out";
   let notes = "";
+  let daily = false;
   let signoutForm;
   let student: Student | null = null;
   let staff: Staff | null = null;
@@ -119,13 +120,14 @@
     student: Student;
   }[] = [];
 
-  async function doCheckout(assetObject, notes) {
+  async function doCheckout(assetObject, notes, daily) {
     let result = await signoutAsset(
       studentMode && student,
       !studentMode && staff,
       assetObject,
       notes,
-      status
+      status,
+      daily
     );
     if (result && result.length == 1) {
       let record = result[0];
@@ -151,11 +153,11 @@
     let success: boolean = false;
     if (assets) {
       for (let asset of assets) {
-        success = await doCheckout(asset, notes);
+        success = await doCheckout(asset, notes, daily);
       }
     }
     if (charger) {
-      success = await doCheckout(charger, (!assets && notes) || "");
+      success = await doCheckout(charger, (!assets && notes) || "", daily);
     }
     if (success) {
       $studentName = "";
@@ -493,6 +495,18 @@
             </label>
           </div>
         </FormField>
+      </div>
+    {/if}
+    {#if status == "Out"}
+      <div class="dailyChoice">
+        <label class:bold={!daily}>
+          <input type="radio" bind:group={daily} value={false} />
+          Long Term</label
+        >
+        <label class:bold={daily}>
+          <input type="radio" bind:group={daily} value={true} />
+          Daily Loan</label
+        >
       </div>
     {/if}
     <FormField name={(status == "Returned" && "Other Notes") || "Notes"}>

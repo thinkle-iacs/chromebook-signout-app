@@ -8,8 +8,9 @@
   import type { Student } from "./students";
   export let signoutHistoryItems: SignoutHistoryEntry[];
   export let student: Student | null;
-  let currentOnlyMode = false;
+  export let currentOnlyMode = false;
   let studentOnlyMode = false;
+  export let dailyOnlyMode = false;
   $: console.log(signoutHistoryItems);
 </script>
 
@@ -34,8 +35,14 @@
         current only
       </div>
     </th>
+    <th
+      >Daily
+      <div class="w3-small normal">
+        <input type="checkbox" bind:checked={dailyOnlyMode} />
+      </div>
+    </th>
   </tr>
-  {#each signoutHistoryItems.filter((i) => (!currentOnlyMode || i["Is Latest Change"]) && (!studentOnlyMode || (i["Email (from Students)"] && i["Email (from Students)"][0] == student.Email))) as item, n}
+  {#each signoutHistoryItems.filter((i) => (!dailyOnlyMode || i.DailyLoan) && (!currentOnlyMode || i["Is Latest Change"]) && (!studentOnlyMode || (i["Email (from Students)"] && i["Email (from Students)"][0] == student.Email))) as item, n}
     <tr
       in:fade|local
       out:fade|local
@@ -47,7 +54,7 @@
       class:w3-red={item.Status == "Lost" && item["Is Latest Change"]}
     >
       <td>
-        {n}
+        {n + 1}
       </td>
       <td>
         {new Date(item.Time).toLocaleDateString()}
@@ -87,6 +94,7 @@
       <td>
         {item.Status}
       </td>
+      <td>{(item.DailyLoan && "Daily") || "Long term"}</td>
     </tr>
   {/each}
 </table>

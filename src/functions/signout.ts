@@ -4,15 +4,16 @@ import { signoutHistoryBase } from './Airtable'
 export async function handler(
   event : APIGatewayEvent, context : Context 
 ) {
-  const { assetRecordId, staffRecordId, studentRecordId, Notes, Status, FormUser } = event.queryStringParameters
+  const { assetRecordId, staffRecordId, studentRecordId, Notes, Status, FormUser, DailyLoan } = event.queryStringParameters
   console.log('Got params',JSON.stringify(
-    { assetRecordId, staffRecordId, studentRecordId, Notes, Status }
+    { assetRecordId, staffRecordId, studentRecordId, Notes, Status, DailyLoan }
   ))
   let fields = {
     Asset : [assetRecordId],
     Status,
     Notes,
-    FormUser
+    FormUser,
+    DailyLoan : DailyLoan=='true' && true || false,
   }
   if (studentRecordId) {
     fields.Student = [studentRecordId]

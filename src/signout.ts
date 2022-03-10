@@ -11,9 +11,10 @@ export async function signoutAsset(
   staff : Staff,
   asset: Asset,
   Notes: string = "",
-  Status: CheckoutStatus = "Out"
+  Status: CheckoutStatus = "Out",
+  daily : boolean = false,
 ) {
-  let params = {mode:'signout',Notes,Status, assetRecordId:asset._id, FormUser:''}
+  let params = {mode:'signout',Notes,Status, assetRecordId:asset._id, FormUser:'',DailyLoan:daily}
   let $user = get(user);
   if (student) {
     params.studentRecordId = student._id

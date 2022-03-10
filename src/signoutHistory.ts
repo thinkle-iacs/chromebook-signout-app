@@ -12,7 +12,8 @@ export type SignoutHistoryEntry {
   'Time':string,
   'Is Latest Change':number,
   'LatestUpdate':number,
-  'Num':number
+  'Num':number,
+  'DailyLoan':boolean,
 }
 
 export function getStudentLinkFromHistoryItem (entry : SignoutHistoryEntry) : string | null {
