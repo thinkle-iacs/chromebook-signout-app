@@ -174,6 +174,8 @@
     Out: "Sign Out",
     Returned: "Return",
     Lost: "Mark as Lost",
+    Repairing: "Repairing",
+    Retire: "Retire",
   };
   let valid;
   $: valid =
@@ -253,9 +255,39 @@
       currentLoans = [];
     }
   }
+
+  let extraButtons = [
+    { label: "Keyboard", note: "Taped keyboard cable" },
+    { label: "Screen", note: "Screen needed to be replaced" },
+    { label: "Hinge", note: "New screws needed for display hinges" },
+    { label: "Display Reseat", note: "Reseated display cable" },
+
+    /* kybard:Taped keyboard cable
+Screen damage:Screen needed to be replaced
+Display reseat:Reseated display cable
+Keyboard damage:Keyboard section needed to be replaced
+Hinge bolts:New screws needed for display hinges*/
+  ];
+
+  let formHeight;
+  let outerDiv;
+  let textHeight = 30;
+  $: {
+    if (outerDiv && status) {
+      setTimeout(() => {
+        let bod = outerDiv.closest("body");
+        let top = outerDiv.closest(".w3-main");
+        let room = bod.clientHeight - top.clientHeight;
+        if (room) {
+          console.log("We have", room, "px available");
+          textHeight += room;
+        }
+      }, 100);
+    }
+  }
 </script>
 
-<article>
+<article bind:clientHeight={formHeight} bind:this={outerDiv}>
   <SimpleForm
     {validators}
     onFormCreated={(f) => {
@@ -509,12 +541,24 @@
         >
       </div>
     {/if}
+    {#if mode == "it"}
+      <div class="row">
+        {#each extraButtons as extraButton}
+          <button
+            on:click={() => (notes += `${notes && "\n"}${extraButton.note}`)}
+          >
+            {extraButton.label}
+          </button>
+        {/each}
+      </div>
+    {/if}
     <FormField name={(status == "Returned" && "Other Notes") || "Notes"}>
       <textarea
         bind:value={notes}
         id="notes"
-        class="w3-input"
+        class="w3-input w3-border"
         placeholder={notePlaceholder}
+        style:height={`${textHeight}px`}
       />
     </FormField>
 
@@ -594,5 +638,8 @@
   .noteChoice {
     margin-left: 10em;
     margin-top: 5px;
+  }
+  textarea {
+    height: 4em;
   }
 </style>
