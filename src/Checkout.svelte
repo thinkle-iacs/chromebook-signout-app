@@ -257,9 +257,13 @@
   }
 
   let extraButtons = [
-    { label: "Keyboard", note: "Taped keyboard cable" },
+    { label: "Kybard", note: "Taped keyboard cable" },
     { label: "Screen", note: "Screen needed to be replaced" },
     { label: "Hinge", note: "New screws needed for display hinges" },
+    {
+      label: "Keyboard Damage",
+      note: "Keyboard section needed to be replaced",
+    },
     { label: "Display Reseat", note: "Reseated display cable" },
 
     /* kybard:Taped keyboard cable
