@@ -7,3 +7,27 @@ Add analogous process for staff:
   - Add staff lookup/autocomplete in Checkout.svelte
 
 Maybe add "Batch Sign In" ?
+
+Plans moving forward...
+Goals:
+-> Email to families who are keeping a machine over the summer
+-> Email to students with a second or third machine
+-> Email to parents to confirm chromebook contract has been signed
+
+Next steps:
+-> Send test email from AirTable
+-> Pull parent contact info into AirTable and automate process so updates come in smoothly
+-> Pull Chromebook contract form data into AirTable and automate process so updates come in smoothy
+-> Build UI for mapping contract data to students and sending contacts confirmation email
+
+Plan:
+-> Basically we'll want a table with...
+   -> Message Key
+   -> Student ID
+   -> Email sent?
+   Which then triggers an air table message with...
+   Message...
+   Student...
+   CC: Student contacts...
+
+Then we just need our app to write records to that table and AirTable should do the rest "magically"
