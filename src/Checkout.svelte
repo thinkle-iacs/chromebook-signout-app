@@ -276,13 +276,14 @@ Hinge bolts:New screws needed for display hinges*/
   let formHeight;
   let outerDiv;
   let textHeight = 30;
+
   $: {
     if (outerDiv && status) {
       setTimeout(() => {
         let bod = outerDiv.closest("body");
         let top = outerDiv.closest(".w3-main");
         let room = bod.clientHeight - top.clientHeight;
-        if (room) {
+        if (room > 0) {
           console.log("We have", room, "px available");
           textHeight += room;
         }
