@@ -6,16 +6,16 @@
   import ListInput from "./ListInput.svelte";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
-  import type { Student } from "./students";
-  import type { Staff } from "./staff";
-  import { getCurrentLoansForStudent } from "./inventory";
-  import type { Asset } from "./inventory";
+  import type { Student } from "./data/students";
+  import type { Staff } from "./data/staff";
+  import { getCurrentLoansForStudent } from "./data/inventory";
+  import type { Asset } from "./data/inventory";
   import { l } from "./util";
-  import type { CheckoutStatus } from "./signout";
-  import { signoutAsset } from "./signout";
-  import { getStudent } from "./students";
-  import { assetStore } from "./inventory";
-  import { staffStore } from "./staff";
+  import type { CheckoutStatus } from "./data/signout";
+  import { signoutAsset } from "./data/signout";
+  import { getStudent } from "./data/students";
+  import { assetStore } from "./data/inventory";
+  import { staffStore } from "./data/staff";
   import { writable, get } from "svelte/store";
   import {
     studentName,

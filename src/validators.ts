@@ -1,8 +1,8 @@
 import { writable, get } from "svelte/store";
 import { tick } from "svelte";
-import { searchForStudent } from "./students";
-import { searchForStaff } from "./staff";
-import { searchForAsset, assetStore } from "./inventory";
+import { searchForStudent } from "./data/students";
+import { searchForStaff } from "./data/staff";
+import { searchForAsset, assetStore } from "./data/inventory";
 
 const cachedValidations = {
   assets: {},

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getContracts, contractStore } from "./contracts";
-  import type { Contract } from "./contracts";
+  import { getContracts, contractStore } from "./data/contracts";
+  import type { Contract } from "./data/contracts";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
 

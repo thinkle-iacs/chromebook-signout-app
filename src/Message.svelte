@@ -1,7 +1,7 @@
 <script lang="ts">
   import Contacts from "./Contacts.svelte";
 
-  import { getContracts } from "./contracts";
+  import { getContracts } from "./data/contracts";
   import { getMessages, messagesStore } from "./data/messages";
   import { getContacts, contactStore, getEmails } from "./data/contacts";
   import {

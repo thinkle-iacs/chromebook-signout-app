@@ -7,3 +7,9 @@ export function l(path: string) {
     return false;
   };
 }
+
+export function parseMarkdown(m) {
+  m = m.replace(/\n/g, "<br>");
+  m = m.replace(/[*]([^*]+)[*]/, "<i>$1</i>");
+  return m;
+}

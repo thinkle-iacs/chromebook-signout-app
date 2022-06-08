@@ -7,7 +7,7 @@
   import Message from "./Message.svelte";
   import router from "page";
   import LogIn from "./LogIn.svelte";
-  import { loggedIn, user } from "./user";
+  import { loggedIn, user } from "./data/user";
   import { l } from "./util";
   import { onMount, SvelteComponent } from "svelte";
   import { fade } from "svelte/transition";

@@ -3,8 +3,8 @@
   import { fade } from "svelte/transition";
   import { l } from "./util";
   import AssetDisplay from "./AssetDisplay.svelte";
-  import { assetStore } from "./inventory";
-  import type { SignoutHistoryEntry } from "./signoutHistory";
+  import { assetStore } from "./data/inventory";
+  import type { SignoutHistoryEntry } from "./data/signoutHistory";
   import type { Student } from "./students";
   export let signoutHistoryItems: SignoutHistoryEntry[];
   export let student: Student | null;

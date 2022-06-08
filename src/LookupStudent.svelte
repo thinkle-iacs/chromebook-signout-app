@@ -1,17 +1,17 @@
 <script lang="ts">
   import router from "page";
   import type { Student } from "./students";
-  import type { Asset } from "./inventory";
-  import type { SignoutHistoryEntry } from "./signoutHistory";
+  import type { Asset } from "./data/inventory";
+  import type { SignoutHistoryEntry } from "./data/signoutHistory";
   import AssetDisplay from "./AssetDisplay.svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import { validateStudent, studentName } from "./validators";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
   import NameDropdown from "./NameDropdown.svelte";
-  import { getStudent, studentsStore } from "./students";
-  import { assetStore, getCurrentLoansForStudent } from "./inventory";
-  import { lookupSignoutHistory } from "./signoutHistory";
+  import { getStudent, studentsStore } from "./data/students";
+  import { assetStore, getCurrentLoansForStudent } from "./data/inventory";
+  import { lookupSignoutHistory } from "./data/signoutHistory";
   import App from "./App.svelte";
   export let name;
   if (name) {

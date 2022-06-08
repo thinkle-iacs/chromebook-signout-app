@@ -1,13 +1,13 @@
 <script type="ts">
   import router from "page";
-  import type { Asset } from "./inventory";
+  import type { Asset } from "./data/inventory";
   import AssetDisplay from "./AssetDisplay.svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
-  import type { SignoutHistoryEntry } from "./signoutHistory";
+  import type { SignoutHistoryEntry } from "./data/signoutHistory";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
-  import { assetStore, searchForAsset } from "./inventory";
-  import { lookupSignoutHistory } from "./signoutHistory";
+  import { assetStore, searchForAsset } from "./data/inventory";
+  import { lookupSignoutHistory } from "./data/signoutHistory";
   import { assetTag, validateAsset } from "./validators";
   export let tag;
   $: if (tag) {
