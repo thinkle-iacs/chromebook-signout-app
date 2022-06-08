@@ -1,6 +1,13 @@
 import { writable, derived } from "svelte/store";
 
-export let user = writable({});
+export let user = writable({
+  // DO NOT COMMIT - LOCAL TESTING ONLY
+  email: "thinkle@innovationcharter.org",
+  user_metadata: {
+    full_name: "Tom Hinkle",
+  },
+  // END NON-COMMITAL SECTION
+});
 export let loggedIn = derived([user], ([user]) => {
   if (user && user.email) {
     console.log("email is", user.email);

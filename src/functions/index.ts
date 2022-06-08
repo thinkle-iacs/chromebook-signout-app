@@ -4,13 +4,20 @@ import {handler as staffHandler} from './staff';
 import {handler as inventoryHandler} from './inventory';
 import {handler as signoutHandler} from './signout';
 import {handler as signoutHistoryHandler} from './signoutHistory'
-
+import {handler as contractHandler} from './contracts';
+import {handler as notificationsHandler} from './notifications';
+import {handler as contactHandler} from './contacts';
+import {handler as messageHandler} from './messages';
 let modes = {
   student : studentHandler,
   asset : inventoryHandler,
   signout : signoutHandler,
   signoutHistory : signoutHistoryHandler,
-  staff : staffHandler
+  staff : staffHandler,
+  contract : contractHandler,
+  contact : contactHandler,
+  notifications : notificationsHandler,
+  message : messageHandler
 }
 
 export async function handler(

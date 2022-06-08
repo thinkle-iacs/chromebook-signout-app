@@ -1,15 +1,17 @@
 <script lang="ts">
   import Checkout from "./Checkout.svelte";
   import LookupAsset from "./LookupAsset.svelte";
+  import Contracts from "./Contracts.svelte";
   import LookupStudent from "./LookupStudent.svelte";
   import History from "./History.svelte";
+  import Message from "./Message.svelte";
   import router from "page";
   import LogIn from "./LogIn.svelte";
   import { loggedIn, user } from "./user";
   import { l } from "./util";
-  import { onMount } from "svelte";
+  import { onMount, SvelteComponent } from "svelte";
   import { fade } from "svelte/transition";
-
+  let update = 0;
   let title = "IACS Chromebook Signout";
 
   let itUsers = [
@@ -26,7 +28,7 @@
     }
   }
 
-  let page = Checkout;
+  let page: SvelteComponent;
   let params: {
     name?: string;
     tag?: string;
@@ -36,8 +38,20 @@
   const IT_NAME = "IACS IT Super Tool";
 
   onMount(() => {
+    router("/message", () => {
+      if (page != Message) update += 1;
+      page = Message;
+
+      title = "Send Notifications";
+    });
+    router("/contracts", () => {
+      if (page != Contracts) update += 1;
+      page = Contracts;
+      title = "Manage Chromebook Contract";
+    });
     router("/user", () => {
       page = LogIn;
+      update += 1;
       title = "IACS Chromebook Signout Log In";
     });
     router("/", () => {
@@ -126,6 +140,20 @@
       href="/history/"
       on:click={l("/history/")}>Signout History</a
     >
+    <a
+      class="w3-bar-item w3-button"
+      class:active={page == Contracts}
+      class:w3-blue={page == Contracts}
+      href="/contracts/"
+      on:click={l("/contracts/")}>Manage Contracts</a
+    >
+    <a
+      class="w3-bar-item w3-button"
+      class:active={page == Message}
+      class:w3-blue={page == Message}
+      href="/message/"
+      on:click={l("/message/")}>Send Notifications</a
+    >
     {#if loggedIn && isIt}
       <a
         class="w3-bar-item w3-button"
@@ -159,8 +187,10 @@
     by eliminating it I'm eliminating a buggy situation where I had multiple
     pages rendering on top of each other.
      -->
-      <!-- <svelte:component this={page} {...params} /> -->
-      {#if page == History}
+      {#key update}
+        <svelte:component this={page} {...params} />
+      {/key}
+      <!-- {#if page == History}
         <div in:fade><History {...params} /></div>
       {:else if page == LookupAsset}
         <div in:fade><LookupAsset {...params} /></div>
@@ -172,9 +202,11 @@
         <div in:fade><History {...params} /></div>
       {:else if page == LogIn}
         <LogIn {...params} />
-      {:else}
-        <div>Unknown Page?</div>
-      {/if}
+      {:else if page == Contracts}
+        <Contracts />
+      {:else} 
+        <svelte:component this={page} {...params} />        
+      {/if} -->
     {:else}
       Weird, nobody's home
     {/if}

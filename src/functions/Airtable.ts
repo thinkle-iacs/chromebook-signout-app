@@ -9,3 +9,7 @@ export let studentsBase = base("Students");
 export let signoutHistoryBase = base("Signout History");
 export let inventoryBase = base("Inventory");
 export let staffBase = base("Staff");
+export let contractsBase = base("Contracts");
+export let contactsBase = base("Contacts");
+export let notificationsBase = base("Notifications");
+export let messagesBase = base("Messages");

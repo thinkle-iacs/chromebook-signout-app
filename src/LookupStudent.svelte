@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
   import router from "page";
   import type { Student } from "./students";
   import type { Asset } from "./inventory";
