@@ -1,9 +1,9 @@
-import type { Student } from "./students";
+import type { Student } from "../students";
 import type { Staff } from './staff';
 import type { Asset } from "./inventory";
 import { assetStore } from "./inventory";]
 import { get } from "svelte/store";
-import { user } from './user';
+import { user } from '../user';
 export type CheckoutStatus = "Out" | "Returned" | "Lost";
 
 export async function signoutAsset(

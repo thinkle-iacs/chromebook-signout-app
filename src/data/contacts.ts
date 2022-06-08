@@ -7,13 +7,24 @@ import { writable, get } from "svelte/store";
  */
 export const contactStore = writable({});
 
-type Contact = {
+export type Contact = {
   LASID: number;
   Contact1Email;
   Contact1ReceivesEmail;
   Contact2Email;
   Contact2ReceivesEmail;
 };
+
+export function getEmails(contact: Contact) {
+  let emails = [];
+  if (contact.Contact1Email && contact.Contact1ReceivesEmail) {
+    emails.push(contact.Contact1Email);
+  }
+  if (contact.Contact2Email && contact.Contact2ReceivesEmail) {
+    emails.push(contact.Contact2Email);
+  }
+  return emails;
+}
 
 export async function getContacts() {
   let params: { [key: string]: string } = { mode: "contact" };

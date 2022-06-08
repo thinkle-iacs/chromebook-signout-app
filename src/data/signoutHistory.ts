@@ -1,5 +1,5 @@
 import type { Asset } from "./inventory";
-import type { Student } from "./students";
+import type { Student } from "../students";
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
 export type SignoutHistoryEntry = {
@@ -60,7 +60,7 @@ export async function lookupSignoutHistory({
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
-  return json.map((item) => item.fields);
+  return json.map((item) => ({ ...item.fields, _id: item.id }));
 }
 
 export let fetching = writable(false);
