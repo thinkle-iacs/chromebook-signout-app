@@ -1,9 +1,12 @@
 <script lang="ts">
+  import NotificationNotice from "./NotificationNotice.svelte";
+
   import Contacts from "./Contacts.svelte";
 
   import { getContracts } from "./data/contracts";
   import { getMessages, messagesStore } from "./data/messages";
   import { getContacts, contactStore, getEmails } from "./data/contacts";
+
   import {
     fetchFullHistory,
     fullHistory,
@@ -13,6 +16,7 @@
   import AssetDisplay from "./AssetDisplay.svelte";
   import { parseMarkdown } from "./util";
   import NotificationSender from "./NotificationSender.svelte";
+  import { getNotifications } from "./data/notifications";
   let update;
   onMount(() => {
     getContacts().then(() => (update += 1));
@@ -37,7 +41,7 @@
           if (!perStudent[student]) {
             perStudent[student] = [];
           }
-          perStudent[student].push([]);
+          perStudent[student].push(he);
         }
       }
     });
@@ -81,6 +85,15 @@
     sortedEntries = sortedEntries;
   }
 
+  function byYOG() {
+    sortedEntries.sort((a, b) => {
+      let ay = a.YOG || 2000;
+      let by = b.YOG || 2000;
+      return (ay > by && -1) || (ay < by && 1) || 0;
+    });
+    sortedEntries = sortedEntries;
+  }
+
   function byAsset() {
     sortedEntries.sort((a, b) => {
       let atags = a["Asset Tag (from Asset)"];
@@ -114,19 +127,41 @@
 
   let emails;
 
+  function buildMessageForExtras(extras: SignoutHistoryEntry[]) {
+    debugger;
+    let message = `\nStudent also has ${extras.length} additional computer out: `;
+    for (let e of extras) {
+      message += `\n\tAsset Tag ${e["Asset Tag (from Asset)"]} (signed ${e.Status} @ ${e.Time})`;
+    }
+    return message;
+  }
+
   function prepareSend() {
     emails = [];
     for (let entry of sortedEntries) {
       if (sendEmails[entry.Num]) {
         let LASID = entry.LASID && entry.LASID[0];
         let notification = {};
+        notification.message = selectedMessage;
         emails.push(notification);
         notification.entry = entry;
+        let student =
+          notification.entry.Student && notification.entry.Student[0];
+        if (student) {
+          let others = perStudent[student];
+          if (others.length > 1) {
+            debugger;
+            let extras = others.filter((e) => e != entry);
+            if (extras) {
+              notification.ExtraText = buildMessageForExtras(extras);
+            }
+          }
+        }
         if (emailStudent) {
           let email =
             entry["Email (from Students)"] || entry["Email (from Staff)"];
           if (email) {
-            notification.Recipient1 = email.join(",");
+            notification.Recipient = email.join(",");
           }
         }
         if (emailContact && LASID && $contactStore[LASID]) {
@@ -136,6 +171,18 @@
       }
     }
     console.log(emails);
+  }
+
+  let notificationsByEntry = {};
+  async function fetchNotifications() {
+    let existingNotifications = await getNotifications();
+    for (let n of existingNotifications) {
+      if (!notificationsByEntry[n.fields.SignoutEntry]) {
+        notificationsByEntry[n.fields.SignoutEntry] = [n];
+      } else {
+        notificationsByEntry[n.fields.SignoutEntry].push(n);
+      }
+    }
   }
 </script>
 
@@ -162,8 +209,12 @@
   <button on:click={() => (emails = [])}>Cancel</button>
   <NotificationSender notifications={emails} />
 {:else}
-  <button on:click={() => fetchFullHistory(true)}>Fetch History</button>
+  <button on:click={() => fetchFullHistory(true)}>Fetch Signout History</button>
+  <button on:click={() => fetchNotifications(true)}
+    >Fetch Notification History</button
+  >
   {#if $fullHistory.length}
+    <button on:click={byYOG}>byYOG</button>
     <button on:click={alphabetize}>A-Z</button>
     <button on:click={byAsset}>#</button>
     <button on:click={byTime}>🕑</button>
@@ -205,6 +256,11 @@
               type="checkbox"
               bind:checked={sendEmails[historyEntry.Num]}
             />
+            {#if notificationsByEntry[historyEntry.Num]}
+              <NotificationNotice
+                notifications={notificationsByEntry[historyEntry.Num]}
+              />
+            {/if}
           </td>
           <td>{new Date(historyEntry.Time).toLocaleDateString()}</td>
           <td>{historyEntry.Status}</td>
@@ -219,8 +275,11 @@
           </td>
           <td
             >{historyEntry["Email (from Students)"] ||
-              historyEntry["Email (from Staff)"]}</td
-          >
+              historyEntry["Email (from Staff)"]}
+            {#if historyEntry.YOG}
+              ({historyEntry.YOG})
+            {/if}
+          </td>
           <td>{LASID}</td>
           <td><Contacts contact={$contactStore[LASID]} /></td>
           <td

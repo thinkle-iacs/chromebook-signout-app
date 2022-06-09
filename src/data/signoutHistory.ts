@@ -16,6 +16,7 @@ export type SignoutHistoryEntry = {
   DailyLoan: boolean;
   LASID: string;
   Name: string;
+  YOG: string;
 };
 
 export function getStudentLinkFromHistoryItem(

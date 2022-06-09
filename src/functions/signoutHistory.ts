@@ -37,6 +37,7 @@ export async function handler(
         'DailyLoan',
         'LASID',
         'Name',
+        'YOG',
       ]  
   console.log('Query is',filterByFormula)
   console.log('Fields are',fields)

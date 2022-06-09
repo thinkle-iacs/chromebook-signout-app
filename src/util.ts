@@ -9,7 +9,13 @@ export function l(path: string) {
 }
 
 export function parseMarkdown(m) {
+  if (!m) {
+    return "";
+  }
+  if (Array.isArray(m)) {
+    return m.map(parseMarkdown).join("\n");
+  }
   m = m.replace(/\n/g, "<br>");
-  m = m.replace(/[*]([^*]+)[*]/, "<i>$1</i>");
+  m = m.replace(/[*]([^*]+)[*]/g, "<i>$1</i>");
   return m;
 }
