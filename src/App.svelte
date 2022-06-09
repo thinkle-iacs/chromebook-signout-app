@@ -140,21 +140,22 @@
       href="/history/"
       on:click={l("/history/")}>Signout History</a
     >
-    <a
-      class="w3-bar-item w3-button"
-      class:active={page == Contracts}
-      class:w3-blue={page == Contracts}
-      href="/contracts/"
-      on:click={l("/contracts/")}>Manage Contracts</a
-    >
-    <a
-      class="w3-bar-item w3-button"
-      class:active={page == Message}
-      class:w3-blue={page == Message}
-      href="/message/"
-      on:click={l("/message/")}>Send Notifications</a
-    >
+
     {#if loggedIn && isIt}
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == Contracts}
+        class:w3-blue={page == Contracts}
+        href="/contracts/"
+        on:click={l("/contracts/")}>Manage Contracts</a
+      >
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == Message}
+        class:w3-blue={page == Message}
+        href="/message/"
+        on:click={l("/message/")}>Send Notifications</a
+      >
       <a
         class="w3-bar-item w3-button"
         class:active={title == IT_NAME}
