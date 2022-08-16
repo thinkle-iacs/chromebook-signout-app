@@ -72,7 +72,7 @@ export async function updateNotifications(
     let results = [];
     for (let b of batched) {
       console.log("Working on batch");
-      results = [...results, await updateNotifications(b)];
+      results = [...results, ...(await updateNotifications(b))];
       console.log("Have results:", results);
     }
     return results;
@@ -113,7 +113,7 @@ export async function createNotifications(
     let results = [];
     for (let b of batched) {
       console.log("Working on batch");
-      results = [...results, await createNotifications(b)];
+      results = [...results, ...(await createNotifications(b))];
       console.log("Have results:", results);
     }
     return results;

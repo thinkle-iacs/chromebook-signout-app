@@ -184,6 +184,35 @@
       }
     }
   }
+
+  function hideAlreadySent() {
+    sortedEntries = sortedEntries.filter((e) => !notificationsByEntry[e.Num]);
+  }
+
+  function selectUpTo(entry) {
+    // We make two round trips...
+    let lastUncheckedBefore = -1;
+    for (let i = 0; i < sortedEntries.length; i++) {
+      let e = sortedEntries[i];
+      if (sendEmails[e.Num]) {
+        // This one is checked...
+        lastUncheckedBefore = i;
+      }
+      if (e == entry) {
+        // If we are the entry, then we are ready to roll!
+        for (
+          let indexToCheck = lastUncheckedBefore;
+          indexToCheck <= i;
+          indexToCheck++
+        ) {
+          let entryToCheck = sortedEntries[indexToCheck];
+          sendEmails[entryToCheck.Num] = true;
+          console.log("checking off", indexToCheck, entryToCheck);
+        }
+        return;
+      }
+    }
+  }
 </script>
 
 <div>
@@ -222,6 +251,7 @@
     <button on:click={onlyLong}>Only Long Term CB</button>
     <button on:click={onlyDaily}>Only Daily CB</button>
     <button on:click={() => (sortedEntries = $fullHistory)}>All</button>
+    <button on:click={hideAlreadySent}>Hide Items Already Sent</button>
     <button
       style="display:inline-block;margin-left:auto"
       on:click={prepareSend}
@@ -255,6 +285,7 @@
             <input
               type="checkbox"
               bind:checked={sendEmails[historyEntry.Num]}
+              on:dblclick={() => selectUpTo(historyEntry)}
             />
             {#if notificationsByEntry[historyEntry.Num]}
               <NotificationNotice
