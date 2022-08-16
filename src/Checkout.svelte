@@ -1,4 +1,6 @@
 <script lang="ts">
+  import StudentContractStatus from "./StudentContractStatus.svelte";
+
   export let mode: "normal" | "it" = "normal";
   import { fly, fade } from "svelte/transition";
   import NameDropdown from "./NameDropdown.svelte";
@@ -360,6 +362,7 @@ Hinge bolts:New screws needed for display hinges*/
               {student.Advisor} Class of {student.YOG}
               (LASID: {student.LASID})
             </a>
+            <StudentContractStatus {student} />
           {/if}
           {#if !studentMode && staff}
             <a tabindex="-1" href={`mailto:${staff.Email}`}>{staff.Email}</a>

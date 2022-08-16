@@ -24,6 +24,30 @@ export type Contract = {
   ID: string;
 };
 
+let lastFetch = null;
+
+export function getContractForStudent(student: Student) {
+  let $contractStore = get(contractStore);
+  let contracts: Contract[] = Object.values($contractStore);
+  let contract = contracts.find(
+    (c) =>
+      c["LASID (from Student)"] &&
+      Number(c["LASID (from Student)"][0]) == Number(student.LASID)
+  );
+  return contract;
+}
+
+export async function updateContracts() {
+  getContracts(false, false, true);
+}
+export async function updateContractsIfNeeded() {
+  let time = new Date().getTime();
+  let threshhold = 60 * 15 * 1000;
+  if (!lastFetch || time - lastFetch > threshhold) {
+    updateContracts();
+  }
+}
+
 export async function getContracts(
   unmapped = true,
   all = false,
@@ -44,7 +68,7 @@ export async function getContracts(
   let json = await response.json();
   console.log("Got asset data:", json);
   contractStore.update(($contractStore) => {
-    $contractStore = {};
+    //$contractStore = {};
     for (let result of json) {
       $contractStore[result.fields["ID"]] = {
         ...result.fields,
@@ -54,6 +78,9 @@ export async function getContracts(
     console.log("contractStore:", JSON.stringify($contractStore));
     return $contractStore;
   });
+  if (mapped || all) {
+    lastFetch = new Date().getTime();
+  }
   return json;
 }
 
