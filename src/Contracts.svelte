@@ -1,13 +1,23 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getContracts, contractStore } from "./data/contracts";
+  import { getContracts, contractStore, mapContract } from "./data/contracts";
   import type { Contract } from "./data/contracts";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
+  import { studentDropdown } from "./validators";
+  import NameDropdown from "./NameDropdown.svelte";
+  import StudentTag from "./StudentTag.svelte";
+  import { studentName, validateStudent } from "./validators";
+  import { getStudent, studentsStore } from "./data/students";
 
   let contract: Contract;
   let lastMode;
+  let student: Student | null;
 
+  let contractList = Object.keys($contractStore);
+  $: contractList = Object.keys($contractStore);
+
+  $: student = getStudent($studentName, $studentsStore);
   onMount(() => {
     changeMode();
   });
@@ -38,9 +48,129 @@
     "Grade Level",
     "Date",
   ];
+
+  let validators = () => ({
+    student: {
+      value: $studentName,
+      validators: [validateStudent],
+    },
+  });
+  let contractForm;
+  let theContract: Contract;
+  function selectContractForMapping(contract: Contract) {
+    theContract = contract;
+    student = null;
+    $studentName =
+      theContract["Student Last"].replace(/\s+$/, "") +
+      ", " +
+      theContract["Student First"].replace(/\s+$/, "");
+  }
+
+  async function doMapContract() {
+    let newContract = await mapContract(theContract, student);
+
+    if (autoContinue) {
+      debugger;
+      let id = theContract.ID;
+      let currentIndex = contractList.indexOf(`${id}`);
+      if (currentIndex > 0) {
+        let nextContract = $contractStore[contractList[currentIndex + 1]];
+        selectContractForMapping(nextContract);
+      }
+    } else {
+      theContract = null;
+    }
+  }
+
+  $: {
+    if (autoMode && student) {
+      console.log("Autoconfirm!");
+      doMapContract();
+    }
+  }
+
+  function doValidation(...args) {
+    console.log("Do validate!", $studentName);
+    if (contractForm) {
+      console.log("Validate");
+      debugger;
+      contractForm.validate();
+    }
+  }
+  $: doValidation(contractForm, $studentName);
+  let nameInput;
+  let autoMode = true;
+  let autoContinue = true;
 </script>
 
 <h2>Map Contracts</h2>
+<input type="checkbox" bind:checked={autoMode} /> Autoconfirm matched students
+<input type="checkbox" bind:checked={autoContinue} /> Move to next student
+automatically
+{#if theContract}
+  <div class="float-me w3-card w3-border w3-white w3-container">
+    <input type="checkbox" bind:checked={autoMode} /> Autoconfirm matched
+    students
+    <input type="checkbox" bind:checked={autoContinue} /> Move to next student
+    <SimpleForm
+      {validators}
+      on:submit={doMapContract}
+      onFormCreated={(f) => {
+        contractForm = f;
+      }}
+    >
+      <table class="w3-table">
+        <tr>
+          <th colspan="2">Contract as filled out...</th>
+        </tr>
+        <tr>
+          <th>Has wifi?:</th>
+          <td>{theContract.WiFi}</td>
+        </tr>
+        <tr>
+          <th>Parent name:</th>
+          <td>{theContract["Parent First"]} {theContract["Parent Last"]}</td>
+        </tr>
+        <tr>
+          <th>Parent signature:</th>
+          <td>{theContract.Signature}</td>
+        </tr>
+        <tr>
+          <th>Student name:</th>
+          <td
+            >{theContract["Student First"]}
+            {theContract["Student Last"]}</td
+          >
+        </tr>
+      </table>
+      <h2>Map to student in database:</h2>
+
+      <FormField
+        name="Search:"
+        errors={contractForm && $contractForm?.fields?.student?.errors}
+      >
+        <input
+          autocomplete="off"
+          id="student"
+          bind:value={$studentName}
+          type="text"
+          bind:this={nameInput}
+        />
+        <div slot="dropdown"><NameDropdown inputElement={nameInput} /></div>
+      </FormField>
+
+      {#if student}
+        Found student: <StudentTag {student} />
+      {:else}
+        No student found...
+      {/if}
+      <div class="w3-bar">
+        <button on:click={() => (theContract = null)}>&times;</button>
+        <input disabled={!student} type="submit" value="Confirm" />
+      </div>
+    </SimpleForm>
+  </div>
+{/if}
 
 <div>
   <nav class="w3-bar w3-border-bottom">
@@ -67,7 +197,8 @@
     </button> -->
   </nav>
   <table>
-    {#each Object.keys($contractStore) as contractId}
+    <!-- {#each Object.keys($contractStore) as contractId} -->
+    {#each contractList as contractId}
       {@const contract = $contractStore[contractId]}
       <tr>
         {#each contractFields as field}
@@ -82,9 +213,9 @@
             {contract["Name (from Student)"][0]}
             {contract["Email (from Student)"][0]}
           {:else}
-            <input
-              value="{contract['Student First']} {contract['Student Last']}"
-            />
+            <button on:click={() => selectContractForMapping(contract)}
+              >MAP</button
+            >
           {/if}
         </td>
       </tr>
@@ -92,10 +223,15 @@
   </table>
 </div>
 
-<SimpleForm>
-  <FormField />
-  <input type="submit" value="Submit" />
-</SimpleForm>
-
 <style>
+  .float-me {
+    background-color: white;
+    width: 80vw;
+    max-height: 70vh;
+    overflow-y: scroll;
+    position: fixed;
+    top: 10vh;
+    left: 10vh;
+    z-index: 99;
+  }
 </style>

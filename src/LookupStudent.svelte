@@ -1,4 +1,6 @@
 <script lang="ts">
+  import StudentTag from "./StudentTag.svelte";
+
   import router from "page";
   import type { Student } from "./students";
   import type { Asset } from "./data/inventory";
@@ -118,14 +120,7 @@
         {student.Name}
       </header>
       <div class="w3-container">
-        <p>
-          Name: {student.Name}
-        </p>
-        <p>Advisor: {student.Advisor}</p>
-        <p>YOG: {student.YOG}</p>
-        <p>
-          Email: <a href={`mailto:${student.Email}`}>{student.Email}</a>
-        </p>
+        <StudentTag {student} />
         <h3>Current Loans:</h3>
         {#if !current}
           <p class="w3-opacity w3-ital">Fetching...</p>
