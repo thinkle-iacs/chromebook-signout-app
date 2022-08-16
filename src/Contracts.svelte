@@ -4,7 +4,6 @@
   import type { Contract } from "./data/contracts";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
-  import { studentDropdown } from "./validators";
   import NameDropdown from "./NameDropdown.svelte";
   import StudentTag from "./StudentTag.svelte";
   import { studentName, validateStudent } from "./validators";
@@ -15,7 +14,13 @@
   let student: Student | null;
 
   let contractList = Object.keys($contractStore);
-  $: contractList = Object.keys($contractStore);
+  $: contractList = Object.keys($contractStore).filter((contractKey) => {
+    if (mode == "Mapped") {
+      return $contractStore[contractKey].Student?.length;
+    } else {
+      return !$contractStore[contractKey].Student?.length;
+    }
+  });
 
   $: student = getStudent($studentName, $studentsStore);
   onMount(() => {
@@ -68,9 +73,7 @@
 
   async function doMapContract() {
     let newContract = await mapContract(theContract, student);
-
     if (autoContinue) {
-      debugger;
       let id = theContract.ID;
       let currentIndex = contractList.indexOf(`${id}`);
       if (currentIndex > 0) {
@@ -93,7 +96,6 @@
     console.log("Do validate!", $studentName);
     if (contractForm) {
       console.log("Validate");
-      debugger;
       contractForm.validate();
     }
   }
@@ -108,10 +110,12 @@
 <input type="checkbox" bind:checked={autoContinue} /> Move to next student
 automatically
 {#if theContract}
-  <div class="float-me w3-card w3-border w3-white w3-container">
-    <input type="checkbox" bind:checked={autoMode} /> Autoconfirm matched
-    students
-    <input type="checkbox" bind:checked={autoContinue} /> Move to next student
+  <div class="float-me w3-card w3-border w3-white w3-container w3-padding-32">
+    <div class="w3-container">
+      <input type="checkbox" bind:checked={autoMode} /> Autoconfirm matched
+      students
+      <input type="checkbox" bind:checked={autoContinue} /> Move to next student
+    </div>
     <SimpleForm
       {validators}
       on:submit={doMapContract}
@@ -119,7 +123,7 @@ automatically
         contractForm = f;
       }}
     >
-      <table class="w3-table">
+      <table class="w3-table w3-responsive">
         <tr>
           <th colspan="2">Contract as filled out...</th>
         </tr>
@@ -162,11 +166,18 @@ automatically
       {#if student}
         Found student: <StudentTag {student} />
       {:else}
-        No student found...
+        Searching...
       {/if}
-      <div class="w3-bar">
-        <button on:click={() => (theContract = null)}>&times;</button>
-        <input disabled={!student} type="submit" value="Confirm" />
+      <div class="w3-bar button-bar">
+        <button class="w3-button w3-round" on:click={() => (theContract = null)}
+          >&times; Close</button
+        >
+        <input
+          class="w3-button w3-blue nospace"
+          disabled={!student}
+          type="submit"
+          value="Confirm"
+        />
       </div>
     </SimpleForm>
   </div>
@@ -196,25 +207,39 @@ automatically
       All Contracts
     </button> -->
   </nav>
-  <table>
+  <table class="w3-table w3-striped w3-bordered w3-responsive">
     <!-- {#each Object.keys($contractStore) as contractId} -->
+    <tr class="w3-pale-blue">
+      {#each contractFields as field}
+        <th>{field}</th>
+      {/each}
+      <td>Student</td>
+    </tr>
     {#each contractList as contractId}
       {@const contract = $contractStore[contractId]}
       <tr>
         {#each contractFields as field}
-          <td>
+          <td class:signature={field == "Signature"}>
             <span>{contract[field]}</span>
           </td>
         {/each}
         <td>
           {#if contract.Student && contract.Student.length}
-            Mapped: {contract.Student[0]}
-            {contract["LASID (from Student)"][0]}
-            {contract["Name (from Student)"][0]}
-            {contract["Email (from Student)"][0]}
+            {#if contract["Name (from Student)"]}<b
+                >{contract["Name (from Student)"][0]}</b
+              >{/if}
+            <div class="w3-small">
+              {#if contract["LASID (from Student)"]}{contract[
+                  "LASID (from Student)"
+                ][0]}{/if}
+
+              {#if contract["Email (from Student)"]}<br />{contract[
+                  "Email (from Student)"
+                ][0]}{/if}
+            </div>
           {:else}
             <button on:click={() => selectContractForMapping(contract)}
-              >MAP</button
+              >Find Student</button
             >
           {/if}
         </td>
@@ -233,5 +258,15 @@ automatically
     top: 10vh;
     left: 10vh;
     z-index: 99;
+  }
+  .signature {
+    font-style: italic;
+  }
+  .button-bar {
+    display: flex;
+    justify-content: end;
+  }
+  input[type="submit"].nospace {
+    margin-left: 0;
   }
 </style>
