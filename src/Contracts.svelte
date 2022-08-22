@@ -72,12 +72,17 @@
   }
 
   async function doMapContract() {
-    let newContract = await mapContract(theContract, student);
+    let nextContract;
     if (autoContinue) {
       let id = theContract.ID;
       let currentIndex = contractList.indexOf(`${id}`);
-      if (currentIndex > 0) {
-        let nextContract = $contractStore[contractList[currentIndex + 1]];
+      if (currentIndex > -1) {
+        nextContract = $contractStore[contractList[currentIndex + 1]];
+      }
+    }
+    let newContract = await mapContract(theContract, student);
+    if (autoContinue) {
+      if (nextContract) {
         selectContractForMapping(nextContract);
       }
     } else {
