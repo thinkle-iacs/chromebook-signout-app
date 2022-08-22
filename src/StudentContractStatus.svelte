@@ -57,7 +57,7 @@
     position: absolute;
     top: 48px;
     left: 0;
-    z-index: 2
+    z-index: 2;
     transition: opacity 300ms;
     pointer-events: none;
     opacity: 0;
