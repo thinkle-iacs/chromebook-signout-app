@@ -9,9 +9,12 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     filterByFormula,
     fields: [
       "Contact1Email",
-      "Contact1ReceivesEmail",
       "Contact2Email",
-      "Contact2ReceivesEmail",
+      "Contact3Email",
+      "Contact4Email",
+      "Contact5Email",
+      "Contact6Email",
+      "Contact7Email",
       "LASID (from Student)",
     ],
   });

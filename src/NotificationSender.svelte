@@ -1,6 +1,7 @@
 <script lang="ts">
-  import NotificationSummary from "./NotificationSummary.svelte";
+  import MessageRow from "./MessageRow.svelte";
 
+  import NotificationSummary from "./NotificationSummary.svelte";
   import {
     createNotifications,
     getNotifications,
@@ -11,6 +12,8 @@
     NotificationResult,
     NotificationUpdates,
   } from "./data/notifications";
+  import { messagesStore } from "./data/messages";
+  import Message from "./Message.svelte";
   export let notifications;
 
   let toSend: Notification[] = [];
@@ -77,7 +80,11 @@
 
   <div>
     To Send:
-    {JSON.stringify(toSend)}
+    <table class="w3-table">
+      {#each toSend as notification}
+        <MessageRow {notification} />
+      {/each}
+    </table>
   </div>
 {/if}
 
