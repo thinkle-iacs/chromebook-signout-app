@@ -47,6 +47,22 @@ staffName.subscribe((s) => {
   }
 });
 
+assetTag.subscribe((s) => {
+  console.log("Asset Tag change!", s);
+  if (s.toUpperCase) {
+    let value = s.toUpperCase();
+    console.log("Upper", value);
+    return value;
+  } else {
+    console.log("Unchanged", s);
+    return s;
+  }
+});
+
+assetTags.subscribe((ss) =>
+  ss.map((s) => (s.toUpperCase() && s.toUpperCase()) || s)
+);
+
 let studentUpdateCount = 0;
 export const validateStudent = async (s) => {
   console.log("Validate student", s);
@@ -148,6 +164,9 @@ export const validateAssets = async (assets: string[], isCharger = false) => {
   let aggregateResult = { name: "Asset found", valid: true };
   let errors = [];
   for (let asset of assets) {
+    if (asset.toUpperCase) {
+      asset = asset.toUpperCase();
+    }
     let result = await validateAsset(asset, isCharger);
     if (!result.valid) {
       errors.push(result);

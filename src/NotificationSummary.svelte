@@ -22,13 +22,16 @@
     </header>
     <div class="w3-container to">
       Recipients: {fields.Recipient}
-      {fields.Recipient2}
+      {fields.Recipient2 || ""}
       {fields.Recipient3 || ""}
       {fields.Recipient4 || ""}
     </div>
     <div class="w3-container message-status">
-      Tell AirTable to Send? {fields.Send || "Not yet"}
-      {#if fields.Send}<br />Actually Sent? {fields.Sent || "Not yet"}{/if}
+      {#if fields.Send && fields.Sent}<br />Sent!
+      {:else if fields.Send}Queued to send!
+      {:else}
+        Not yet queued up
+      {/if}
     </div>
     {#if mode != "COMPACT"}
       {#if mode == "EXPANDED"}

@@ -13,7 +13,7 @@
     NotificationUpdates,
   } from "./data/notifications";
   import { messagesStore } from "./data/messages";
-  import Message from "./Message.svelte";
+  import Message from "./BulkMessageSender.svelte";
   export let notifications;
 
   let toSend: Notification[] = [];
@@ -28,6 +28,7 @@
         Recipient2: n.Recipient2,
         Recipient3: n.Recipient3,
         Recipient4: n.Recipient4,
+        Send: true,
       };
       return nr;
     });
@@ -60,46 +61,57 @@
   }
 
   let history: NotificationResult[] = [];
+
+  $: updateResults(history);
+
+  function updateResults(history) {
+    let changed = false;
+    for (let item of history) {
+      console.log("Got history item", item);
+      let correspondingNotification = result.filter(
+        (n) => n.Num == item.fields.Num
+      );
+
+      console.log("Got corresponding item!", correspondingNotification);
+      if (correspondingNotification) {
+        for (let property in item.fields) {
+          // Update???
+          if (correspondingNotification[property] != item.fields[property]) {
+            console.log("Updating", property);
+            correspondingNotification[property] = item.fields[property];
+            changed = true;
+          }
+        }
+      }
+    }
+    if (changed) {
+      result = result;
+    }
+  }
 </script>
 
-<button on:click={getAllNotifications}> Check History </button>
+<!-- <button class="w3-button" on:click={getAllNotifications}>Check History</button> -->
 {#if !result}
-  <button on:click={send}>Queue 'Em Up in AirTable!</button>
-  <table class="w3-table">
-    {#each notifications as n}
-      <tr>
-        <td>{n.Recipient}</td>
-        <td>{n.Recipient2}</td>
-        <td>{n.message.ID}</td>
-        <td>{n.entry["Asset Tag (from Asset)"]}</td>
-        <td>{n.entry.Name}</td>
-        <td>{n.entry.YOG}</td>
-      </tr>
-    {/each}
-  </table>
-
   <div>
     To Send:
-    <table class="w3-table">
-      {#each toSend as notification}
-        <MessageRow {notification} />
-      {/each}
+    <table class="w3-table w3-hoverable">
+      <tbody>
+        {#each notifications as notification}
+          <MessageRow {notification} />
+        {/each}
+      </tbody>
     </table>
   </div>
+  <button class="w3-btn w3-red" on:click={send}
+    >Send {notifications.length} messages</button
+  >
 {/if}
 
 {#if result}
-  <button on:click={sendReal}>Send 'Em For Realzzzz!</button>
   <div>
+    Sent Messages:
     {#each result as row}
       <NotificationSummary fields={row.fields} />
     {/each}
   </div>
-{/if}
-
-{#if history.length}
-  <h2>All Notifications</h2>
-  {#each history as row}
-    <NotificationSummary fields={row.fields} />
-  {/each}
 {/if}

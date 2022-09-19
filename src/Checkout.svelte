@@ -1,4 +1,6 @@
 <script lang="ts">
+  import MessageSender from "./MessageSender.svelte";
+
   import StudentContractStatus from "./StudentContractStatus.svelte";
 
   export let mode: "normal" | "it" = "normal";
@@ -19,6 +21,7 @@
   import { assetStore } from "./data/inventory";
   import { staffStore } from "./data/staff";
   import { writable, get } from "svelte/store";
+
   import {
     studentName,
     staffName,
@@ -30,6 +33,9 @@
     validateAsset,
   } from "./validators";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
+  import { contactStore, getContacts } from "./data/contacts";
+  import { onMount } from "svelte";
+  import { createEmail } from "./messageUtils";
 
   let status: CheckoutStatus = "Out";
   let notes = "";
@@ -39,6 +45,12 @@
   let staff: Staff | null = null;
   let assets: Asset[] | null = null;
   let charger: null = null;
+
+  onMount(async () => {
+    console.log("Fetch contacts!");
+    await getContacts();
+    console.log($contactStore);
+  });
 
   let validators = () => ({
     assetTag: {
@@ -110,7 +122,7 @@
   );
   $: student = studentMode && getStudent($studentName);
   $: staff = !studentMode && $staffStore[$staffName];
-  $: assets = $assetTags.map((assetTag) => $assetStore[assetTag]);
+  $: assets = $assetTags.map((assetTag) => $assetStore[assetTag.toUpperCase()]);
   $: charger = $assetStore[$chargerTag];
 
   let checkedOut: {
@@ -581,6 +593,8 @@ Hinge bolts:New screws needed for display hinges*/
 </article>
 
 {#if checkedOut.length}
+  Send Message:
+  <MessageSender signoutItem={checkedOut[0]} />
   <article class="w3-container">
     <h4>Recent Updates</h4>
     <SignoutHistoryTable signoutHistoryItems={checkedOut} />

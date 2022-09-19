@@ -4,7 +4,7 @@
   import Contracts from "./Contracts.svelte";
   import LookupStudent from "./LookupStudent.svelte";
   import History from "./History.svelte";
-  import Message from "./Message.svelte";
+  import Message from "./BulkMessageSender.svelte";
   import router from "page";
   import LogIn from "./LogIn.svelte";
   import { loggedIn, user } from "./data/user";
@@ -17,6 +17,7 @@
   let itUsers = [
     "thinkle@innovationcharter.org",
     "ntroy@innovationcharter.org",
+    "aspence@innovationcharter.org",
   ];
 
   let isIt: boolean = false;

@@ -9,6 +9,7 @@ export type Notification = {
   Recipient3?: string;
   Recipient4?: string;
   ExtraText?: string;
+  Send?: boolean;
 };
 
 export type NotificationFields = {

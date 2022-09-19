@@ -15,6 +15,7 @@
   import { assetStore, getCurrentLoansForStudent } from "./data/inventory";
   import { lookupSignoutHistory } from "./data/signoutHistory";
   import App from "./App.svelte";
+  import MessageSender from "./MessageSender.svelte";
   export let name;
   if (name) {
     $studentName = name;
@@ -89,6 +90,22 @@
   }
 
   let nameInput: HTMLInputElement | null;
+  let latestLoan;
+
+  function getLatestLoan(loans: SignoutHistoryEntry[]) {
+    if (!loans) {
+      return;
+    }
+    latestLoan = loans.find((l) => {
+      if (l.LASID == student.LASID) {
+        if (l.Status == "Out") {
+          return true;
+        }
+      }
+    });
+  }
+
+  $: getLatestLoan(loans);
 </script>
 
 <div class="search w3-xlarge w3-container">
@@ -135,6 +152,9 @@
         {#if !loans}
           <p class="w3-opacity w3-ital">Fetching...</p>
         {:else if loans.length}
+          {#if latestLoan}
+            <MessageSender signoutItem={latestLoan} />
+          {/if}
           <SignoutHistoryTable signoutHistoryItems={loans} {student} />
         {:else}
           Never signed anything out.
