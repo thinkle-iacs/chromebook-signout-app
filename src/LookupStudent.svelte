@@ -155,7 +155,11 @@
           {#if latestLoan}
             <MessageSender signoutItem={latestLoan} />
           {/if}
-          <SignoutHistoryTable signoutHistoryItems={loans} {student} />
+          <SignoutHistoryTable
+            signoutHistoryItems={loans}
+            {student}
+            studentOnlyMode={true}
+          />
         {:else}
           Never signed anything out.
         {/if}

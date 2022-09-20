@@ -9,7 +9,7 @@
   export let signoutHistoryItems: SignoutHistoryEntry[];
   export let student: Student | null;
   export let currentOnlyMode = false;
-  let studentOnlyMode = false;
+  export let studentOnlyMode = false;
   export let dailyOnlyMode = false;
   $: console.log(signoutHistoryItems);
 </script>
