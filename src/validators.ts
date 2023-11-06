@@ -20,14 +20,14 @@ export let chargerTag = writable("");
 
 function toTitleCase(s: string) {
   if (s) {
-    s = s[0].toUpperCase() + s.substr(1);
+    s = s[0].toUpperCase() + s.substring(1);
     let commaAt = s.indexOf(", ");
     if (commaAt > -1 && commaAt < s.length - 2) {
       console.log("Got comma", commaAt, s);
       s =
-        s.substr(0, commaAt + 2) +
+        s.substring(0, commaAt + 2) +
         s[commaAt + 2].toUpperCase() +
-        s.substr(commaAt + 3);
+        s.substring(commaAt + 3);
     }
     return s;
   } else {
@@ -35,7 +35,7 @@ function toTitleCase(s: string) {
   }
 }
 
-studentName.subscribe((s) => {
+/* studentName.subscribe((s) => {
   if (s) {
     studentName.update((s) => toTitleCase(s));
   }
@@ -46,7 +46,7 @@ staffName.subscribe((s) => {
     staffName.update((s) => toTitleCase(s));
   }
 });
-
+ */
 assetTag.subscribe((s) => {
   console.log("Asset Tag change!", s);
   if (s.toUpperCase) {
@@ -81,6 +81,7 @@ export const validateStudent = async (s) => {
     };
   } else {
     let valid = false;
+    debugger;
     let results = await searchForStudent(s);
     if (results.length == 0) {
       return {
