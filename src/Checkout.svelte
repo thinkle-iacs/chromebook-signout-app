@@ -92,12 +92,12 @@
             valid,
           };
         },
-        (s) => ({
+        /* (s) => ({
           name: "Enter name in format: Last, First",
           // show warning if there is a string with a space but no comma
           valid: !s || s.indexOf(" ") == -1 || s.indexOf(",") > -1,
           type: "warning",
-        }),
+        }), */
         validateStudent,
       ],
     },
