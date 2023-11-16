@@ -1,5 +1,8 @@
 <script lang="ts">
+  import AssetDisplay from "./AssetDisplay.svelte";
   import type { ChromebookInfo } from "./data/google";
+  import { assetStore, type Asset, searchForAsset } from "./data/inventory";
+
   export let info: ChromebookInfo;
   info.activeTimeRanges;
 
@@ -22,44 +25,79 @@
     }
   }
   let showAllUsers = false;
+  let asset: Asset;
+  if ($assetStore[info.serialNumber.toLowerCase()]) {
+    asset = $assetStore[info.serialNumber.toLowerCase()];
+    console.log("Already had ", asset, "for", info);
+  } else {
+    searchForAsset(null, null, info.serialNumber).then((val) => {
+      asset = $assetStore[info.serialNumber.toLowerCase()];
+    });
+  }
 </script>
 
 <div class="w3-small w3-card w3-container">
-  <h2>Google Admin Console Info</h2>
-  <div>
-    Info from Console for machine with s/n {info.serialNumber}
-    <br />Mac address: {info.macAddress}
-    <br />Model: {info.model}
-    <br />Manufactured: {info.manufatureDate}
-  </div>
-
-  <h3>Last Users:</h3>
-  <ul class="w3-ul">
-    {#each info.recentUsers as user, idx}
-      {#if showAllUsers || idx < 5}
-        <li>{user.email}</li>
+  <h4>Google Admin Console Info</h4>
+  <div class="w3-row">
+    <div class="w3-col l8 m8 s12">
+      Info from Console for machine with s/n {info.serialNumber}
+      <br />Mac address: {info.macAddress}
+      <br />Model: {info.model}
+      {#if info.manufactureDate}<br />Manufactured: {info.manufactureDate}{/if}
+      {#if info.lastKnownNetwork}
+        {#each info.lastKnownNetwork as network}
+          <br />Last network: {network.ipAddress}
+          ({network.wanIpAddress})
+        {/each}
       {/if}
-    {/each}
-
-    {#if info.recentUsers?.length > 5}
-      <li>
-        <button
-          class="w3-button"
-          on:click={() => (showAllUsers = !showAllUsers)}
-        >
-          {#if showAllUsers}
-            Show less
-          {:else}
-            Show {info.recentUsers.length - 5} more...
+    </div>
+    <div class="w3-col l4 m4 s12">
+      {#if asset}<AssetDisplay {asset} />{/if}
+    </div>
+  </div>
+  <div class="w3-row">
+    <div class="w3-col l6 m6 s12">
+      <h5>Last Users:</h5>
+      <ul class="w3-ul">
+        {#each info.recentUsers as user, idx}
+          {#if showAllUsers || idx < 5}
+            <li>{user.email}</li>
           {/if}
-        </button>
-      </li>
-    {/if}
-  </ul>
-  <h3>Last used:</h3>
-  <ul class="w3-ul">
-    {#each info.activeTimeRanges as timeRange}
-      <li>{timeRange.date} for {formatDuration(timeRange.activeTime)}</li>
-    {/each}
-  </ul>
+        {/each}
+
+        {#if info.recentUsers?.length > 5}
+          <li>
+            <button
+              class="w3-button"
+              on:click={() => (showAllUsers = !showAllUsers)}
+            >
+              {#if showAllUsers}
+                Show less
+              {:else}
+                Show {info.recentUsers.length - 5} more...
+              {/if}
+            </button>
+          </li>
+        {/if}
+      </ul>
+    </div>
+    <div class="w3-col m6 l6 s12">
+      <h5>Last used:</h5>
+      <ul class="w3-ul reverse">
+        {#each info.activeTimeRanges as timeRange}
+          <li>{timeRange.date} for {formatDuration(timeRange.activeTime)}</li>
+        {/each}
+      </ul>
+    </div>
+  </div>
 </div>
+
+<style>
+  .reverse {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .reverse li:last-child {
+    border-bottom: 1px solid #ddd;
+  }
+</style>

@@ -20,13 +20,16 @@ export type Asset = {
   "Charger Type": string | null;
 };
 
-export async function searchForAsset(tag, lasid) {
-  let params = { mode: "asset" };
+export async function searchForAsset(tag, lasid, serial) {
+  let params: any = { mode: "asset" };
   if (tag) {
     params.tag = tag;
   }
   if (lasid) {
     params.lasid = lasid;
+  }
+  if (serial) {
+    params.serial = serial;
   }
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
@@ -34,10 +37,12 @@ export async function searchForAsset(tag, lasid) {
   console.log("Got asset data:", json);
   assetStore.update(($assetStore) => {
     for (let result of json) {
-      $assetStore[result.fields["Asset Tag"]] = {
+      let item = {
         ...result.fields,
         _id: result.id,
       };
+      $assetStore[result.fields["Asset Tag"]] = item;
+      $assetStore[result.fields["Serial"].toLowerCase()] = item;
     }
     console.log("assetStore:", JSON.stringify($assetStore));
     return $assetStore;
