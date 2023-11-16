@@ -7,7 +7,7 @@ export async function handler(
   const { name } = event.queryStringParameters
   let query = staffBase.select({
     maxRecords:100,
-    filterByFormula : `Search("${name}",{Full Name})`,    
+    filterByFormula : `Search("${name.toLowerCase()}",LOWER({Full Name}))`,    
     fields : [
       'Email',
       'First',
