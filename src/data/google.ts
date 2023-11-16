@@ -2,8 +2,6 @@ import { writable, get } from "svelte/store";
 import type { Asset } from "./inventory";
 import type { Student } from "./students";
 
-export let studentsStore = writable({});
-
 export type ChromebookInfo = {
   recentUsers: { type: "USER_TYPE_MANAGED"; email: string }[];
   orgUnitId: string;
@@ -21,7 +19,7 @@ export type ChromebookInfo = {
   osVersion: string;
   annotatedUser: string;
   systemRamTotal: string;
-  manufatureDate: string;
+  manufactureDate: string;
   lastKnownNetwork: { ipAddress: string; wanIpAddress: string }[];
   serialNumber: string;
   macAddress: string;
@@ -57,9 +55,14 @@ export type ChromebookInfo = {
   }[];
 };
 
+let serialCache = {};
+
 export async function getDeviceInfo(
   device: Asset
 ): Promise<ChromebookInfo | void> {
+  if (serialCache[device.Serial]) {
+    return serialCache[device.Serial];
+  }
   let response = await fetch(
     "/.netlify/functions/index?mode=google&serial=" +
       encodeURIComponent(device.Serial)
@@ -68,21 +71,29 @@ export async function getDeviceInfo(
   if (response.status == 200) {
     let json = await response.json();
     console.log("getDeviceInfo returning", json);
+    serialCache[device.Serial] = json.result;
     return json.result as ChromebookInfo;
   }
 }
 
+let userCache = {};
+
 export async function getDevicesForUser(
   user: Student
 ): Promise<ChromebookInfo[] | void> {
+  if (userCache[user.Email]) {
+    return userCache[user.Email];
+  }
   let response = await fetch(
     "/.netlify/functions/index?mode=google&user=" +
       encodeURIComponent(user.Email)
   );
+
   console.log("Fetching devices for ", user.Email);
   if (response.status == 200) {
     let json = await response.json();
     console.log("getDevicesForUser returning", json);
+    userCache[user.Email] = json.result;
     return json.result as ChromebookInfo[];
   }
 }
