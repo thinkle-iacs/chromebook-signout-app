@@ -32,7 +32,7 @@ export async function searchForStudent(name) {
 }
 
 export function getStudent(name: string) : Student {
-  for (let item of Object.values(get(studentsStore))) {
+  for (let item of Object.values(get(studentsStore)) as Student[]) {
     if (item.Name == name) {
       return item;
     }
