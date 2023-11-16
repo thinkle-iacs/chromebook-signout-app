@@ -19,7 +19,7 @@
 
 {#if chromebooks}
   <div class="w3-card w3-container">
-    <h2>Student has used {chromebooks.length} Chromebooks</h2>
+    <h2>Student was last to use {chromebooks.length} Chromebooks</h2>
     {#each chromebooks as chromebook}
       <ChromebookInfoDisplay info={chromebook} />
     {/each}

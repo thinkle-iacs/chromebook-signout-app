@@ -2,7 +2,7 @@
   import StudentTag from "./StudentTag.svelte";
 
   import router from "page";
-  import type { Student } from "./students";
+  import type { Student } from "./data/students";
   import type { Asset } from "./data/inventory";
   import type { SignoutHistoryEntry } from "./data/signoutHistory";
   import AssetDisplay from "./AssetDisplay.svelte";
@@ -12,11 +12,10 @@
   import SimpleForm from "./SimpleForm.svelte";
   import NameDropdown from "./NameDropdown.svelte";
   import { getStudent, studentsStore } from "./data/students";
-  import { assetStore, getCurrentLoansForStudent } from "./data/inventory";
+  import { getCurrentLoansForStudent } from "./data/inventory";
   import { lookupSignoutHistory } from "./data/signoutHistory";
-  import App from "./App.svelte";
   import MessageSender from "./MessageSender.svelte";
-  import StudentCheckoutHistory from "./StudentCheckoutHistory.svelte";
+  import StudentGoogleAdminHistory from "./StudentGoogleAdminHistory.svelte";
   export let name;
   if (name) {
     $studentName = name;
@@ -151,7 +150,7 @@
 
       <div class="w3-container">
         {#if activeTab == "google"}
-          <StudentCheckoutHistory {student} />
+          <StudentGoogleAdminHistory {student} />
         {/if}
         {#if activeTab == "loans"}
           <h3>Current Loans:</h3>
