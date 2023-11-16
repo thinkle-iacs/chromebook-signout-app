@@ -39,12 +39,12 @@
 </script>
 
 <div class="w3-small w3-card w3-container">
-  <h4>Google Admin</h4>
   {#if info.recentUsers && info.activeTimeRanges}
-    <div class="summary w3-medium">
-      Last used by {info.recentUsers[0].email} on
-      {info.activeTimeRanges[info.activeTimeRanges.length - 1].date}
-    </div>
+    <h4 class="summary w3-medium">
+      Last used by <b>{info.recentUsers[0].email}</b> on
+      <b>{info.activeTimeRanges[info.activeTimeRanges.length - 1].date}</b>
+    </h4>
+    <div class="w3-tiny">According to Google Admin Data</div>
   {/if}
   <div class="w3-row">
     <div class="w3-col l8 m8 s12">
