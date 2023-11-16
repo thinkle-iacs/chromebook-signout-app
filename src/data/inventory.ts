@@ -42,7 +42,9 @@ export async function searchForAsset(tag, lasid, serial) {
         _id: result.id,
       };
       $assetStore[result.fields["Asset Tag"]] = item;
-      $assetStore[result.fields["Serial"].toLowerCase()] = item;
+      if (result.fields["Serial"]) {
+        $assetStore[result.fields["Serial"].toLowerCase()] = item;
+      }
     }
     console.log("assetStore:", JSON.stringify($assetStore));
     return $assetStore;
@@ -52,7 +54,7 @@ export async function searchForAsset(tag, lasid, serial) {
 }
 
 export async function getCurrentLoansForStudent(student) {
-  let results = await searchForAsset(null, student.LASID);
+  let results = await searchForAsset(null, student.LASID, null);
   if (results.length) {
     let $assetStore = get(assetStore);
     return results.map((result) => $assetStore[result.fields["Asset Tag"]]);
