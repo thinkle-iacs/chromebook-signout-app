@@ -9,6 +9,8 @@
   import { assetStore, searchForAsset } from "./data/inventory";
   import { lookupSignoutHistory } from "./data/signoutHistory";
   import { assetTag, validateAsset } from "./validators";
+  import { ChromebookInfo, getDeviceInfo } from "./data/google";
+  import ChromebookInfoDisplay from "./ChromebookInfoDisplay.svelte";
   export let tag;
   $: if (tag) {
     $assetTag = tag;
@@ -51,9 +53,21 @@
     }
   }
 
+  let googleChromebookInfo: ChromebookInfo | null;
+
+  async function getGoogleInfo() {
+    console.log("Looking up info?", asset.Serial);
+    googleChromebookInfo = (await getDeviceInfo(asset)) || null;
+    console.log("Got info", googleChromebookInfo);
+  }
+
   $: if (asset) {
+    googleChromebookInfo = null;
+    getGoogleInfo();
     getHistory();
     router("/asset/" + asset["Asset Tag"]);
+  } else {
+    googleChromebookInfo = null;
   }
 </script>
 
@@ -83,6 +97,11 @@
       <div class="center">
         <div class="w3-card-4 w3-center empty">No signout history</div>
       </div>
+    {/if}
+    {#if googleChromebookInfo}
+      <ChromebookInfoDisplay info={googleChromebookInfo} />
+    {:else}
+      No google info found (yet)
     {/if}
   {/if}
 </article>

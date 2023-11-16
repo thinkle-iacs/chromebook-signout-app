@@ -8,6 +8,7 @@ import {handler as contractHandler} from './contracts';
 import {handler as notificationsHandler} from './notifications';
 import {handler as contactHandler} from './contacts';
 import {handler as messageHandler} from './messages';
+import {handler as googleHandler} from './googleAdmin';
 let modes = {
   student : studentHandler,
   asset : inventoryHandler,
@@ -17,7 +18,8 @@ let modes = {
   contract : contractHandler,
   contact : contactHandler,
   notifications : notificationsHandler,
-  message : messageHandler
+  message : messageHandler,
+  google: googleHandler
 }
 
 export async function handler(
