@@ -16,6 +16,7 @@
   import { lookupSignoutHistory } from "./data/signoutHistory";
   import App from "./App.svelte";
   import MessageSender from "./MessageSender.svelte";
+  import StudentCheckoutHistory from "./StudentCheckoutHistory.svelte";
   export let name;
   if (name) {
     $studentName = name;
@@ -106,6 +107,7 @@
   }
 
   $: getLatestLoan(loans);
+  let activeTab: "loans" | "google" | "info" = "info";
 </script>
 
 <div class="search w3-xlarge w3-container">
@@ -136,32 +138,57 @@
       <header class="w3-container w3-blue w3-bar-block w3-padding-24">
         {student.Name}
       </header>
+      <nav class="w3-nav w3-bar w3-border-bottom">
+        <button
+          class="w3-bar-item w3-button"
+          class:w3-blue={activeTab == "info"}
+          on:click={() => (activeTab = "info")}>Student</button
+        >
+        <button
+          class="w3-bar-item w3-button"
+          class:w3-blue={activeTab == "loans"}
+          on:click={() => (activeTab = "loans")}>Loan History</button
+        >
+        <button
+          class="w3-bar-item w3-button"
+          class:w3-blue={activeTab == "google"}
+          on:click={() => (activeTab = "google")}>Google Admin Data</button
+        >
+      </nav>
+
       <div class="w3-container">
-        <StudentTag {student} />
-        <h3>Current Loans:</h3>
-        {#if !current}
-          <p class="w3-opacity w3-ital">Fetching...</p>
-        {:else}
-          {#each current as asset}
-            <AssetDisplay {asset} />
-          {:else}
-            No current loans
-          {/each}
+        {#if activeTab == "info"}
+          <StudentTag {student} />
         {/if}
-        <h3>Signout History:</h3>
-        {#if !loans}
-          <p class="w3-opacity w3-ital">Fetching...</p>
-        {:else if loans.length}
-          {#if latestLoan}
-            <MessageSender signoutItem={latestLoan} />
+        {#if activeTab == "google"}
+          <StudentCheckoutHistory {student} />
+        {/if}
+        {#if activeTab == "loans"}
+          <h3>Current Loans:</h3>
+          {#if !current}
+            <p class="w3-opacity w3-ital">Fetching...</p>
+          {:else}
+            {#each current as asset}
+              <AssetDisplay {asset} />
+            {:else}
+              No current loans
+            {/each}
           {/if}
-          <SignoutHistoryTable
-            signoutHistoryItems={loans}
-            {student}
-            studentOnlyMode={true}
-          />
-        {:else}
-          Never signed anything out.
+          <h3>Signout History:</h3>
+          {#if !loans}
+            <p class="w3-opacity w3-ital">Fetching...</p>
+          {:else if loans.length}
+            {#if latestLoan}
+              <MessageSender signoutItem={latestLoan} />
+            {/if}
+            <SignoutHistoryTable
+              signoutHistoryItems={loans}
+              {student}
+              studentOnlyMode={true}
+            />
+          {:else}
+            Never signed anything out.
+          {/if}
         {/if}
       </div>
     </article>
