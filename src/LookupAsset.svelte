@@ -69,6 +69,7 @@
   } else {
     googleChromebookInfo = null;
   }
+  let mode: "history" | "google" = "history";
 </script>
 
 <article class="w3-container w3-padding-24 w3-xlarge">
@@ -91,17 +92,36 @@
   </SimpleForm>
   {#if asset}
     <AssetDisplay {asset} showOwner={true} />
-    {#if history.length}
-      <SignoutHistoryTable signoutHistoryItems={history} />
-    {:else}
-      <div class="center">
-        <div class="w3-card-4 w3-center empty">No signout history</div>
-      </div>
-    {/if}
-    {#if googleChromebookInfo}
-      <ChromebookInfoDisplay info={googleChromebookInfo} />
-    {:else}
-      No google info found (yet)
+    <div class="w3-bar w3-row w3-border-bottom w3-medium">
+      <button
+        class="w3-button w3-bar-item"
+        class:w3-blue={mode == "history"}
+        on:click={() => (mode = "history")}
+      >
+        Signout History
+      </button>
+      <button
+        class="w3-button w3-bar-item"
+        class:w3-blue={mode == "google"}
+        on:click={() => (mode = "google")}
+      >
+        Google Admin Info
+      </button>
+    </div>
+    {#if mode == "history"}
+      {#if history.length}
+        <SignoutHistoryTable signoutHistoryItems={history} />
+      {:else}
+        <div class="center">
+          <div class="w3-card-4 w3-center empty">No signout history</div>
+        </div>
+      {/if}
+    {:else if mode == "google"}
+      {#if googleChromebookInfo}
+        <ChromebookInfoDisplay info={googleChromebookInfo} />
+      {:else}
+        No google info found (yet)
+      {/if}
     {/if}
   {/if}
 </article>

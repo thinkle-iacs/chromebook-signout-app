@@ -107,7 +107,7 @@
   }
 
   $: getLatestLoan(loans);
-  let activeTab: "loans" | "google" | "info" = "info";
+  let activeTab: "loans" | "google" = "loans";
 </script>
 
 <div class="search w3-xlarge w3-container">
@@ -135,15 +135,8 @@
 {#if student}
   <div class="w3-container">
     <article class="w3-card w3-cell-middle">
-      <header class="w3-container w3-blue w3-bar-block w3-padding-24">
-        {student.Name}
-      </header>
+      <StudentTag {student} />
       <nav class="w3-nav w3-bar w3-border-bottom">
-        <button
-          class="w3-bar-item w3-button"
-          class:w3-blue={activeTab == "info"}
-          on:click={() => (activeTab = "info")}>Student</button
-        >
         <button
           class="w3-bar-item w3-button"
           class:w3-blue={activeTab == "loans"}
@@ -157,9 +150,6 @@
       </nav>
 
       <div class="w3-container">
-        {#if activeTab == "info"}
-          <StudentTag {student} />
-        {/if}
         {#if activeTab == "google"}
           <StudentCheckoutHistory {student} />
         {/if}

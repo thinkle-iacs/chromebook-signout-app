@@ -34,14 +34,21 @@
       asset = $assetStore[info.serialNumber.toLowerCase()];
     });
   }
+  let showChart = false;
 </script>
 
 <div class="w3-small w3-card w3-container">
-  <h4>Google Admin Console Info</h4>
+  <h4>Google Admin</h4>
+  {#if info.recentUsers && info.activeTimeRanges}
+    <div class="summary w3-medium">
+      Last used by {info.recentUsers[0].email} on
+      {info.activeTimeRanges[info.activeTimeRanges.length - 1].date}
+    </div>
+  {/if}
   <div class="w3-row">
     <div class="w3-col l8 m8 s12">
-      Info from Console for machine with s/n {info.serialNumber}
-      <br />Mac address: {info.macAddress}
+      s/n: {info.serialNumber}
+      <br />mac: {info.macAddress}
       <br />Model: {info.model}
       {#if info.manufactureDate}<br />Manufactured: {info.manufactureDate}{/if}
       {#if info.lastKnownNetwork}
@@ -55,41 +62,50 @@
       {#if asset}<AssetDisplay {asset} />{/if}
     </div>
   </div>
-  <div class="w3-row">
-    <div class="w3-col l6 m6 s12">
-      <h5>Last Users:</h5>
-      <ul class="w3-ul">
-        {#each info.recentUsers as user, idx}
-          {#if showAllUsers || idx < 5}
-            <li>{user.email}</li>
-          {/if}
-        {/each}
+  <button
+    class="w3-button"
+    class:w3-blue={showChart}
+    on:click={() => (showChart = !showChart)}
+  >
+    Show Full History
+  </button>
+  {#if showChart}
+    <div class="w3-row">
+      <div class="w3-col l6 m6 s12">
+        <h5>Last Users:</h5>
+        <ul class="w3-ul">
+          {#each info.recentUsers as user, idx}
+            {#if showAllUsers || idx < 5}
+              <li>{user.email}</li>
+            {/if}
+          {/each}
 
-        {#if info.recentUsers?.length > 5}
-          <li>
-            <button
-              class="w3-button"
-              on:click={() => (showAllUsers = !showAllUsers)}
-            >
-              {#if showAllUsers}
-                Show less
-              {:else}
-                Show {info.recentUsers.length - 5} more...
-              {/if}
-            </button>
-          </li>
-        {/if}
-      </ul>
+          {#if info.recentUsers?.length > 5}
+            <li>
+              <button
+                class="w3-button"
+                on:click={() => (showAllUsers = !showAllUsers)}
+              >
+                {#if showAllUsers}
+                  Show less
+                {:else}
+                  Show {info.recentUsers.length - 5} more...
+                {/if}
+              </button>
+            </li>
+          {/if}
+        </ul>
+      </div>
+      <div class="w3-col m6 l6 s12">
+        <h5>Last used:</h5>
+        <ul class="w3-ul reverse">
+          {#each info.activeTimeRanges as timeRange}
+            <li>{timeRange.date} for {formatDuration(timeRange.activeTime)}</li>
+          {/each}
+        </ul>
+      </div>
     </div>
-    <div class="w3-col m6 l6 s12">
-      <h5>Last used:</h5>
-      <ul class="w3-ul reverse">
-        {#each info.activeTimeRanges as timeRange}
-          <li>{timeRange.date} for {formatDuration(timeRange.activeTime)}</li>
-        {/each}
-      </ul>
-    </div>
-  </div>
+  {/if}
 </div>
 
 <style>
