@@ -81,7 +81,6 @@ export const validateStudent = async (s) => {
     };
   } else {
     let valid = false;
-    debugger;
     let results = await searchForStudent(s);
     if (results.length == 0) {
       return {
