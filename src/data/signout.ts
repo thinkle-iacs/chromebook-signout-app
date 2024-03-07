@@ -4,7 +4,12 @@ import type { Asset } from "./inventory";
 import { assetStore } from "./inventory";
 import { get } from "svelte/store";
 import { user } from "./user";
-export type CheckoutStatus = "Out" | "Returned" | "Lost";
+export type CheckoutStatus =
+  | "Out"
+  | "Returned"
+  | "Lost"
+  | "Retire"
+  | "Repairing";
 
 export async function signoutAsset(
   student: Student,

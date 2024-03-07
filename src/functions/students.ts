@@ -7,7 +7,7 @@ export async function handler(
   const { name } = event.queryStringParameters
   let query = studentsBase.select({
     maxRecords:100,
-    filterByFormula : `Search("${name}",{Name})`,    
+    filterByFormula : `Search("${name.toLowerCase()}",LOWER({Name}))`,    
     fields : ['LASID','Name','Email','YOG','Advisor']
   })
   let result = await query.firstPage()
