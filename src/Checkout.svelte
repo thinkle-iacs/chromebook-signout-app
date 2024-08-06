@@ -279,6 +279,7 @@
       note: "Keyboard section needed to be replaced",
     },
     { label: "Display Reseat", note: "Reseated display cable" },
+    { label: "ResetOS", note: "Reset ChromeOS (Esc+Rfrsh+Power)" },
 
     /* kybard:Taped keyboard cable
 Screen damage:Screen needed to be replaced
