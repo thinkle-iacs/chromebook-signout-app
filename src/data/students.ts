@@ -8,6 +8,7 @@ export type Student = {
   YOG: string;
   Advisor: string;
   Email: string;
+  Notes: string;
   _id: string;
 };
 let cachedSearch = {};
@@ -40,4 +41,16 @@ export function getStudent(name: string): Student {
       return item;
     }
   }
+}
+
+export async function addStudentNote(student: Student, note: string) {
+  let response = await fetch(
+    "/.netlify/functions/index?mode=updateStudent&studentId=" +
+      student._id +
+      "&note=" +
+      encodeURIComponent(note)
+  );
+  let json = await response.json();
+  console.log("Got data:", json);
+  return json;
 }

@@ -1,41 +1,46 @@
-import type { APIGatewayEvent, Context } from 'aws-lambda'
-import {handler as studentHandler} from './students';
-import {handler as staffHandler} from './staff';
-import {handler as inventoryHandler} from './inventory';
-import {handler as signoutHandler} from './signout';
-import {handler as signoutHistoryHandler} from './signoutHistory'
-import {handler as contractHandler} from './contracts';
-import {handler as notificationsHandler} from './notifications';
-import {handler as contactHandler} from './contacts';
-import {handler as messageHandler} from './messages';
-import {handler as googleHandler} from './googleAdmin';
+import type { APIGatewayEvent, Context } from "aws-lambda";
+import { handler as studentHandler } from "./students";
+import { handler as staffHandler } from "./staff";
+import { handler as inventoryHandler } from "./inventory";
+import { handler as signoutHandler } from "./signout";
+import { handler as signoutHistoryHandler } from "./signoutHistory";
+import { handler as contractHandler } from "./contracts";
+import { handler as notificationsHandler } from "./notifications";
+import { handler as contactHandler } from "./contacts";
+import { handler as messageHandler } from "./messages";
+import { handler as googleHandler } from "./googleAdmin";
+import { handler as updateStudent } from "./updateStudent";
 let modes = {
-  student : studentHandler,
-  asset : inventoryHandler,
-  signout : signoutHandler,
-  signoutHistory : signoutHistoryHandler,
-  staff : staffHandler,
-  contract : contractHandler,
-  contact : contactHandler,
-  notifications : notificationsHandler,
-  message : messageHandler,
-  google: googleHandler
-}
+  student: studentHandler,
+  asset: inventoryHandler,
+  signout: signoutHandler,
+  signoutHistory: signoutHistoryHandler,
+  staff: staffHandler,
+  contract: contractHandler,
+  contact: contactHandler,
+  notifications: notificationsHandler,
+  message: messageHandler,
+  google: googleHandler,
+  updateStudent: updateStudent,
+};
 
 export async function handler(
-  event : APIGatewayEvent,
-  context : Context
+  event: APIGatewayEvent,
+  context: Context
 ): Promise<{ statusCode: number; body: string }> {
   if (modes[event.queryStringParameters.mode]) {
-    return modes[event.queryStringParameters.mode](event,context);
-  } else {    
+    return modes[event.queryStringParameters.mode](event, context);
+  } else {
     return {
-    statusCode: 400,
-    body: JSON.stringify({
-      error : `No known mode provided. We only understand mode : ${Object.keys(modes)}`,
-      params : JSON.stringify(event.queryStringParameters)
-    })
-  };
+      statusCode: 400,
+      body: JSON.stringify({
+        error: `No known mode provided. We only understand mode : ${Object.keys(
+          modes
+        )}`,
+        params: JSON.stringify(event.queryStringParameters),
+      }),
+    };
+  }
 }
 /*   let params = event.queryStringParameters;
   let jsonBody;

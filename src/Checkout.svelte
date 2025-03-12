@@ -17,7 +17,7 @@
   import { l } from "./util";
   import type { CheckoutStatus } from "./data/signout";
   import { signoutAsset } from "./data/signout";
-  import { getStudent } from "./data/students";
+  import { addStudentNote, getStudent } from "./data/students";
   import { assetStore } from "./data/inventory";
   import { staffStore } from "./data/staff";
   import { writable, get } from "svelte/store";
@@ -36,9 +36,12 @@
   import { contactStore, getContacts } from "./data/contacts";
   import { onMount } from "svelte";
   import { createEmail } from "./messageUtils";
+  import StudentNote from "./StudentNote.svelte";
 
   let status: CheckoutStatus = "Out";
   let notes = "";
+  let studentNotes = "";
+  let showStudentNoteMode = false;
   let daily = false;
   let signoutForm;
   let student: Student | null = null;
@@ -172,6 +175,10 @@
     }
     if (charger) {
       success = await doCheckout(charger, (!assets && notes) || "", daily);
+    }
+    if (studentNotes) {
+      success = await addStudentNote(student, studentNotes);
+      console.log("student note success?", success);
     }
     if (success) {
       $studentName = "";
@@ -374,6 +381,7 @@ Hinge bolts:New screws needed for display hinges*/
               {student.Advisor} Class of {student.YOG}
               (LASID: {student.LASID})
             </a>
+            <StudentNote {student} />
             <StudentContractStatus {student} />
           {/if}
           {#if !studentMode && staff}
@@ -582,6 +590,27 @@ Hinge bolts:New screws needed for display hinges*/
       />
     </FormField>
 
+    {#if student}
+      <button
+        class="w3-button"
+        class:w3-light-grey={!showStudentNoteMode}
+        class:w3-blue={showStudentNoteMode}
+        on:click={() => {
+          showStudentNoteMode = !showStudentNoteMode;
+          if (showStudentNoteMode && !studentNotes && student?.Notes) {
+            studentNotes = student.Notes;
+          }
+        }}>{showStudentNoteMode ? "Hide" : "Edit"} Student Notes</button
+      >
+      {#if showStudentNoteMode}
+        <textarea
+          bind:value={studentNotes}
+          class="w3-input w3-border"
+          placeholder="Notes to add for this student"
+          style:height={`${textHeight}px`}
+        />
+      {/if}
+    {/if}
     <input
       class:w3-red={valid}
       disabled={!valid}
