@@ -20,7 +20,7 @@ export type Asset = {
   "Charger Type": string | null;
 };
 
-export async function searchForAsset(tag, lasid, serial) {
+export async function searchForAsset(tag, lasid?, serial?) {
   let params: any = { mode: "asset" };
   if (tag) {
     params.tag = tag;
