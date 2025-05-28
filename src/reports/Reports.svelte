@@ -24,11 +24,12 @@
   let selectedYOG: string | null = null;
   let sortBy: "alphabetical" | "yog" = "alphabetical";
 
+  // Ensure YOG filtering is applied when fetching student loans
   async function fetchData() {
     loading = true;
     if (activeTab === "studentLoans") {
       studentLoans = await normalizeAssets(
-        await getStudentLoans(true, selectedYOG)
+        await getStudentLoans(true, selectedYOG) // Pass selectedYOG for filtering
       );
       sortStudentLoans();
     } else if (activeTab === "staffLoans") {
@@ -249,7 +250,6 @@
                 <th>Assigned User?</th>
                 <th>Last User</th>
                 <th>Last Used</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -264,11 +264,11 @@
                     >{asset["Email (from Student (Current))"]?.[0] || "N/A"}</td
                   >
                   <td>{asset["YOG (from Student (Current))"]?.[0] || "N/A"}</td>
-                  <td>
-                    {machineStatuses[asset["Asset Tag"]]?.lastUserMatch
+                  <td
+                    >{machineStatuses[asset["Asset Tag"]]?.lastUserMatch
                       ? "Yes"
-                      : "No"}
-                  </td>
+                      : "No"}</td
+                  >
                   <td>
                     <span
                       class={machineStatuses[asset["Asset Tag"]]?.lastUserMatch
@@ -317,14 +317,6 @@
                         {/each}
                       </ul>
                     {/if}
-                  </td>
-                  <td>
-                    <button
-                      class="w3-button w3-blue"
-                      on:click={() => checkStatus(asset)}
-                    >
-                      Check Status
-                    </button>
                   </td>
                 </tr>
               {/each}
@@ -403,24 +395,6 @@
       {:else}
         <p>No non-loaned Chromebooks found.</p>
       {/if}
-    {/if}
-
-    {#if machineStatuses}
-      <div class="w3-container">
-        <h3>Machine Status</h3>
-        {#each Object.keys(machineStatuses) as assetTag}
-          <div class="w3-margin-bottom">
-            <strong>Asset Tag:</strong>
-            {assetTag}<br />
-            <strong>Status:</strong>
-            {machineStatuses[assetTag].status}<br />
-            <strong>Last User Match:</strong>
-            {machineStatuses[assetTag].lastUserMatch ? "Yes" : "No"}<br />
-            <strong>Last Used:</strong>
-            {machineStatuses[assetTag].lastUsed || "Unknown"}<br />
-          </div>
-        {/each}
-      </div>
     {/if}
   </div>
 </div>
