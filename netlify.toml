@@ -1,0 +1,12 @@
+#[dev]
+#command = "npm run dev"
+#functions = "functions"
+#publish = "public"
+#port = 8888
+#targetPort = 5000
+[dev]
+  framework = "svelte"
+  command = "npm run dev"
+  targetPort = 5000
+  functions = "functions"
+  port = 8888

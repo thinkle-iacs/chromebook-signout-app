@@ -12,6 +12,8 @@
   import { onMount, SvelteComponent } from "svelte";
   import { fade } from "svelte/transition";
   import LookupStaff from "./LookupStaff.svelte";
+  import Reports from "./reports/Reports.svelte";
+
   let update = 0;
   let title = "IACS Chromebook Signout";
 
@@ -105,6 +107,10 @@
       };
       title = IT_NAME;
     });
+    router("/reports/", (ctx) => {
+      page = Reports;
+      title = "IACS Chromebook Reports";
+    });
     router.start();
   });
   let navActive;
@@ -160,6 +166,13 @@
     >
 
     {#if loggedIn && isIt}
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == Contracts}
+        class:w3-blue={page == Contracts}
+        href="/reports/"
+        on:click={l("/reports/")}>Reports</a
+      >
       <a
         class="w3-bar-item w3-button"
         class:active={page == Contracts}
