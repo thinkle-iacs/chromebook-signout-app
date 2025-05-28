@@ -83,11 +83,13 @@ export async function fetchReport({
   studentLoan = false,
   staffLoan = false,
   notLoaned = false,
+  yog = undefined,
 }: {
   chromebookOnly?: boolean;
   studentLoan?: boolean;
   staffLoan?: boolean;
   notLoaned?: boolean;
+  yog?: string | undefined;
 } = {}) {
   let params: any = { mode: "asset" };
 
@@ -102,6 +104,9 @@ export async function fetchReport({
   }
   if (notLoaned) {
     params.notLoaned = true;
+  }
+  if (yog) {
+    params.yog = yog;
   }
 
   let paramString = new URLSearchParams(params);
@@ -133,8 +138,8 @@ export async function getStaffLoans(chromebookOnly = false) {
 }
 
 // Convenience function: Get student loans
-export async function getStudentLoans(chromebookOnly = false) {
-  return await fetchReport({ chromebookOnly, studentLoan: true });
+export async function getStudentLoans(chromebookOnly = false, yog?: string) {
+  return await fetchReport({ chromebookOnly, studentLoan: true, yog });
 }
 
 // Convenience function: Get non-loaned Chromebooks

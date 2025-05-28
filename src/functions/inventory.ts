@@ -11,6 +11,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     studentLoan,
     staffLoan,
     notLoaned,
+    yog, // Add YOG filter parameter
   } = event.queryStringParameters;
   let filterByFormula = "";
 
@@ -57,6 +58,14 @@ export async function handler(event: APIGatewayEvent, context: Context) {
       : notLoanedFilter;
   }
 
+  // Add filter for YOG (Year of Graduation)
+  if (yog) {
+    const yogFilter = `ARRAYJOIN({YOG (from Student (Current))}, "") = "${yog}"`;
+    filterByFormula = filterByFormula
+      ? `AND(${filterByFormula},${yogFilter})`
+      : yogFilter;
+  }
+
   console.log("Query with filter:", filterByFormula);
 
   let allRecords = [];
@@ -81,10 +90,12 @@ export async function handler(event: APIGatewayEvent, context: Context) {
         "Year of Purchase",
         "Student (Current)",
         "Email (from Student (Current))",
+        "YOG (from Student (Current))", // Ensure YOG is included in the fields
         "Full Name (from User)",
         "SignoutRecordNumber",
         "Charger Type",
         "Staff Email",
+        "LASID",
       ],
       offset, // Pass the offset for pagination
     });
