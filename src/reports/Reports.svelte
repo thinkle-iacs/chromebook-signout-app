@@ -126,6 +126,32 @@
 
     return assignedUserEntry?.lastLoginTime || "Unknown";
   }
+
+  function addMachineInfo(assets, machineStatuses) {
+    return assets.map((asset) => {
+      const assetTag = asset["Asset Tag"];
+      const status = machineStatuses[assetTag] || {};
+      return {
+        ...asset,
+        status: status.status || "Unknown",
+        lastUsed: status.lastUsed || "Unknown",
+        lastUserMatch: status.lastUserMatch || false,
+        googleData: status.googleData || {},
+        lastFiveUsers:
+          status.googleData?.recentUsers?.map((u) => u.email) || [],
+      };
+    });
+  }
+
+  let displayData = [];
+  $: if (activeTab === "studentLoans") {
+    displayData = addMachineInfo(studentLoans, machineStatuses);
+  } else if (activeTab === "staffLoans") {
+    displayData = addMachineInfo(staffLoans, machineStatuses);
+  } else if (activeTab === "nonLoaned") {
+    displayData = addMachineInfo(nonLoanedChromebooks, machineStatuses);
+  }
+  $: console.log(displayData);
 </script>
 
 <div class="w3-container">
