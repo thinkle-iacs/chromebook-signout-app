@@ -97,3 +97,34 @@ export async function getDevicesForUser(
     return json.result as ChromebookInfo[];
   }
 }
+
+export async function checkMachineStatus(asset: Asset) {
+  const googleData = await getDeviceInfo(asset);
+
+  if (!googleData) {
+    console.warn("No Google Admin data found for asset:", asset["Asset Tag"]);
+    return {
+      status: "No data",
+      lastUserMatch: false,
+      lastUsed: null,
+      googleData,
+    };
+  }
+
+  const lastUser = googleData.recentUsers?.[0]?.email?.toLowerCase() || null;
+  const signedOutTo =
+    asset["Email (from Student (Current))"]?.[0]?.toLowerCase() || null;
+
+  const lastUserMatch = lastUser && signedOutTo && lastUser === signedOutTo;
+
+  const lastUsedDate =
+    googleData.activeTimeRanges?.[googleData.activeTimeRanges.length - 1]
+      ?.date || null;
+
+  return {
+    status: lastUserMatch ? "Match" : "Mismatch",
+    lastUserMatch,
+    lastUsed: lastUsedDate,
+    googleData,
+  };
+}
