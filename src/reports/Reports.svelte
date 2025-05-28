@@ -1,3 +1,16 @@
+<!-- TODO
+
+1. Clean up this code (it's part vibe-coded so needs some love).
+2. Add nice filters/sorting to just show the problem machines.
+3. Add the Active/Inactive status into the asset table in air table 
+   so we can see whether these students are actually enrolled or not. 
+   Then add a filter to show only active or inactive students. 
+4. Get CSV export working nicely. 
+5. Integrate emailing directly here w/ our notifications system. 
+6. Integrate notes into the emailing so we can keep track of what we have said/done. 
+
+-->
+
 <script lang="ts">
   import DataExporter from "./DataExporter.svelte";
   import { checkMachineStatus } from "../data/google";
