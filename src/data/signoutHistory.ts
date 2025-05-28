@@ -2,6 +2,7 @@ import type { Asset } from "./inventory";
 import type { Student } from "../students";
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
+import { Staff } from "./staff";
 export type SignoutHistoryEntry = {
   Status: string;
   "Asset Tag (from Asset)": string[];
@@ -31,11 +32,13 @@ export function getStudentLinkFromHistoryItem(
 export async function lookupSignoutHistory({
   asset,
   student,
+  staff,
   isLatest,
   onlyOut,
 }: {
   asset?: Asset;
   student?: Student;
+  staff?: Staff;
   isLatest?: boolean;
   onlyOut?: boolean;
 } = {}): SignoutHistoryEntry[] {
@@ -44,6 +47,7 @@ export async function lookupSignoutHistory({
     assetTag?: string;
     lasid?: number;
     isLatest?: boolean;
+    staffId?: string;
     onlyOut?: boolean;
   } = { mode: "signoutHistory" };
   if (asset) {
@@ -57,6 +61,9 @@ export async function lookupSignoutHistory({
   }
   if (isLatest) {
     params.isLatest = true;
+  }
+  if (staff) {
+    params.staffId = staff._id;
   }
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);

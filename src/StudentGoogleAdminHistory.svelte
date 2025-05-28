@@ -3,7 +3,7 @@
   import type { Student } from "./data/students";
   import type { ChromebookInfo } from "./data/google";
   import { getDevicesForUser } from "./data/google";
-  export let student: Student;
+  export let student: Student | Staff;
   let lastLookedUp = null;
   let chromebooks: ChromebookInfo[] | void;
 
@@ -12,8 +12,10 @@
     chromebooks = await getDevicesForUser(student);
   }
 
-  $: if (student?.LASID != lastLookedUp) {
-    updateChromebooks().then(() => (lastLookedUp = student.LASID));
+  $: if ((student?.LASID || student?.psnOID) != lastLookedUp) {
+    updateChromebooks().then(
+      () => (lastLookedUp = student.LASID || student.psnOID)
+    );
   }
 </script>
 

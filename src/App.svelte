@@ -11,6 +11,7 @@
   import { l } from "./util";
   import { onMount, SvelteComponent } from "svelte";
   import { fade } from "svelte/transition";
+  import LookupStaff from "./LookupStaff.svelte";
   let update = 0;
   let title = "IACS Chromebook Signout";
 
@@ -66,6 +67,15 @@
     router("/student/:name", (ctx) => {
       params.name = ctx.params.name;
       page = LookupStudent;
+      title = "IACS Chromebook Student Lookup";
+    });
+    router("/staff/", (ctx) => {
+      page = LookupStaff;
+      title = "IACS Chromebook Staff Lookup";
+    });
+    router("/staff/:name", (ctx) => {
+      params.name = ctx.params.name;
+      page = LookupStaff;
       title = "IACS Chromebook Student Lookup";
     });
     router("/asset/", (ctx) => {
@@ -133,6 +143,13 @@
       class:w3-blue={page == LookupStudent}
       href="/students/"
       on:click={l("/student/")}>Look Up Student</a
+    >
+    <a
+      class="w3-bar-item w3-button"
+      class:active={page == LookupStaff}
+      class:w3-blue={page == LookupStaff}
+      href="/staff/"
+      on:click={l("/staff/")}>Look Up Staff</a
     >
     <a
       class="w3-bar-item w3-button"

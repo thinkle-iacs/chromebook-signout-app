@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { Staff } from "./staff";
 
 export const assetStore = writable({});
 
@@ -20,7 +21,7 @@ export type Asset = {
   "Charger Type": string | null;
 };
 
-export async function searchForAsset(tag, lasid?, serial?) {
+export async function searchForAsset(tag, lasid?, serial?, staffEmail?) {
   let params: any = { mode: "asset" };
   if (tag) {
     params.tag = tag;
@@ -30,6 +31,9 @@ export async function searchForAsset(tag, lasid?, serial?) {
   }
   if (serial) {
     params.serial = serial;
+  }
+  if (staffEmail) {
+    params.staffEmail = staffEmail;
   }
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
@@ -51,6 +55,16 @@ export async function searchForAsset(tag, lasid?, serial?) {
   });
 
   return json;
+}
+
+export async function getCurrentLoansForStaff(staff) {
+  let results = await searchForAsset(null, null, null, staff.Email);
+  if (results.length) {
+    let $assetStore = get(assetStore);
+    return results.map((result) => $assetStore[result.fields["Asset Tag"]]);
+  } else {
+    return [];
+  }
 }
 
 export async function getCurrentLoansForStudent(student) {
