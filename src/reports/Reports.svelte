@@ -23,6 +23,7 @@
   } from "../data/inventory";
   import AssetDisplay from "../AssetDisplay.svelte";
   import { get } from "svelte/store";
+  import ReportTable from "./ReportTable.svelte";
 
   let activeTab: "studentLoans" | "staffLoans" | "nonLoaned" = "studentLoans";
   let studentLoans = [];
@@ -37,12 +38,15 @@
   let selectedYOG: string | null = null;
   let sortBy: "alphabetical" | "yog" = "alphabetical";
 
+  // Add filtering by Student Status
+  let selectedStudentStatus: string | null = null; // New variable for Student Status
+
   // Ensure YOG filtering is applied when fetching student loans
   async function fetchData() {
     loading = true;
     if (activeTab === "studentLoans") {
       studentLoans = await normalizeAssets(
-        await getStudentLoans(true, selectedYOG) // Pass selectedYOG for filtering
+        await getStudentLoans(true, selectedYOG, selectedStudentStatus) // Pass Student Status
       );
       sortStudentLoans();
     } else if (activeTab === "staffLoans") {
@@ -151,15 +155,25 @@
         lastUsed: status.lastUsed || "Unknown",
         lastUserMatch: status.lastUserMatch || false,
         googleData: status.googleData || {},
-        lastFiveUsers:
-          status.googleData?.recentUsers?.map((u) => u.email) || [],
+        recentUsers: status.googleData?.recentUsers?.map((u) => u.email) || [],
+        sessions: status.googleData?.activeTimeRanges.map((r) => r.date) || [],
       };
     });
   }
 
   let displayData = [];
+  let columns = [];
+  let headers = [];
   $: if (activeTab === "studentLoans") {
+    console.log("Update display data for students");
     displayData = addMachineInfo(studentLoans, machineStatuses);
+    columns = [
+      "_ASSET",
+      "Email (from Student (Current))",
+      "YOG (from Student (Current))",
+      "Student Status",
+    ];
+    headers = ["Asset Tag", "Email", "YOG", "Active Student"];
   } else if (activeTab === "staffLoans") {
     displayData = addMachineInfo(staffLoans, machineStatuses);
   } else if (activeTab === "nonLoaned") {
@@ -205,6 +219,18 @@
           placeholder="Enter YOG (e.g., 2023)"
           bind:value={selectedYOG}
         />
+        <label for="studentStatus" class="w3-margin-left"
+          >Filter by Student Status:</label
+        >
+        <select
+          id="studentStatus"
+          class="w3-select w3-border w3-inline"
+          bind:value={selectedStudentStatus}
+        >
+          <option value="">All</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
         <label for="sort" class="w3-margin-left">Sort by:</label>
         <select
           id="sort"
@@ -252,6 +278,7 @@
           "Last User",
         ]}
       ></DataExporter>
+      <ReportTable data={displayData} {columns} {headers} />
       {#if studentLoans.length}
         <div class="w3-responsive">
           <table class="w3-table w3-bordered w3-striped">

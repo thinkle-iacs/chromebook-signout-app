@@ -84,12 +84,14 @@ export async function fetchReport({
   staffLoan = false,
   notLoaned = false,
   yog = undefined,
+  studentStatus = undefined, // New field for filtering by Student Status
 }: {
   chromebookOnly?: boolean;
   studentLoan?: boolean;
   staffLoan?: boolean;
   notLoaned?: boolean;
   yog?: string | undefined;
+  studentStatus?: string | undefined; // Allow querying by Student Status
 } = {}) {
   let params: any = { mode: "asset" };
 
@@ -108,6 +110,9 @@ export async function fetchReport({
   if (yog) {
     params.yog = yog;
   }
+  if (studentStatus) {
+    params.studentStatus = studentStatus; // Pass Student Status to query
+  }
 
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
@@ -120,12 +125,8 @@ export async function fetchReport({
         ...result.fields,
         _id: result.id,
       };
-      $assetStore[result.fields["Asset Tag"]] = item;
-      if (result.fields["Serial"]) {
-        $assetStore[result.fields["Serial"].toLowerCase()] = item;
-      }
+      $assetStore[item["Asset Tag"]] = item;
     }
-    console.log("assetStore:", JSON.stringify($assetStore));
     return $assetStore;
   });
 
@@ -138,8 +139,8 @@ export async function getStaffLoans(chromebookOnly = false) {
 }
 
 // Convenience function: Get student loans
-export async function getStudentLoans(chromebookOnly = false, yog?: string) {
-  return await fetchReport({ chromebookOnly, studentLoan: true, yog });
+export async function getStudentLoans(chromebookOnly = false, yog?: string, studentStatus?: string) {
+  return await fetchReport({ chromebookOnly, studentLoan: true, yog, studentStatus });
 }
 
 // Convenience function: Get non-loaned Chromebooks

@@ -12,6 +12,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     staffLoan,
     notLoaned,
     yog, // Add YOG filter parameter
+    studentStatus, // Add Student Status filter parameter
   } = event.queryStringParameters;
   let filterByFormula = "";
 
@@ -48,6 +49,13 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     filterByFormula = filterByFormula
       ? `AND(${filterByFormula},${staffLoanFilter})`
       : staffLoanFilter;
+  }
+  // Add filter for Student Status if provided
+  if (studentStatus) {
+    const studentStatusFilter = `ARRAYJOIN({Student Status}, "") = "${studentStatus}"`;
+    filterByFormula = filterByFormula
+      ? `AND(${filterByFormula},${studentStatusFilter})`
+      : studentStatusFilter;
   }
 
   // Add filter for items not loaned (both Staff Email and Student (Current) are blank)
@@ -96,6 +104,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
         "Charger Type",
         "Staff Email",
         "LASID",
+        "Student Status",
       ],
       offset, // Pass the offset for pagination
     });
