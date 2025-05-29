@@ -1,6 +1,7 @@
 <script>
   import AssetDisplay from "../AssetDisplay.svelte";
   import DataExporter from "./DataExporter.svelte";
+  import BulkMessageSender from "../BulkMessageSender.svelte";
 
   export let data;
   export let columns = [];
@@ -99,6 +100,34 @@
       exportColumns = [...baseColumns];
     }
   }
+
+  let selectedAssetTags = new Set();
+  let mountBulkMessageSender = false;
+  let showBulkMessageSender = false;
+
+  function openBulkMessageSender() {
+    if (!mountBulkMessageSender) {
+      mountBulkMessageSender = true;
+    }
+    showBulkMessageSender = true;
+  }
+
+  function toggleSelectAll() {
+    if (selectedAssetTags.size === filteredData.length) {
+      selectedAssetTags = new Set();
+    } else {
+      selectedAssetTags = new Set(filteredData.map((row) => row["Asset Tag"]));
+    }
+  }
+  function toggleSelectRow(row) {
+    const tag = row["Asset Tag"];
+    if (selectedAssetTags.has(tag)) {
+      selectedAssetTags.delete(tag);
+    } else {
+      selectedAssetTags.add(tag);
+    }
+    selectedAssetTags = new Set(selectedAssetTags); // trigger reactivity
+  }
 </script>
 
 <!-- Filter controls -->
@@ -135,10 +164,45 @@
 <div class="w3-responsive">
   <p>Showing <b>{filteredData.length}</b> records</p>
 
+  <button
+    class="w3-button w3-blue w3-margin-bottom"
+    disabled={selectedAssetTags.size === 0}
+    on:click={openBulkMessageSender}
+  >
+    Send Email to Selected
+  </button>
+
+  {#if mountBulkMessageSender}
+    <div
+      class="modal-wrap modal-bulk-message"
+      style:display={showBulkMessageSender ? "flex" : "none"}
+    >
+      <div class="modal-content modal-bulk-message-content">
+        <BulkMessageSender assetTags={[...selectedAssetTags]} />
+        <button
+          class="w3-button w3-grey"
+          on:click={() => (showBulkMessageSender = false)}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  {/if}
+
   <DataExporter items={filteredData} {filename} headers={exportColumns} />
   <table class="w3-table w3-bordered w3-striped">
     <thead>
       <tr>
+        <th>
+          <input
+            type="checkbox"
+            checked={selectedAssetTags.size === filteredData.length &&
+              filteredData.length > 0}
+            indeterminate={selectedAssetTags.size > 0 &&
+              selectedAssetTags.size < filteredData.length}
+            on:change={toggleSelectAll}
+          />
+        </th>
         {#each headers as header, i}
           <th
             on:click={() => {
@@ -190,6 +254,13 @@
           class:highlight-stale={haveGoogleData && isStale(row.lastUsed)}
           class:highlight-wrong-user={haveGoogleData && !row.lastUserMatch}
         >
+          <td>
+            <input
+              type="checkbox"
+              checked={selectedAssetTags.has(row["Asset Tag"])}
+              on:change={() => toggleSelectRow(row)}
+            />
+          </td>
           {#each columns as column, i (i)}
             <td>
               {#if column == "_ASSET"}
@@ -271,5 +342,54 @@
     padding: 0;
     border: none;
     line-height: 1.5;
+  }
+
+  /* Modal styles */
+  .modal-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    z-index: 1000;
+    padding: 0;
+  }
+  .modal-content {
+    background: #fff;
+    border-radius: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    box-shadow: none;
+    padding: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-bulk-message .modal-content {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+  .modal-bulk-message-content {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
   }
 </style>

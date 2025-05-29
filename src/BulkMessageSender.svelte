@@ -22,8 +22,23 @@
   import { buildMessageForExtras, createEmail } from "./messageUtils";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import NotificationSummary from "./NotificationSummary.svelte";
+  import { Asset } from "./data/inventory";
   let fetchedFull;
   let update;
+
+  export let assetTags: string[] | null = null;
+
+  let historyWeCareAbout = [];
+  $: {
+    if (assetTags && assetTags.length) {
+      historyWeCareAbout = $fullHistory.filter((h) =>
+        assetTags.includes(h["Asset Tag (from Asset)"][0])
+      );
+    } else {
+      historyWeCareAbout = [...$fullHistory];
+    }
+  }
+
   onMount(() => {
     getContacts().then(() => (update += 1));
     getMessages().then(() => (update += 1));
@@ -38,9 +53,9 @@
   let sortedEntries: SignoutHistoryEntry[];
   let perStudent = {};
 
-  $: updateEntries($fullHistory);
+  $: updateEntries(historyWeCareAbout);
   function updateEntries(makeMeUpdate: any) {
-    sortedEntries = $fullHistory;
+    sortedEntries = historyWeCareAbout;
     perStudent = {};
     sortedEntries.forEach((he) => {
       if (he["Asset Tag (from Asset)"][0].length > 3) {
@@ -230,7 +245,7 @@
 
   function applyFilters(force1, force2, force3, statusFilter) {
     console.log("Re-apply filters!");
-    sortedEntries = [...$fullHistory];
+    sortedEntries = [...historyWeCareAbout];
     console.log("Begin with", sortedEntries.length);
     for (let f of filters) {
       console.log("Apply filter", f);
@@ -243,7 +258,7 @@
     sortedEntries = sortedEntries;
   }
 
-  $: applyFilters($fullHistory, filters, sorters, statusFilter);
+  $: applyFilters(historyWeCareAbout, filters, sorters, statusFilter);
 </script>
 
 <div class="w3-container">
@@ -299,7 +314,7 @@
       >
     {/if}
   </div>
-  {#if $fullHistory.length}
+  {#if historyWeCareAbout.length}
     <div class="w3-cell-row">
       <button
         class:w3-black={sorters.at(-1) == byYOGSorter}
