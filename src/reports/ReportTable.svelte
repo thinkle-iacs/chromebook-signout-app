@@ -1,8 +1,10 @@
 <script>
   import AssetDisplay from "../AssetDisplay.svelte";
+  import DataExporter from "./DataExporter.svelte";
 
   export let data;
   export let columns = [];
+  export let filename = "data.csv";
   // sortColumn is now a property name (string)
   let sortColumn = columns[0] || "";
   let sortDirection = "asc";
@@ -70,6 +72,33 @@
       return false;
     return true;
   });
+
+  let includeGoogleDataInExport = haveGoogleData;
+  let exportColumns = [];
+  let ASSET_COLUMNS = [
+    "Asset Tag",
+    "Serial",
+    "Make",
+    "Model",
+    "Year of Purchase",
+  ];
+  $: {
+    // Expand _ASSET into ASSET_COLUMNS for exportColumns
+    let baseColumns = columns.flatMap((col) =>
+      col === "_ASSET" ? ASSET_COLUMNS : [col]
+    );
+    if (includeGoogleDataInExport) {
+      exportColumns = [
+        ...baseColumns,
+        "lastUserMatch",
+        "lastUsed",
+        "recentUsers",
+        "sessions",
+      ];
+    } else {
+      exportColumns = [...baseColumns];
+    }
+  }
 </script>
 
 <!-- Filter controls -->
@@ -91,11 +120,22 @@
       style="display:inline-block;width:auto;margin-left:4px;"
     />
   </label>
+  {#if haveGoogleData}
+    <label class="w3-bar-item">
+      <input
+        type="checkbox"
+        class="w3-check"
+        bind:checked={includeGoogleDataInExport}
+      />
+      Include Google Data in Export
+    </label>
+  {/if}
 </div>
 
-<p>Sorting by: {sortColumn} {sortDirection}</p>
-
 <div class="w3-responsive">
+  <p>Showing <b>{filteredData.length}</b> records</p>
+
+  <DataExporter items={filteredData} {filename} headers={exportColumns} />
   <table class="w3-table w3-bordered w3-striped">
     <thead>
       <tr>
@@ -115,8 +155,32 @@
           </th>
         {/each}
         {#if haveGoogleData}
-          <th> Last User? </th>
-          <th> Last Used </th>
+          <th
+            on:click={() => {
+              if (sortColumn === "lastUserMatch") {
+                sortDirection = sortDirection === "asc" ? "desc" : "asc";
+              } else {
+                sortColumn = "lastUserMatch";
+                sortDirection = "asc";
+              }
+            }}
+            style="cursor:pointer"
+          >
+            Last User?
+          </th>
+          <th
+            on:click={() => {
+              if (sortColumn === "lastUsed") {
+                sortDirection = sortDirection === "asc" ? "desc" : "asc";
+              } else {
+                sortColumn = "lastUsed";
+                sortDirection = "asc";
+              }
+            }}
+            style="cursor:pointer"
+          >
+            Last Used
+          </th>
         {/if}
       </tr>
     </thead>
@@ -189,5 +253,23 @@
   .highlight-stale .session {
     font-weight: bold;
     color: #c6093b;
+  }
+
+  /* Minimalist expander styling for <ul> in table cells */
+  td ul {
+    margin: 4px 0 0 0;
+    padding: 6px 12px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    list-style: none;
+    font-size: 0.95em;
+    position: relative;
+    z-index: 1;
+  }
+  td ul li {
+    margin: 0;
+    padding: 0;
+    border: none;
+    line-height: 1.5;
   }
 </style>

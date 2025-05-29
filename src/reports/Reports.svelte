@@ -31,12 +31,9 @@
   let nonLoanedChromebooks = [];
   let loading = false;
   let machineStatuses = {}; // Store statuses for each asset
-  let expandedUsers = {}; // Track expanded user lists
-  let expandedTimeRanges = {}; // Track expanded time ranges
 
   // New variables for filtering and sorting
   let selectedYOG: string | null = null;
-  let sortBy: "alphabetical" | "yog" = "alphabetical";
 
   // Add filtering by Student Status
   let selectedStudentStatus: string | null = null; // New variable for Student Status
@@ -48,7 +45,6 @@
       studentLoans = await normalizeAssets(
         await getStudentLoans(true, selectedYOG, selectedStudentStatus) // Pass Student Status
       );
-      sortStudentLoans();
     } else if (activeTab === "staffLoans") {
       staffLoans = await normalizeAssets(await getStaffLoans(true));
     } else if (activeTab === "nonLoaned") {
@@ -72,49 +68,19 @@
     });
   }
 
-  function sortStudentLoans() {
-    if (sortBy === "alphabetical") {
-      studentLoans.sort((a, b) => {
-        const emailA = a["Email (from Student (Current))"]?.[0] || "";
-        const emailB = b["Email (from Student (Current))"]?.[0] || "";
-        return emailA.localeCompare(emailB);
-      });
-    } else if (sortBy === "yog") {
-      studentLoans.sort((a, b) => {
-        const yogA = parseInt(a["YOG (from Student (Current))"]?.[0]) || 0;
-        const yogB = parseInt(b["YOG (from Student (Current))"]?.[0]) || 0;
-        return yogA - yogB;
-      });
-    }
-  }
-
-  async function checkStatus(asset) {
-    const status = await checkMachineStatus(asset);
-    machineStatuses[asset["Asset Tag"]] = status; // Save status by Asset Tag
-    console.log("Machine status:", status);
-  }
-
-  function toggleExpandUsers(assetTag) {
-    expandedUsers[assetTag] = !expandedUsers[assetTag];
-  }
-
-  function toggleExpandTimeRanges(assetTag) {
-    expandedTimeRanges[assetTag] = !expandedTimeRanges[assetTag];
-  }
-
-  function isStale(lastUsed) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return new Date(lastUsed) < thirtyDaysAgo;
-  }
+  let loginDataLoading = false;
+  let loginDataProgress = 0;
 
   const MAX_CONCURRENT_REQUESTS = 10; // Limit concurrency
 
   async function checkAllStatuses() {
-    const assets = studentLoans; // Adjust based on activeTab
+    loginDataLoading = true;
+    loginDataProgress = 0;
+    const assets = displayData;
     const assetTags = assets.map((asset) => asset["Asset Tag"]);
 
     let index = 0;
+    const total = assets.length;
 
     async function processBatch() {
       const batch = assets.slice(index, index + MAX_CONCURRENT_REQUESTS);
@@ -125,24 +91,16 @@
         })
       );
       index += MAX_CONCURRENT_REQUESTS;
-      if (index < assets.length) {
+      loginDataProgress = Math.min(index, total);
+      if (index < total) {
         await processBatch(); // Process next batch
       }
     }
 
     await processBatch();
+    loginDataLoading = false;
+    loginDataProgress = total;
     console.log("All statuses updated:", machineStatuses);
-  }
-
-  function getLastLoginForAssignedUser(googleData, assignedUser) {
-    if (!googleData || !googleData.recentUsers || !assignedUser)
-      return "Unknown";
-
-    const assignedUserEntry = googleData.recentUsers.find(
-      (user) => user.email === assignedUser
-    );
-
-    return assignedUserEntry?.lastLoginTime || "Unknown";
   }
 
   function addMachineInfo(assets, machineStatuses) {
@@ -161,23 +119,39 @@
     });
   }
 
+  // Remove all per-tab table rendering, just keep displayData/columns/headers logic
   let displayData = [];
   let columns = [];
   let headers = [];
-  $: if (activeTab === "studentLoans") {
-    console.log("Update display data for students");
-    displayData = addMachineInfo(studentLoans, machineStatuses);
-    columns = [
-      "_ASSET",
-      "Email (from Student (Current))",
-      "YOG (from Student (Current))",
-      "Student Status",
-    ];
-    headers = ["Asset Tag", "Email", "YOG", "Active Student"];
-  } else if (activeTab === "staffLoans") {
-    displayData = addMachineInfo(staffLoans, machineStatuses);
-  } else if (activeTab === "nonLoaned") {
-    displayData = addMachineInfo(nonLoanedChromebooks, machineStatuses);
+  let filename = "chromebook_report.csv";
+  $: {
+    if (activeTab === "studentLoans") {
+      displayData = addMachineInfo(studentLoans, machineStatuses);
+      filename = "student-loans-report.csv";
+      if (selectedYOG) {
+        filename = `${selectedYOG}-${filename}`;
+      }
+      if (selectedStudentStatus) {
+        filename = `${selectedStudentStatus}-${filename}`;
+      }
+      columns = [
+        "_ASSET",
+        "Email (from Student (Current))",
+        "YOG (from Student (Current))",
+        "Student Status",
+      ];
+      headers = ["Asset Tag", "Email", "YOG", "Active Student"];
+    } else if (activeTab === "staffLoans") {
+      filename = "staff-loans-report.csv";
+      displayData = addMachineInfo(staffLoans, machineStatuses);
+      columns = ["_ASSET", "Staff Email", "Full Name (from User)"];
+      headers = ["Asset Tag", "Staff Email", "Full Name"];
+    } else if (activeTab === "nonLoaned") {
+      filename = "non-loaned-chromebooks-report.csv";
+      displayData = addMachineInfo(nonLoanedChromebooks, machineStatuses);
+      columns = ["_ASSET", "Location"];
+      headers = ["Asset Tag", "Location"];
+    }
   }
   $: console.log(displayData);
 </script>
@@ -211,7 +185,7 @@
   <div class="w3-container">
     {#if activeTab === "studentLoans"}
       <div class="w3-margin-top">
-        <label for="yog" class="w3-margin-right">Filter by YOG:</label>
+        <label for="yog" class="w3-margin-right">YOG:</label>
         <input
           id="yog"
           type="text"
@@ -220,7 +194,7 @@
           bind:value={selectedYOG}
         />
         <label for="studentStatus" class="w3-margin-left"
-          >Filter by Student Status:</label
+          >Active/Inactive Student:</label
         >
         <select
           id="studentStatus"
@@ -230,16 +204,6 @@
           <option value="">All</option>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
-        </select>
-        <label for="sort" class="w3-margin-left">Sort by:</label>
-        <select
-          id="sort"
-          class="w3-select w3-border w3-inline"
-          bind:value={sortBy}
-          on:change={sortStudentLoans}
-        >
-          <option value="alphabetical">Alphabetical</option>
-          <option value="yog">YOG</option>
         </select>
       </div>
     {/if}
@@ -254,187 +218,31 @@
     <button
       class="w3-button w3-green w3-margin-top"
       on:click={checkAllStatuses}
+      disabled={loading || displayData.length === 0 || loginDataLoading}
     >
-      Check All Statuses
+      Get Login Data
     </button>
+
+    {#if loginDataLoading}
+      <div class="progress-bar-container w3-margin-top">
+        <div
+          class="progress-bar"
+          style="width: {displayData.length
+            ? (100 * loginDataProgress) / displayData.length
+            : 0}%"
+        >
+          {displayData.length
+            ? Math.round((100 * loginDataProgress) / displayData.length)
+            : 0}%
+        </div>
+      </div>
+    {/if}
 
     {#if loading}
       <p class="w3-opacity">Loading...</p>
-    {:else if activeTab === "studentLoans"}
-      <h2>Student Loans</h2>
-      <DataExporter
-        items={studentLoans}
-        filename="student_loans_report.csv"
-        headers={[
-          "Asset Tag",
-          "Serial",
-          "LASID",
-          "Model",
-          "Year of Purchase",
-          "Email (from Student (Current))",
-          "YOG (from Student (Current))",
-          "Status",
-          "Last Used",
-          "Last User",
-        ]}
-      ></DataExporter>
-      <ReportTable data={displayData} {columns} {headers} />
-      {#if studentLoans.length}
-        <div class="w3-responsive">
-          <table class="w3-table w3-bordered w3-striped">
-            <thead>
-              <tr>
-                <th>Asset</th>
-                <th>Student Email</th>
-                <th>YOG</th>
-                <th>Assigned User?</th>
-                <th>Last User</th>
-                <th>Last Used</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each studentLoans as asset}
-                <tr
-                  class={isStale(machineStatuses[asset["Asset Tag"]]?.lastUsed)
-                    ? "stale"
-                    : ""}
-                >
-                  <td><AssetDisplay {asset} /></td>
-                  <td
-                    >{asset["Email (from Student (Current))"]?.[0] || "N/A"}</td
-                  >
-                  <td>{asset["YOG (from Student (Current))"]?.[0] || "N/A"}</td>
-                  <td
-                    >{machineStatuses[asset["Asset Tag"]]?.lastUserMatch
-                      ? "Yes"
-                      : "No"}</td
-                  >
-                  <td>
-                    <span
-                      class={machineStatuses[asset["Asset Tag"]]?.lastUserMatch
-                        ? ""
-                        : "mismatch"}
-                    >
-                      {machineStatuses[asset["Asset Tag"]]?.googleData
-                        ?.recentUsers?.[0]?.email || "Unknown"}
-                    </span>
-                    <button
-                      class="w3-button w3-small w3-blue"
-                      on:click={() => toggleExpandUsers(asset["Asset Tag"])}
-                    >
-                      +
-                    </button>
-                    {#if expandedUsers[asset["Asset Tag"]]}
-                      <ul>
-                        {#each machineStatuses[asset["Asset Tag"]]?.googleData?.recentUsers || [] as user}
-                          <li>{user.email}</li>
-                        {/each}
-                      </ul>
-                    {/if}
-                  </td>
-                  <td>
-                    <span
-                      class={isStale(
-                        machineStatuses[asset["Asset Tag"]]?.lastUsed
-                      )
-                        ? "bold"
-                        : ""}
-                    >
-                      {machineStatuses[asset["Asset Tag"]]?.lastUsed ||
-                        "Unknown"}
-                    </span>
-                    <button
-                      class="w3-button w3-small w3-blue"
-                      on:click={() =>
-                        toggleExpandTimeRanges(asset["Asset Tag"])}
-                    >
-                      +
-                    </button>
-                    {#if expandedTimeRanges[asset["Asset Tag"]]}
-                      <ul>
-                        {#each machineStatuses[asset["Asset Tag"]]?.googleData?.activeTimeRanges || [] as range}
-                          <li>{range.date}: {range.activeTime} ms</li>
-                        {/each}
-                      </ul>
-                    {/if}
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
-      {:else}
-        <p>No student loans found.</p>
-      {/if}
-    {:else if activeTab === "staffLoans"}
-      <h2>Staff Loans</h2>
-      <DataExporter
-        items={staffLoans}
-        filename="staff_loans_report.csv"
-        headers={[
-          "Asset Tag",
-          "Serial",
-          "Model",
-          "Year of Purchase",
-          "Staff Email",
-          "Full Name (from User)",
-        ]}
-      ></DataExporter>
-      {#if staffLoans.length}
-        <table class="w3-table w3-bordered w3-striped">
-          <thead>
-            <tr>
-              <th>Asset</th>
-              <th>Staff Email</th>
-              <th>Full Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each staffLoans as asset}
-              <tr>
-                <td><AssetDisplay {asset} /></td>
-                <td>{asset["Staff Email"]?.[0] || "N/A"}</td>
-                <td>{asset["Full Name (from User)"]?.[0] || "N/A"}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      {:else}
-        <p>No staff loans found.</p>
-      {/if}
-    {:else if activeTab === "nonLoaned"}
-      <h2>Non-Loaned Chromebooks</h2>
-      <DataExporter
-        items={nonLoanedChromebooks}
-        filename="non_loaned_chromebooks_report.csv"
-        headers={[
-          "Asset Tag",
-          "Serial",
-          "Model",
-          "Year of Purchase",
-          "Location",
-        ]}
-      ></DataExporter>
-      {#if nonLoanedChromebooks.length}
-        <table class="w3-table w3-bordered w3-striped">
-          <thead>
-            <tr>
-              <th>Asset</th>
-              <th>Location</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each nonLoanedChromebooks as asset}
-              <tr>
-                <td><AssetDisplay {asset} /></td>
-                <td>{asset.Location || "N/A"}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      {:else}
-        <p>No non-loaned Chromebooks found.</p>
-      {/if}
+    {:else}
+      <!-- Single ReportTable for all tabs -->
+      <ReportTable data={displayData} {columns} {headers} {filename} />
     {/if}
   </div>
 </div>
@@ -468,5 +276,26 @@
   .mismatch {
     font-weight: bold; /* Bold text for mismatched users */
     color: #ff0000; /* Red text for mismatched users */
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    background: #eee;
+    border-radius: 6px;
+    height: 24px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #2196f3);
+    color: #fff;
+    text-align: center;
+    line-height: 24px;
+    font-weight: bold;
+    transition: width 0.3s;
+    border-radius: 6px 0 0 6px;
+    font-size: 1em;
   }
 </style>
