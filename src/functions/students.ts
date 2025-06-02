@@ -6,7 +6,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
   let query = studentsBase.select({
     maxRecords: 100,
     filterByFormula: `Search("${name.toLowerCase()}",LOWER({Name}))`,
-    fields: ["LASID", "Name", "Email", "YOG", "Advisor", "Notes"],
+    fields: ["LASID", "Name", "Email", "YOG", "Advisor", "Notes", "Status"],
   });
   let result = await query.firstPage();
   return {

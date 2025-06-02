@@ -50,7 +50,12 @@
       <div class="w3-small">
         {#if asset["Email (from Student (Current))"]}
           Currently signed out to
-          <b>{asset["Email (from Student (Current))"]}</b>
+          <b class:inactive={asset["Student Status"]?.[0] === "Inactive"}
+            >{asset["Email (from Student (Current))"]}</b
+          >
+          {#if asset["YOG (from Student (Current))"]}
+            ({asset["YOG (from Student (Current))"]})
+          {/if}
         {/if}
         {#if asset["Full Name (from User)"]}
           Currently signed out to staff
@@ -97,5 +102,9 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+  }
+  .inactive {
+    text-decoration: line-through;
+    color: #9e9e9e;
   }
 </style>

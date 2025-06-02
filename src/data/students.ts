@@ -10,6 +10,7 @@ export type Student = {
   Email: string;
   Notes: string;
   _id: string;
+  Status: "Active" | "Inactive";
 };
 let cachedSearch = {};
 

@@ -3,7 +3,11 @@
   export let student: Student;
 </script>
 
-<table class="w3-table">
+<table
+  class="w3-table"
+  class:inactive={student.Status === "Inactive"}
+  class:active={student.Status === "Active"}
+>
   <tr>
     <th> Name: </th>
     <td class="name">
@@ -34,9 +38,19 @@
       <a href={`mailto:${student.Email}`}>{student.Email}</a>
     </td>
   </tr>
+  <tr>
+    <th> Status: </th>
+    <td>
+      {student.Status}
+    </td>
+  </tr>
 </table>
 
 <style>
+  .inactive {
+    text-decoration: line-through;
+    color: #9e9e9e;
+  }
   .name {
     font-weight: bold;
   }
