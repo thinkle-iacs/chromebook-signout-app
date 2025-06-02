@@ -12,10 +12,11 @@
   export let student: Student;
   onMount(() => updateContractsIfNeeded());
   let contract: Contract;
-
+  let fetchingContracts = true;
   $: {
-    if ($contractStore) {
+    if ($contractStore && Object.keys($contractStore).length > 0) {
       contract = getContractForStudent(student);
+      fetchingContracts = false;
     }
   }
   let pop = false;
@@ -44,6 +45,8 @@
     >
       Contract signed on {contract.Date} by {contract.Signature}
     </div>
+  {:else if fetchingContracts}
+    <div class="icon w3-yellow w3-padding-16">⌛ Fetching Contract...</div>
   {:else}
     <div class="icon w3-red w3-padding-16">
       ✗ No Contract On File!
