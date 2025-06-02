@@ -44,6 +44,7 @@
       }
     });
   }
+  $: console.log("Dropdown:", dropdown, "show:", show);
 </script>
 
 {#if dropdown.length && show}
@@ -52,10 +53,23 @@
     use:trackFocus
     bind:this={dropdownElement}
   >
-    {#each dropdown as name}
-      <li>
-        <button class="w3-button" on:click={() => select(name)}>
-          {name}
+    {#each dropdown as person}
+      <li
+        class:inactive={person?.Role?.toLowerCase()?.includes("departed") ||
+          person?.Status === "Inactive"}
+      >
+        <button
+          class="w3-button"
+          on:click={() => select(person.name)}
+          style="display:flex;justify-content:start;align-items:center;gap:4px;"
+        >
+          {person.name}
+          {#if person.Role}
+            <span class="w3-tiny">({person.Role})</span>
+          {/if}
+          {#if person.YOG}
+            <span class="w3-tiny">[{person.YOG}]</span>
+          {/if}
         </button>
       </li>
     {/each}
@@ -73,5 +87,9 @@
     top: 0px;
     left: 0px;
     z-index: 2;
+  }
+  .inactive button.w3-button {
+    text-decoration: line-through;
+    color: #9e9e9e;
   }
 </style>

@@ -98,7 +98,25 @@ export const validateStudent = async (s) => {
         name: "Matching student",
       };
     } else if (results.length < 20) {
-      studentDropdown.set(results.map((result) => result.fields.Name));
+      studentDropdown.set(
+        results
+          .slice()
+          .sort((a, b) => {
+            // Sort by Status first
+            const statusA = a.fields.Status || "";
+            const statusB = b.fields.Status || "";
+            if (statusA < statusB) return -1;
+            if (statusA > statusB) return 1;
+            // Then by Name
+            const nameA = a.fields.Name || "";
+            const nameB = b.fields.Name || "";
+            return nameA.localeCompare(nameB);
+          })
+          .map((result) => ({
+            name: result.fields.Name,
+            ...result.fields,
+          }))
+      );
       return {
         valid: false,
         name: "Choose matching student",
@@ -146,7 +164,12 @@ export const validateStaff = async (s) => {
         name: "Matching staff member",
       };
     } else if (results.length < 20) {
-      staffDropdown.set(results.map((r) => r["Full Name"]));
+      staffDropdown.set(
+        results.map((r) => ({
+          name: r["Full Name"],
+          ...r,
+        }))
+      );
       return {
         valid: false,
         name: "Find matching staff member",
