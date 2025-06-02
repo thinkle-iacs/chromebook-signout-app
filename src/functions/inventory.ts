@@ -13,6 +13,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     notLoaned,
     yog, // Add YOG filter parameter
     studentStatus, // Add Student Status filter parameter
+    purpose, // Add Purpose filter parameter
   } = event.queryStringParameters;
   let filterByFormula = "";
 
@@ -56,6 +57,13 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     filterByFormula = filterByFormula
       ? `AND(${filterByFormula},${studentStatusFilter})`
       : studentStatusFilter;
+  }
+  // Add filter for Purpose if provided
+  if (purpose) {
+    const purposeFilter = `{Purpose} = "${purpose}"`;
+    filterByFormula = filterByFormula
+      ? `AND(${filterByFormula},${purposeFilter})`
+      : purposeFilter;
   }
 
   // Add filter for items not loaned (both Staff Email and Student (Current) are blank)

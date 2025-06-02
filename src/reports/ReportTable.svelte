@@ -2,6 +2,7 @@
   import AssetDisplay from "../AssetDisplay.svelte";
   import DataExporter from "./DataExporter.svelte";
   import BulkMessageSender from "../BulkMessageSender.svelte";
+  import { signoutAsset } from "../data/signout";
 
   export let data;
   export let columns = [];
@@ -128,6 +129,61 @@
     }
     selectedAssetTags = new Set(selectedAssetTags); // trigger reactivity
   }
+
+  let isUpdatingStatus = false;
+  let updateStatusError = "";
+
+  async function markSelectedAsLost() {
+    isUpdatingStatus = true;
+    updateStatusError = "";
+    try {
+      const tags = [...selectedAssetTags];
+      await Promise.all(
+        tags.map(async (tag) => {
+          const asset = data.find((row) => row["Asset Tag"] === tag);
+          if (!asset) throw new Error(`Asset not found: ${tag}`);
+          await signoutAsset(null, null, asset, "", "Lost", false);
+        })
+      );
+      selectedAssetTags = new Set();
+    } catch (e) {
+      updateStatusError = e.message || "Failed to update status.";
+    } finally {
+      isUpdatingStatus = false;
+    }
+  }
+
+  let showLostConfirm = false;
+  let lostNote = "";
+
+  function openLostConfirm() {
+    lostNote = "";
+    showLostConfirm = true;
+  }
+  function closeLostConfirm() {
+    showLostConfirm = false;
+  }
+
+  async function confirmMarkSelectedAsLost() {
+    isUpdatingStatus = true;
+    updateStatusError = "";
+    try {
+      const tags = [...selectedAssetTags];
+      await Promise.all(
+        tags.map(async (tag) => {
+          const asset = data.find((row) => row["Asset Tag"] === tag);
+          if (!asset) throw new Error(`Asset not found: ${tag}`);
+          await signoutAsset(null, null, asset, lostNote, "Lost", false);
+        })
+      );
+      selectedAssetTags = new Set();
+      closeLostConfirm();
+    } catch (e) {
+      updateStatusError = e.message || "Failed to update status.";
+    } finally {
+      isUpdatingStatus = false;
+    }
+  }
 </script>
 
 <!-- Filter controls -->
@@ -164,13 +220,28 @@
 <div class="w3-responsive">
   <p>Showing <b>{filteredData.length}</b> records</p>
 
-  <button
-    class="w3-button w3-blue w3-margin-bottom"
-    disabled={selectedAssetTags.size === 0}
-    on:click={openBulkMessageSender}
+  <div
+    class="w3-bar w3-center w3-margin-bottom"
+    style="justify-content: center; display: flex; gap: 0.5em;"
   >
-    Send Email to Selected
-  </button>
+    <button
+      class="w3-button w3-blue w3-bar-item"
+      disabled={selectedAssetTags.size === 0}
+      on:click={openBulkMessageSender}
+    >
+      Send Email to Selected
+    </button>
+    <button
+      class="w3-button w3-orange w3-bar-item"
+      disabled={selectedAssetTags.size === 0 || isUpdatingStatus}
+      on:click={openLostConfirm}
+    >
+      Mark as Lost
+    </button>
+    <span class="w3-bar-item data-exporter-wrap" style="padding:0;">
+      <DataExporter items={filteredData} {filename} headers={exportColumns} />
+    </span>
+  </div>
 
   {#if mountBulkMessageSender}
     <div
@@ -189,7 +260,6 @@
     </div>
   {/if}
 
-  <DataExporter items={filteredData} {filename} headers={exportColumns} />
   <table class="w3-table w3-bordered w3-striped">
     <thead>
       <tr>
@@ -308,6 +378,44 @@
       {/each}
     </tbody>
   </table>
+
+  {#if showLostConfirm}
+    <div
+      class="modal-wrap"
+      style="display:flex;align-items:center;justify-content:center;z-index:2000;"
+    >
+      <div
+        class="modal-content"
+        style="max-width:400px;width:90vw;padding:2em;"
+      >
+        <h3>Mark {selectedAssetTags.size} asset(s) as Lost?</h3>
+        <label>Optional Note:</label>
+        <textarea
+          class="w3-input w3-border"
+          rows="3"
+          bind:value={lostNote}
+          placeholder="Add a note (optional)"
+        ></textarea>
+        <div class="w3-bar w3-margin-top">
+          <button
+            class="w3-button w3-orange w3-bar-item"
+            on:click={confirmMarkSelectedAsLost}
+            disabled={isUpdatingStatus}
+          >
+            {isUpdatingStatus ? "Marking as Lost..." : "Confirm"}
+          </button>
+          <button
+            class="w3-button w3-grey w3-bar-item"
+            on:click={closeLostConfirm}
+            disabled={isUpdatingStatus}>Cancel</button
+          >
+        </div>
+        {#if updateStatusError}
+          <div class="w3-text-red">{updateStatusError}</div>
+        {/if}
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -391,5 +499,8 @@
     overflow: auto;
     display: flex;
     flex-direction: column;
+  }
+  .data-exporter-wrap :global(button.w3-button) {
+    margin-top: 0;
   }
 </style>

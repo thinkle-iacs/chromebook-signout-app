@@ -15,13 +15,21 @@ export type Asset = {
   Purpose: string;
   "Staff User": string;
   "Email (from Student (Current))": string;
+  "YOG (from Student (Current))"; // Ensure YOG is included in the fields
   "Student (Current)": string;
   "Device Type": string;
   Location: string;
   "Charger Type": string | null;
+  "Student Status": string[] | null;
 };
 
-export async function searchForAsset(tag, lasid?, serial?, staffEmail?) {
+export async function searchForAsset(
+  tag,
+  lasid?,
+  serial?,
+  staffEmail?,
+  purpose?
+) {
   let params: any = { mode: "asset" };
   if (tag) {
     params.tag = tag;
@@ -34,6 +42,9 @@ export async function searchForAsset(tag, lasid?, serial?, staffEmail?) {
   }
   if (staffEmail) {
     params.staffEmail = staffEmail;
+  }
+  if (purpose) {
+    params.purpose = purpose;
   }
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
@@ -68,7 +79,7 @@ export async function getCurrentLoansForStaff(staff) {
 }
 
 export async function getCurrentLoansForStudent(student) {
-  let results = await searchForAsset(null, student.LASID, null);
+  let results = await searchForAsset(null, student.LASID, null, "Student Loan");
   if (results.length) {
     let $assetStore = get(assetStore);
     return results.map((result) => $assetStore[result.fields["Asset Tag"]]);
@@ -85,6 +96,7 @@ export async function fetchReport({
   notLoaned = false,
   yog = undefined,
   studentStatus = undefined, // New field for filtering by Student Status
+  purpose = undefined, // New field for filtering by Purpose
 }: {
   chromebookOnly?: boolean;
   studentLoan?: boolean;
@@ -92,6 +104,7 @@ export async function fetchReport({
   notLoaned?: boolean;
   yog?: string | undefined;
   studentStatus?: string | undefined; // Allow querying by Student Status
+  purpose?: string | undefined; // Allow querying by Purpose
 } = {}) {
   let params: any = { mode: "asset" };
 
@@ -112,6 +125,9 @@ export async function fetchReport({
   }
   if (studentStatus) {
     params.studentStatus = studentStatus; // Pass Student Status to query
+  }
+  if (purpose) {
+    params.purpose = purpose; // Pass Purpose to query
   }
 
   let paramString = new URLSearchParams(params);
@@ -139,8 +155,18 @@ export async function getStaffLoans(chromebookOnly = false) {
 }
 
 // Convenience function: Get student loans
-export async function getStudentLoans(chromebookOnly = false, yog?: string, studentStatus?: string) {
-  return await fetchReport({ chromebookOnly, studentLoan: true, yog, studentStatus });
+export async function getStudentLoans(
+  chromebookOnly = false,
+  yog?: string,
+  studentStatus?: string
+) {
+  return await fetchReport({
+    chromebookOnly,
+    studentLoan: true,
+    yog,
+    studentStatus,
+    purpose: "Student Loan",
+  });
 }
 
 // Convenience function: Get non-loaned Chromebooks

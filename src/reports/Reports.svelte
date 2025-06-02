@@ -139,18 +139,43 @@
         "Email (from Student (Current))",
         "YOG (from Student (Current))",
         "Student Status",
+        "Purpose",
+        "Location",
+        "Status",
       ];
-      headers = ["Asset Tag", "Email", "YOG", "Active Student"];
+      headers = [
+        "Asset Tag",
+        "Email",
+        "YOG",
+        "Active Student",
+        "Purpose",
+        "Location",
+        "Status",
+      ];
     } else if (activeTab === "staffLoans") {
       filename = "staff-loans-report.csv";
       displayData = addMachineInfo(staffLoans, machineStatuses);
-      columns = ["_ASSET", "Staff Email", "Full Name (from User)"];
-      headers = ["Asset Tag", "Staff Email", "Full Name"];
+      columns = [
+        "_ASSET",
+        "Staff Email",
+        "Full Name (from User)",
+        "Purpose",
+        "Location",
+        "Status",
+      ];
+      headers = [
+        "Asset Tag",
+        "Staff Email",
+        "Full Name",
+        "Purpose",
+        "Location",
+        "Status",
+      ];
     } else if (activeTab === "nonLoaned") {
       filename = "non-loaned-chromebooks-report.csv";
       displayData = addMachineInfo(nonLoanedChromebooks, machineStatuses);
-      columns = ["_ASSET", "Location"];
-      headers = ["Asset Tag", "Location"];
+      columns = ["_ASSET", "Location", "Purpose", "Status"];
+      headers = ["Asset Tag", "Location", "Purpose", "Status"];
     }
   }
   $: console.log(displayData);
