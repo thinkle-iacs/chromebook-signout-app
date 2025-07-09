@@ -1,33 +1,51 @@
-Add "Look Up Asset" tab to get machine history
-Add "Look Up Student" tab to get student history
-Add "Full History" to get full asset history
-Add analogous process for staff:
-  - Add Staff field to SignoutHistory in AirTable
-  - Add Automation in AirTable to update Inventory based on staff entries
-  - Add staff lookup/autocomplete in Checkout.svelte
+Next Steps (June 2025):
+
+- Clean up UI for bulk emailer so we don't double-click send while it's sending.
+- Make it easy to see messages that have been sent in the past
+- Implement ticket and billing system
+- Ticket & Billing System Plan...
+  - We will need new tables in AirTable, specifically for...
+    -> Tracking tickets (replace google spreadsheet).
+    -> Invoices (note: once we invoice, it leaves our system and goes to the business office, so we just need to kick of an invoice).
+    -> We want a way to indicate computer's "owner" even under repair, so when a kid brings in a new machine we have...
+    (1) Mark their machine as "in for repair" or some such, but with a clear flag as to _where_ it goes once repaired.
+    (2) Mark a temporary loaner as out to the student, but with a clear flag that it is meant to be a temporary loan
+    (3) Make it easy to "Complete" a repair by swapping the loan with a repair.
+    -> We may need other processes such as: replace machine (when machine is a total loss).
+
+---
+
+Add "Look Up Asset" tab to get machine history (x)
+Add "Look Up Student" tab to get student history (x)
+Add "Full History" to get full asset history (x)
+Add analogous process for staff: (x)
+
+- Add Staff field to SignoutHistory in AirTable (x)
+- Add Automation in AirTable to update Inventory based on staff entries (x)
+- Add staff lookup/autocomplete in Checkout.svelte (x)
 
 Maybe add "Batch Sign In" ?
 
 Plans moving forward...
-Goals:
+Goals: (x)
 -> Email to families who are keeping a machine over the summer
 -> Email to students with a second or third machine
 -> Email to parents to confirm chromebook contract has been signed
 
-Next steps:
+Next steps: (x)
 -> Send test email from AirTable
 -> Pull parent contact info into AirTable and automate process so updates come in smoothly
 -> Pull Chromebook contract form data into AirTable and automate process so updates come in smoothy
 -> Build UI for mapping contract data to students and sending contacts confirmation email
 
-Plan:
+Plan: (x)
 -> Basically we'll want a table with...
-   -> Message Key
-   -> Student ID
-   -> Email sent?
-   Which then triggers an air table message with...
-   Message...
-   Student...
-   CC: Student contacts...
+-> Message Key
+-> Student ID
+-> Email sent?
+Which then triggers an air table message with...
+Message...
+Student...
+CC: Student contacts...
 
 Then we just need our app to write records to that table and AirTable should do the rest "magically"
