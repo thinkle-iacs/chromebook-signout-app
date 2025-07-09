@@ -19,7 +19,41 @@
 
 ### Core User Stories
 
-#### Story A: Librarian-Assisted Intake (Addresses Problem #1)
+#### Story A: Student Ticket Journey & Automated Communication (Addresses Problems #2 & #4)
+
+**As a** student  
+**I want to** be kept informed throughout my repair process with clear communication  
+**So that** I know what's happening and what's expected of me at each step
+
+**Example Scenario**: Student submits repair request and follows through completion
+
+1. **Initial Submission**
+
+   - Student fills out Google form: "Screen cracked on my laptop CB-12345"
+   - **System automatically sends confirmation email**: "Repair request received for CB-12345. Bring your device to the library within 2 school days."
+
+2. **Device Drop-off & Loaner Assignment**
+
+   - Student brings device to librarian
+   - Librarian assigns loaner device CB-LOAN-018
+   - **System automatically sends update email**: "Your device CB-12345 is now in for repair. You've been assigned temporary device CB-LOAN-018. Keep this device safe - you're responsible for it until your repair is complete."
+
+3. **Repair in Progress**
+
+   - Tech begins work on device
+   - **System automatically sends progress email**: "Your device CB-12345 repair is in progress."
+
+4. **Repair Complete & Pickup**
+
+   - Tech completes screen replacement
+   - **System automatically sends completion email**: "Your device CB-12345 is ready for pickup at the library! Please bring loaner device CB-LOAN-018 to exchange. Your family will receive an invoice for $40 for the screen repair."
+
+5. **Billing Notification**
+   - Business office receives billing details automatically
+   - **Family receives invoice** through business office's system
+   - **Student/family knows exactly what the charge is for** (linked to specific repair)
+
+#### Story B: Librarian-Assisted Intake (Addresses Problem #1)
 
 **As a** librarian  
 **I want to** quickly create tickets when students bring broken devices  
@@ -34,7 +68,7 @@
 - **Machine-to-ticket integration**: When looking up device CB-12345 in the future, librarian sees all related tickets and repair history
 - **Ticket-to-machine integration**: When viewing a ticket, librarian sees complete device details, assignment history, and current status
 
-#### Story B: Quick Fix & Billing (Addresses Problems #2 & #4)
+#### Story C: Quick Fix & Billing (Addresses Problems #2 & #4)
 
 **As a** CB tech  
 **I want to** handle simple repairs and easily generate billing notifications  
@@ -65,7 +99,7 @@
 - **BEFORE**: Librarian manually bills → Family pays via web form → Librarian searches emails for payment confirmation
 - **AFTER**: Tech/Librarian clicks "Send to Business Office" → Business office handles everything → Library staff freed from billing work
 
-#### Story C: Tech Repair Workflow (Addresses Problems #1 & #3)
+#### Story D: Tech Repair Workflow (Addresses Problems #1 & #3)
 
 **As a** CB tech  
 **I want to** efficiently process my repair queue with complete context  
@@ -89,7 +123,7 @@
   - Creates billing notification for business office
 - Tech brings repaired device to library desk with full context provided to librarian
 
-#### Story D: Student Follow-up & Status Inquiries (Addresses Problem #1)
+#### Story E: Student Follow-up & Status Inquiries (Addresses Problem #1)
 
 **As a** librarian  
 **I want to** quickly answer student questions about repair status  
@@ -102,13 +136,13 @@
 - **System displays student's repair history:**
   - **Current Open Ticket**: "CB-23456 - Battery not holding charge"
   - **Status**: "Waiting for Parts - Battery ordered 2 days ago"
-  - **Estimated Timeline**: "Parts expected Friday, repair completion Monday"
+  - **Estimated Timeline**: "Parts expected Friday, repair completion soon after"
   - **Loaner**: "Student has CB-LOAN-007"
   - **Contact**: "Email sent to parents when parts arrive"
 - Librarian provides immediate, accurate status update
-- Student knows exactly what to expect and when
+- Student knows exactly what to expect
 
-#### Story E: Management Reporting & Inventory Planning (Addresses Problem #1)
+#### Story F: Management Reporting & Inventory Planning (Addresses Problem #1)
 
 **As an** IT Director  
 **I want to** get overview reports on repair volume and inventory health  
@@ -253,6 +287,11 @@
   - [ ] When Ticket is marked for billing → Create new Billing Notification record with linked Ticket
   - [ ] When Billing Notification Status changes to "Paid" → Send confirmation email
   - [ ] When Asset Repair Status changes → Send notification to assigned Staff Member
+  - [ ] **Student Communication Automations (KEY for Story F):**
+    - [ ] When new Ticket created → Send confirmation email to student: "Repair request received"
+    - [ ] When Asset status changes to "In Repair" → Send update email: "Device in for repair, loaner assigned"
+    - [ ] When Ticket status changes to "In Progress" → Send progress email: "Repair in progress"
+    - [ ] When Ticket status changes to "Completed" → Send pickup email: "Device ready, return loaner, billing info"
 
 - [ ] **AirTable API Setup**
   - [ ] Set up AirTable API access tokens for the application
@@ -339,6 +378,22 @@
   - [ ] Track notification status (Pending, Sent, Acknowledged)
   - [ ] Handle confirmation from business office
   - [ ] Simple audit trail for billing communications
+
+### 2.5 Student Communication Functions (KEY for Story F)
+
+- [ ] **Automated Email Notifications** (`src/functions/notifications.ts`)
+
+  - [ ] Ticket confirmation email when new ticket created
+  - [ ] Loaner assignment notification when device goes in for repair
+  - [ ] Progress update email when repair begins
+  - [ ] Completion email with pickup and billing information
+  - [ ] Email template system with dynamic content (student name, asset ID, costs, etc.)
+
+- [ ] **Communication Tracking**
+  - [ ] Log all sent emails with timestamps
+  - [ ] Track email delivery status
+  - [ ] Handle bounce/failure notifications
+  - [ ] Provide communication history for support inquiries
 
 ## Phase 3: Frontend UI Development
 
@@ -521,26 +576,27 @@
 1. **Update Google Form backend** - Route submissions to Tickets table instead of Sheets
 2. **Keep existing GChat notifications** - Don't break current tech team workflow
 
-**Phase 1 MVP** - Focus on Story B (Quick billing workflow - addresses Problems #2 & #4)
+**Phase 1 MVP** - Focus on Story C (Quick billing workflow - addresses Problems #2 & #4)
 
 1. **Basic Ticket Lookup** - Find tickets created from Google Form
 2. **Simple Cost Entry** - Add final cost to ticket
 3. **One-Click Billing Notification** - Send billing details to business office
 4. **AirTable Email Automation** - Automated notification with student/cost/asset details
 
-**Phase 2 Expansion** - Add Stories A & C (addresses Problems #1 & #3)
+**Phase 2 Expansion** - Add Stories A, B, & D (addresses Problems #1, #3, & #4)
 
-5. **Librarian Intake Interface** - Create tickets for walk-ins with full device context (Story A)
-6. **Tech Repair Workflow** - Asset scan → complete repair context → completion workflow (Story C)
-7. **Simple Loaner Assignment** - Clear temporary device tracking during repairs
-8. **Student Status Lookup** - Quick status inquiries for librarian (Story D)
+1. **Automated Student Communications** - Email notifications throughout repair journey (Story A)
+2. **Librarian Intake Interface** - Create tickets for walk-ins with full device context (Story B)
+3. **Tech Repair Workflow** - Asset scan → complete repair context → completion workflow (Story D)
+4. **Simple Loaner Assignment** - Clear temporary device tracking during repairs
+5. **Student Status Lookup** - Quick status inquiries for librarian (Story E)
 
 **Phase 3** - Full System
 
-9. **Management Dashboard** - Repair analytics and inventory planning (Story E)
-10. **Advanced Reporting** - Cost tracking, repair history, asset health
-11. **Complex Loaner Workflows** - Full repair-to-return process
-12. **Automated Notifications** - Status updates, overdue alerts
+1. **Management Dashboard** - Repair analytics and inventory planning (Story F)
+2. **Advanced Reporting** - Cost tracking, repair history, asset health
+3. **Complex Loaner Workflows** - Full repair-to-return process
+4. **Enhanced Automated Notifications** - Status updates, overdue alerts, reminders
 
 ## Dependencies
 
