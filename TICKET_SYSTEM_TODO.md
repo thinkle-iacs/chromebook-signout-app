@@ -2,7 +2,19 @@
 
 **Goal:** Implement a comprehensive ticket and billing system to replace the current Google spreadsheet workflow and enable better tracking of repairs, loans, and invoicing.
 
-**Key Problem Being Solved:** Currently, librarians manually handle billing (families pay via web form, librarian searches emails for payment confirmation), which is disconnected from the repair system. The new system will let tech/librarian generate billing notifications that automatically go to the business office, who then handles ALL invoicing, payment collection, and follow-up - eliminating manual billing work for library staff.
+**Key Problems Being Solved:**
+(1) Disconnect between current google sheet with student tickets AND current Chromebook app with inventory data.
+(2) Disconnect between inventory/tickets and invoicing families + difficulty of following up on invoices.
+(3) Unclear how to mark machines in for repair and temporary loaner machines out to students while a machine is being repaired (i.e. does the machine stay "checked out" to a student while being repaired to indicate it is still "assigned" to the student or does it get marked "in for repairs" to indicate it is no longer the student's reponsibility since the machine is in our hands).
+(4) Difficulty of generating and following up on invoices (this is currently falling on the librarian but can be handled by the business office which has software designed for handling invoices).
+
+## User Stories & Workflows
+
+### Primary User Personas
+
+- **CB Tech**: Repairs devices, manages loaner assignments, handles quick fixes
+- **Librarian**: Intake/checkout interface, manages student interactions
+- **Student/Staff**: End users who need repairs or have issues
 
 ## User Stories & Workflows
 
@@ -14,54 +26,22 @@
 
 ### Core User Stories
 
-#### Story A: Existing Google Form → Ticket Integration
-
-**As a** student or staff member  
-**I want to** continue using the existing Google form  
-**So that** my repair requests automatically create tickets instead of spreadsheet entries
-
-**Current Workflow (needs updating):**
-
-- Student fills out existing Google form
-- Form hits GChat API (notify tech team) - **KEEP THIS**
-- Form populates Google spreadsheet - **REPLACE WITH TICKET CREATION**
-- Spreadsheet manually managed by tech team - **REPLACE WITH TICKET SYSTEM**
-
-**New Workflow:**
-
-- Student fills out same Google form (no change for students)
-- Form hits GChat API (keep existing notification)
-- Form creates Ticket record in AirTable instead of spreadsheet row
-- Ticket automatically linked to Asset and Student records
-- Tech team manages through ticket system instead of spreadsheet
-
-#### Story B: Librarian-Assisted Intake
+#### Story A: Librarian-Assisted Intake (Addresses Problem #1)
 
 **As a** librarian  
 **I want to** quickly create tickets when students bring broken devices  
-**So that** I can efficiently process repairs during busy periods
+**So that** I can efficiently process repairs and have integrated ticket/inventory data
 
 - Student brings device to checkout desk
 - Librarian scans asset tag or looks up student
 - Quick damage assessment and ticket creation
 - Immediate loaner assignment if needed
-- Print receipt/reference for student
+- Easy to follow up on ticket/repairs by looking up either the student or the machine in the future.
 
-#### Story C: Tech Repair Completion
-
-**As a** CB tech  
-**I want to** efficiently close completed repairs and handle billing  
-**So that** devices get back to students and invoices are generated
-
-- Tech completes repair work
-- Updates ticket with repair notes and costs
-- Marks ticket complete (triggers automated processes)
-- System handles device status updates and notifications
-
-#### Story D: Quick Fix & Invoice (KEY WORKFLOW)
+#### Story B: Quick Fix & Billing (Addresses Problems #2 & #4)
 
 **As a** CB tech  
-**I want to** handle simple repairs and easily generate invoices  
+**I want to** handle simple repairs and easily generate billing notifications  
 **So that** students get devices back quickly and business office gets accurate billing
 
 **CURRENT BILLING PAIN POINT:**
@@ -89,11 +69,11 @@
 - **BEFORE**: Librarian manually bills → Family pays via web form → Librarian searches emails for payment confirmation
 - **AFTER**: Tech/Librarian clicks "Send to Business Office" → Business office handles everything → Library staff freed from billing work
 
-#### Story E: Complex Repair with Loaner (ADDRESSES EXISTING PAIN POINT)
+#### Story C: Complex Repair with Loaner (Addresses Problems #1 & #3)
 
 **As a** CB tech  
-**I want to** see ticket context when I complete repairs  
-**So that** I know what to do next and don't lose track of student assignments
+**I want to** see ticket context when I complete repairs and clearly track loaner assignments  
+**So that** I know what to do next and devices are properly assigned during repairs
 
 **Current Pain Point**: Tech gets stack of broken machines from librarian, fixes them, but then doesn't know:
 
@@ -106,8 +86,9 @@
 
 - Student reports sticky keys via Google form
 - Librarian assigns loaner device when student drops off broken machine
-- Tech receives broken machine (currently no context about ticket/loaner)
-- **NEW WORKFLOW**: Tech scans asset tag → System shows:
+- **Original device marked "In Repair" with "Original Owner" field tracking the student**
+- **Loaner device marked "Temporary Assignment" to same student**
+- Tech receives broken machine and scans asset tag → System shows:
   - Related ticket with issue description
   - Student name and contact info
   - "Student currently has loaner device: CB-LOAN-015"
@@ -117,89 +98,46 @@
 - **System alerts librarian**: "Repaired device CB-12345 ready for pickup - Student has loaner CB-LOAN-015"
 - Librarian handles the device swap with full context
 
-#### Story F: Repair Status Tracking
+#### Story D: Tech Repair Completion (Addresses Problem #1)
+
+**As a** CB tech  
+**I want to** efficiently close completed repairs and handle billing  
+**So that** devices get back to students and all data stays integrated
+
+- Tech completes repair work
+- Updates ticket with repair notes and costs
+- Marks ticket complete (triggers automated processes)
+- System handles device status updates and notifications
+
+#### Story E: Repair Status Tracking (Addresses Problem #1)
 
 **As a** librarian or CB tech  
 **I want to** easily see repair status and history  
-**So that** I can answer student questions and manage workflow
+**So that** I can answer student questions and manage workflow with integrated data
 
 - Quick lookup by student or asset
 - View all open tickets and repair status
 - See repair history and recurring issues
 - Identify devices that should be retired
 
-### Edge Cases & Special Scenarios
+### Technical Integration Requirements
 
-#### Lost/Stolen Device Processing
+#### Google Form → Ticket Integration (Addresses Problem #1)
 
-- Student reports device lost/stolen
-- Create ticket for tracking purposes
-- Mark device as "Lost" in inventory
-- Generate invoice for replacement cost
-- Handle insurance claims if applicable
+**Current Workflow (needs updating):**
 
-#### Device Retirement/Replacement
+- Student fills out existing Google form
+- Form hits GChat API (notify tech team) - **KEEP THIS**
+- Form populates Google spreadsheet - **REPLACE WITH TICKET CREATION**
+- Spreadsheet manually managed by tech team - **REPLACE WITH TICKET SYSTEM**
 
-- Multiple repair history indicates replacement needed
-- Mark device as "Retired"
-- Create replacement device assignment
-- Handle disposal/recycling process
+**New Workflow:**
 
-#### Emergency Loaner Assignment
-
-- Student has urgent need (presentation, test, etc.)
-- Quick loaner checkout process
-- Temporary assignment with return date
-- Integration with existing checkout system
-
-#### Batch Processing for Common Issues
-
-- Multiple devices with same issue (software update, recall)
-- Bulk ticket creation
-- Mass status updates
-- Efficient workflow for tech team
-
-## UI/UX Design Considerations
-
-### Quick Actions Interface
-
-Based on the user stories, we need several "quick action" interfaces:
-
-- **Quick Ticket + Immediate Completion** (Story D)
-
-  - Single form that creates ticket and marks it complete
-  - Ideal for screen replacements, simple fixes
-  - Instant billing notification to business office
-
-- **Quick Intake + Loaner Assignment** (Story B)
-
-  - Scan asset → assess damage → assign loaner
-  - Streamlined for librarian use during busy periods
-  - Print receipt for student
-
-- **Tech Repair Completion with Context** (Story E - KEY PAIN POINT)
-
-  - Scan repaired asset → see full ticket context
-  - Show student info, loaner assignment, original issue
-  - Mark complete → alert librarian for device swap
-  - Seamless handoff between tech and librarian
-
-- **Repair Dashboard** (Story C & F)
-  - Tech-focused view of open tickets
-  - Quick status updates and completion actions
-  - Batch operations for common fixes
-
-### Mobile-First Design
-
-- Tech team often works away from desks
-- Barcode scanning capabilities
-- Touch-friendly interfaces for quick updates
-
-### Integration Points
-
-- Must work seamlessly with existing checkout system
-- Asset lookup should be consistent across all interfaces
-- Student/staff lookup matches current patterns
+- Student fills out same Google form (no change for students)
+- Form hits GChat API (keep existing notification)
+- Form creates Ticket record in AirTable instead of spreadsheet row
+- Ticket automatically linked to Asset and Student records
+- Tech team manages through ticket system instead of spreadsheet
 
 ---
 
@@ -546,15 +484,14 @@ Based on the user stories, we need several "quick action" interfaces:
 1. **Update Google Form backend** - Route submissions to Tickets table instead of Sheets
 2. **Keep existing GChat notifications** - Don't break current tech team workflow
 
-**Phase 1 MVP** - Focus on Story D (Quick invoice workflow)
+**Phase 1 MVP** - Focus on Story B (Quick billing workflow - addresses Problems #2 & #4)
 
 1. **Basic Ticket Lookup** - Find tickets created from Google Form
 2. **Simple Cost Entry** - Add final cost to ticket
 3. **One-Click Billing Notification** - Send billing details to business office
 4. **AirTable Email Automation** - Automated notification with student/cost/asset details
 
-**Phase 2 Expansion** - Add Stories B & C  
-5. **Librarian Intake Interface** - Create tickets for walk-ins 6. **Simple Loaner Assignment** - Temporary device checkout process 7. **Tech Repair Dashboard** - View and manage all open tickets
+**Phase 2 Expansion** - Add Stories A & C (addresses Problems #1 & #3) 5. **Librarian Intake Interface** - Create tickets for walk-ins with integrated inventory data 6. **Simple Loaner Assignment** - Clear temporary device tracking during repairs 7. **Tech Repair Dashboard** - View and manage all open tickets with full context
 
 **Phase 3** - Full System 8. **Advanced Reporting** - Cost tracking, repair history, asset health 9. **Complex Loaner Workflows** - Full repair-to-return process 10. **Automated Notifications** - Status updates, overdue alerts
 
