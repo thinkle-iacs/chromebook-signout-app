@@ -1,5 +1,12 @@
 # Ticket & Billing System Implementation TODO
 
+**Key Problems Being Solved:**
+
+1. Disconnect between current google sheet with student tickets AND current Chromebook app with inventory data.
+2. Disconnect between inventory/tickets and invoicing families + difficulty of following up on invoices.
+3. Unclear how to mark machines in for repair and temporary loaner machines out to students while a machine is being repaired (i.e. does the machine stay "checked out" to a student while being repaired to indicate it is still "assigned" to the student or does it get marked "in for repairs" to indicate it is no longer the student's responsibility since the machine is in our hands).
+4. Difficulty of generating and following up on invoices (this is currently falling on the librarian but can be handled by the business office which has software designed for handling invoices).& Billing System Implementation TODO
+
 **Goal:** Implement a comprehensive ticket and billing system to replace the current Google spreadsheet workflow and enable better tracking of repairs, loans, and invoicing.
 
 **Key Problems Being Solved:**
@@ -7,14 +14,6 @@
 (2) Disconnect between inventory/tickets and invoicing families + difficulty of following up on invoices.
 (3) Unclear how to mark machines in for repair and temporary loaner machines out to students while a machine is being repaired (i.e. does the machine stay "checked out" to a student while being repaired to indicate it is still "assigned" to the student or does it get marked "in for repairs" to indicate it is no longer the student's reponsibility since the machine is in our hands).
 (4) Difficulty of generating and following up on invoices (this is currently falling on the librarian but can be handled by the business office which has software designed for handling invoices).
-
-## User Stories & Workflows
-
-### Primary User Personas
-
-- **CB Tech**: Repairs devices, manages loaner assignments, handles quick fixes
-- **Librarian**: Intake/checkout interface, manages student interactions
-- **Student/Staff**: End users who need repairs or have issues
 
 ## User Stories & Workflows
 
