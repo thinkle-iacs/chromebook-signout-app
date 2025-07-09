@@ -37,10 +37,11 @@
 
   // Add filtering by Student Status
   let selectedStudentStatus: string | null = null; // New variable for Student Status
-
+  let reportRun = false;
   // Ensure YOG filtering is applied when fetching student loans
   async function fetchData() {
     loading = true;
+    reportRun = false;
     if (activeTab === "studentLoans") {
       studentLoans = await normalizeAssets(
         await getStudentLoans(true, selectedYOG, selectedStudentStatus) // Pass Student Status
@@ -53,6 +54,7 @@
       );
     }
     loading = false;
+    reportRun = true;
   }
 
   function normalizeAssets(rawAssets) {
@@ -235,10 +237,11 @@
 
     <button
       class="w3-button w3-green w3-margin-top"
+      class:w3-white={loading === false && reportRun}
       on:click={fetchData}
       disabled={loading}
     >
-      Run Report
+      {#if reportRun}Rerun{:else}Run{/if} Report
     </button>
     <button
       class="w3-button w3-green w3-margin-top"

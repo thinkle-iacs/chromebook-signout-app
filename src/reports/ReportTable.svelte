@@ -58,15 +58,27 @@
   let expandedUsers = {};
   let expandedSessions = {};
 
+  const FILTER_ANY = "any";
+  const FILTER_TRUE = "true";
+  const FILTER_FALSE = "false";
+
   // Filter state
-  let filterMismatched = false;
-  let filterStale = false;
+  let filterMismatched = FILTER_ANY; // "all" | true | false
+  let filterStale = FILTER_ANY; // "all" | true | false
   let filterModel = "";
 
   // Derived filtered data
   $: filteredData = sortedData.filter((row) => {
-    if (filterMismatched && row.lastUserMatch !== false) return false;
-    if (filterStale && !isStale(row.lastUsed)) return false;
+    if (filterMismatched !== FILTER_ANY) {
+      if (filterMismatched === FILTER_TRUE && row.lastUserMatch !== false)
+        return false;
+      if (filterMismatched === FILTER_FALSE && row.lastUserMatch === false)
+        return false;
+    }
+    if (filterStale !== FILTER_ANY) {
+      if (filterStale === FILTER_TRUE && !isStale(row.lastUsed)) return false;
+      if (filterStale === FILTER_FALSE && isStale(row.lastUsed)) return false;
+    }
     if (
       filterModel &&
       !(row.Model || "").toLowerCase().includes(filterModel.toLowerCase())
@@ -74,6 +86,21 @@
       return false;
     return true;
   });
+
+  function setFilterMismatched(val) {
+    filterMismatched = val;
+  }
+  function setFilterStale(val) {
+    filterStale = val;
+  }
+
+  function selectGoodAssets() {
+    // Select assets that are NOT mismatched and NOT stale
+    const goodRows = filteredData.filter(
+      (row) => row.lastUserMatch !== false && !isStale(row.lastUsed)
+    );
+    selectedAssetTags = new Set(goodRows.map((row) => row["Asset Tag"]));
+  }
 
   let includeGoogleDataInExport = haveGoogleData;
   let exportColumns = [];
@@ -184,17 +211,52 @@
       isUpdatingStatus = false;
     }
   }
+
+  // Add state for report/run buttons
+  let reportRun = false;
+  let loginDataReady = false;
+
+  function handleRunReport() {
+    reportRun = true;
+    loginDataReady = false;
+    // ...existing logic for running the report...
+  }
+  function handleGetLoginData() {
+    loginDataReady = true;
+    // ...existing logic for getting login data...
+  }
 </script>
 
 <!-- Filter controls -->
-<div class="w3-padding w3-bar">
-  <label class="w3-bar-item">
-    <input type="checkbox" bind:checked={filterMismatched} />
-    Mismatched
+<div
+  class="w3-padding w3-bar"
+  style="align-items:center;display:flex;gap:0.5em;"
+>
+  <label class="w3-bar-item"
+    >Mismatched:
+    <select
+      bind:value={filterMismatched}
+      on:change={(e) => setFilterMismatched(e.target.value)}
+      class="w3-select w3-border"
+      style="width:auto;display:inline-block;margin-left:4px;"
+    >
+      <option value={FILTER_ANY}>All</option>
+      <option value={FILTER_TRUE}>Yes</option>
+      <option value={FILTER_FALSE}>No</option>
+    </select>
   </label>
-  <label class="w3-bar-item">
-    <input type="checkbox" bind:checked={filterStale} />
-    Stale
+  <label class="w3-bar-item"
+    >Stale:
+    <select
+      bind:value={filterStale}
+      on:change={(e) => setFilterStale(e.target.value)}
+      class="w3-select w3-border"
+      style="width:auto;display:inline-block;margin-left:4px;"
+    >
+      <option value={FILTER_ANY}>All</option>
+      <option value={FILTER_TRUE}>Yes</option>
+      <option value={FILTER_FALSE}>No</option>
+    </select>
   </label>
   <label class="w3-bar-item">
     Model:
@@ -215,6 +277,11 @@
       Include Google Data in Export
     </label>
   {/if}
+  <button
+    class="w3-button w3-bar-item"
+    style="margin-left:1em;"
+    on:click={selectGoodAssets}>Select Good Assets</button
+  >
 </div>
 
 <div class="w3-responsive">
@@ -248,14 +315,17 @@
       class="modal-wrap modal-bulk-message"
       style:display={showBulkMessageSender ? "flex" : "none"}
     >
-      <div class="modal-content modal-bulk-message-content">
-        <BulkMessageSender assetTags={[...selectedAssetTags]} />
+      <div
+        class="modal-content modal-bulk-message-content"
+        style="position:relative;"
+      >
         <button
-          class="w3-button w3-grey"
+          class="close-modal-btn"
           on:click={() => (showBulkMessageSender = false)}
+          aria-label="Close"
+          type="button">&times;</button
         >
-          Close
-        </button>
+        <BulkMessageSender assetTags={[...selectedAssetTags]} />
       </div>
     </div>
   {/if}
@@ -385,9 +455,16 @@
       style="display:flex;align-items:center;justify-content:center;z-index:2000;"
     >
       <div
-        class="modal-content"
-        style="max-width:400px;width:90vw;padding:2em;"
+        class="modal-content lost-confirm-modal"
+        style="max-width:400px;width:90vw;padding:2em;position:relative;"
       >
+        <button
+          class="close-modal-btn"
+          on:click={closeLostConfirm}
+          disabled={isUpdatingStatus}
+          aria-label="Close"
+          type="button">&times;</button
+        >
         <h3>Mark {selectedAssetTags.size} asset(s) as Lost?</h3>
         <label>Optional Note:</label>
         <textarea
@@ -404,11 +481,6 @@
           >
             {isUpdatingStatus ? "Marking as Lost..." : "Confirm"}
           </button>
-          <button
-            class="w3-button w3-grey w3-bar-item"
-            on:click={closeLostConfirm}
-            disabled={isUpdatingStatus}>Cancel</button
-          >
         </div>
         {#if updateStatusError}
           <div class="w3-text-red">{updateStatusError}</div>
@@ -488,7 +560,7 @@
     box-shadow: none;
     padding: 0;
   }
-  .modal-bulk-message-content {
+  .modal-bulk-message_content {
     width: 100vw;
     height: 100vh;
     max-width: 100vw;
@@ -502,5 +574,25 @@
   }
   .data-exporter-wrap :global(button.w3-button) {
     margin-top: 0;
+  }
+  .lost-confirm-modal {
+    position: relative;
+  }
+  .close-modal-btn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 2em;
+    color: #888;
+    cursor: pointer;
+    z-index: 10;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .close-modal-btn:hover {
+    color: #c6093b;
   }
 </style>
