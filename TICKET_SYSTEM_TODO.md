@@ -1,19 +1,13 @@
 # Ticket & Billing System Implementation TODO
 
+**Goal:** Implement a comprehensive ticket and billing system to replace the current Google spreadsheet workflow and enable better tracking of repairs, loans, and invoicing.
+
 **Key Problems Being Solved:**
 
 1. Disconnect between current google sheet with student tickets AND current Chromebook app with inventory data.
 2. Disconnect between inventory/tickets and invoicing families + difficulty of following up on invoices.
 3. Unclear how to mark machines in for repair and temporary loaner machines out to students while a machine is being repaired (i.e. does the machine stay "checked out" to a student while being repaired to indicate it is still "assigned" to the student or does it get marked "in for repairs" to indicate it is no longer the student's responsibility since the machine is in our hands).
-4. Difficulty of generating and following up on invoices (this is currently falling on the librarian but can be handled by the business office which has software designed for handling invoices).& Billing System Implementation TODO
-
-**Goal:** Implement a comprehensive ticket and billing system to replace the current Google spreadsheet workflow and enable better tracking of repairs, loans, and invoicing.
-
-**Key Problems Being Solved:**
-(1) Disconnect between current google sheet with student tickets AND current Chromebook app with inventory data.
-(2) Disconnect between inventory/tickets and invoicing families + difficulty of following up on invoices.
-(3) Unclear how to mark machines in for repair and temporary loaner machines out to students while a machine is being repaired (i.e. does the machine stay "checked out" to a student while being repaired to indicate it is still "assigned" to the student or does it get marked "in for repairs" to indicate it is no longer the student's reponsibility since the machine is in our hands).
-(4) Difficulty of generating and following up on invoices (this is currently falling on the librarian but can be handled by the business office which has software designed for handling invoices).
+4. Difficulty of generating and following up on invoices (this is currently falling on the librarian but can be handled by the business office which has software designed for handling invoices).
 
 ## User Stories & Workflows
 
@@ -33,9 +27,12 @@
 
 - Student brings device to checkout desk
 - Librarian scans asset tag or looks up student
-- Quick damage assessment and ticket creation
+- **When scanning asset tag: System immediately shows machine history, current status, and any existing open tickets**
+- **When looking up student: System shows any devices assigned to them and related ticket history**
+- Quick damage assessment and ticket creation with full context
 - Immediate loaner assignment if needed
-- Easy to follow up on ticket/repairs by looking up either the student or the machine in the future.
+- **Machine-to-ticket integration**: When looking up device CB-12345 in the future, librarian sees all related tickets and repair history
+- **Ticket-to-machine integration**: When viewing a ticket, librarian sees complete device details, assignment history, and current status
 
 #### Story B: Quick Fix & Billing (Addresses Problems #2 & #4)
 
@@ -68,56 +65,70 @@
 - **BEFORE**: Librarian manually bills → Family pays via web form → Librarian searches emails for payment confirmation
 - **AFTER**: Tech/Librarian clicks "Send to Business Office" → Business office handles everything → Library staff freed from billing work
 
-#### Story C: Complex Repair with Loaner (Addresses Problems #1 & #3)
+#### Story C: Tech Repair Workflow (Addresses Problems #1 & #3)
 
 **As a** CB tech  
-**I want to** see ticket context when I complete repairs and clearly track loaner assignments  
-**So that** I know what to do next and devices are properly assigned during repairs
+**I want to** efficiently process my repair queue with complete context  
+**So that** I can fix devices quickly and handle all necessary updates
 
-**Current Pain Point**: Tech gets stack of broken machines from librarian, fixes them, but then doesn't know:
+**Example Scenario**: Tech's daily repair workflow
 
-- Which student it belongs to
-- If student has a loaner that needs to be returned
-- What the original issue was
-- Whether repair should be billed
+- Tech comes into shop and sees stack of broken machines from librarian
+- Picks up first device and scans asset tag CB-12345
+- **System immediately displays complete repair context:**
+  - **Student Info**: "Jane Smith, Grade 10, jane.smith@school.edu"
+  - **Issue**: "Sticky keyboard keys, reported 3 days ago"
+  - **Loaner Status**: "Student has temporary device CB-LOAN-018"
+  - **Repair History**: "Previous screen repair 6 months ago ($45)"
+  - **Billing**: "Repair should be billed to family"
+- Tech diagnoses issue, completes keyboard replacement
+- Updates ticket: "Replaced keyboard, tested all keys" + "Final Cost: $30"
+- Marks ticket complete → System automatically:
+  - Updates device status to "Ready for Pickup"
+  - Alerts librarian: "CB-12345 ready - Student: Jane Smith - Collect loaner: CB-LOAN-018"
+  - Creates billing notification for business office
+- Tech brings repaired device to library desk with full context provided to librarian
 
-**Example Scenario**: Keyboard replacement needed
+#### Story D: Student Follow-up & Status Inquiries (Addresses Problem #1)
 
-- Student reports sticky keys via Google form
-- Librarian assigns loaner device when student drops off broken machine
-- **Original device marked "In Repair" with "Original Owner" field tracking the student**
-- **Loaner device marked "Temporary Assignment" to same student**
-- Tech receives broken machine and scans asset tag → System shows:
-  - Related ticket with issue description
-  - Student name and contact info
-  - "Student currently has loaner device: CB-LOAN-015"
-  - Repair notes and any special instructions
-- Tech completes keyboard replacement
-- Tech marks ticket complete and brings device to librarian
-- **System alerts librarian**: "Repaired device CB-12345 ready for pickup - Student has loaner CB-LOAN-015"
-- Librarian handles the device swap with full context
+**As a** librarian  
+**I want to** quickly answer student questions about repair status  
+**So that** I can provide accurate information and manage student expectations
 
-#### Story D: Tech Repair Completion (Addresses Problem #1)
+**Example Scenario**: Student inquiry about repair submitted a week ago
 
-**As a** CB tech  
-**I want to** efficiently close completed repairs and handle billing  
-**So that** devices get back to students and all data stays integrated
+- Student walks up: "Hi, I submitted a repair request for my laptop last week. Any updates?"
+- Librarian searches "John Doe" or asks for asset tag
+- **System displays student's repair history:**
+  - **Current Open Ticket**: "CB-23456 - Battery not holding charge"
+  - **Status**: "Waiting for Parts - Battery ordered 2 days ago"
+  - **Estimated Timeline**: "Parts expected Friday, repair completion Monday"
+  - **Loaner**: "Student has CB-LOAN-007"
+  - **Contact**: "Email sent to parents when parts arrive"
+- Librarian provides immediate, accurate status update
+- Student knows exactly what to expect and when
 
-- Tech completes repair work
-- Updates ticket with repair notes and costs
-- Marks ticket complete (triggers automated processes)
-- System handles device status updates and notifications
+#### Story E: Management Reporting & Inventory Planning (Addresses Problem #1)
 
-#### Story E: Repair Status Tracking (Addresses Problem #1)
+**As an** IT Director  
+**I want to** get overview reports on repair volume and inventory health  
+**So that** I can make informed purchasing and resource decisions
 
-**As a** librarian or CB tech  
-**I want to** easily see repair status and history  
-**So that** I can answer student questions and manage workflow with integrated data
+**Example Scenario**: Monthly inventory planning meeting
 
-- Quick lookup by student or asset
-- View all open tickets and repair status
-- See repair history and recurring issues
-- Identify devices that should be retired
+- IT Director opens repair analytics dashboard
+- **Views current system health:**
+  - **Active Repairs**: "12 devices currently in repair queue"
+  - **Loaner Utilization**: "8 of 15 loaner devices assigned"
+  - **Repair Trends**: "Screen replacements up 30% this month"
+  - **Cost Analysis**: "$450 in repair costs this month vs $320 last month"
+  - **Problem Devices**: "3 devices with multiple repairs - retirement candidates"
+- **Uses data for decisions:**
+  - Order additional loaner devices based on utilization trends
+  - Budget for increased screen replacement costs
+  - Flag high-repair-frequency devices for replacement
+  - Plan staff time allocation based on repair volume
+- Export reports for budget meetings and purchasing decisions
 
 ### Technical Integration Requirements
 
@@ -283,13 +294,24 @@
   - [ ] Get open tickets (filter by Status field)
   - [ ] Get ticket history with full linked record data
 
-- [ ] **Asset Repair Context Lookup** (KEY for Story E)
-  - [ ] Scan/enter asset tag → return full ticket context
-  - [ ] Show student info, current loaner assignment, repair notes
-  - [ ] Display "what's next" actions for tech
-  - [ ] Alert librarian when repair marked complete
+- [ ] **Asset Repair Context Lookup** (KEY for Stories C & D - Tech Workflow & Status Inquiries)
+  - [ ] Scan/enter asset tag → return comprehensive repair context with device details, ticket info, student data, loaner status
+  - [ ] Display student info, current loaner assignment, repair notes, device history for tech workflow
+  - [ ] Show "what's next" actions for tech with full context
+  - [ ] Support student lookup for librarian status inquiries
+  - [ ] Alert librarian when repair marked complete with integrated details
+  - [ ] **Universal search**: Accept asset tags, student names, or ticket numbers from single search interface
 
-### 2.2 Loaner Management Functions
+### 2.2 Reporting & Analytics Functions (KEY for Story E - Management Dashboard)
+
+- [ ] **Inventory Health Reports**
+  - [ ] Get count of devices currently in repair
+  - [ ] Calculate loaner utilization percentages
+  - [ ] Generate repair trend analysis (cost, frequency, types)
+  - [ ] Identify high-maintenance devices for retirement planning
+  - [ ] Export data for budget meetings and purchasing decisions
+
+### 2.3 Loaner Management Functions
 
 - [ ] **Assign Loaner Device**
 
@@ -304,7 +326,7 @@
   - [ ] Update inventory records
   - [ ] Close loaner assignment
 
-### 2.3 Billing Notification Functions
+### 2.4 Billing Notification Functions
 
 - [ ] **Create Billing Notification** (`src/functions/billing.ts`)
 
@@ -345,12 +367,28 @@
   - [ ] Cost tracking
   - [ ] Related loaner information
 
-- [ ] **Tech Repair Context View** (`src/TechRepairContext.svelte`) - **KEY COMPONENT**
-  - [ ] Asset tag scan/lookup interface
-  - [ ] Display ticket context: student, loaner, issue description
-  - [ ] Quick repair completion workflow
-  - [ ] "Mark Complete & Alert Librarian" action
-  - [ ] Show next steps clearly
+- [ ] **Tech Repair Workflow View** (`src/TechRepairWorkflow.svelte`) - **KEY COMPONENT for Story C**
+
+  - [ ] Asset tag scan/lookup interface for repair queue
+  - [ ] Display complete repair context: student info, ticket details, loaner status, repair history
+  - [ ] Quick repair completion workflow with cost entry
+  - [ ] "Mark Complete & Alert Librarian" action with integrated notification
+  - [ ] Show clear next steps and handoff information
+
+- [ ] **Student Status Lookup** (`src/StudentStatusLookup.svelte`) - **KEY COMPONENT for Story D**
+
+  - [ ] Universal search interface (student names, asset tags, ticket numbers)
+  - [ ] Student repair history view with current status
+  - [ ] Clear status display: "Waiting for Parts," "In Progress," "Ready for Pickup"
+  - [ ] Timeline information and estimated completion dates
+  - [ ] Loaner device information and contact details
+
+- [ ] **Management Dashboard** (`src/ManagementDashboard.svelte`) - **KEY COMPONENT for Story E**
+  - [ ] Current repair queue overview (devices in repair, waiting for parts, etc.)
+  - [ ] Loaner utilization statistics and availability
+  - [ ] Repair trend analysis (costs, frequency, common issues)
+  - [ ] Problem device identification (high repair frequency)
+  - [ ] Export capabilities for budget planning and reports
 
 ### 3.2 Loaner Management Interface
 
@@ -490,9 +528,19 @@
 3. **One-Click Billing Notification** - Send billing details to business office
 4. **AirTable Email Automation** - Automated notification with student/cost/asset details
 
-**Phase 2 Expansion** - Add Stories A & C (addresses Problems #1 & #3) 5. **Librarian Intake Interface** - Create tickets for walk-ins with integrated inventory data 6. **Simple Loaner Assignment** - Clear temporary device tracking during repairs 7. **Tech Repair Dashboard** - View and manage all open tickets with full context
+**Phase 2 Expansion** - Add Stories A & C (addresses Problems #1 & #3)
 
-**Phase 3** - Full System 8. **Advanced Reporting** - Cost tracking, repair history, asset health 9. **Complex Loaner Workflows** - Full repair-to-return process 10. **Automated Notifications** - Status updates, overdue alerts
+5. **Librarian Intake Interface** - Create tickets for walk-ins with full device context (Story A)
+6. **Tech Repair Workflow** - Asset scan → complete repair context → completion workflow (Story C)
+7. **Simple Loaner Assignment** - Clear temporary device tracking during repairs
+8. **Student Status Lookup** - Quick status inquiries for librarian (Story D)
+
+**Phase 3** - Full System
+
+9. **Management Dashboard** - Repair analytics and inventory planning (Story E)
+10. **Advanced Reporting** - Cost tracking, repair history, asset health
+11. **Complex Loaner Workflows** - Full repair-to-return process
+12. **Automated Notifications** - Status updates, overdue alerts
 
 ## Dependencies
 
