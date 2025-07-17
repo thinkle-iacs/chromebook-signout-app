@@ -2,7 +2,22 @@
 
 ## Phase 0: Google Form Integration (Immediate Priority)
 
-### 0.0
+### 0.0 External Project Coordination
+
+**Google Apps Script Project Location:** `/Users/thinkle/BackedUpProjects/gas/chromebook-ticket-system/form-processor`
+
+- [ ] **Coordinate with Google Apps Script project**
+  - [ ] Review current form processor implementation
+  - [ ] Identify current Google Sheets integration points
+  - [ ] Plan AirTable integration approach
+  - [ ] Update form processor to route to AirTable instead of Sheets
+  - [ ] Test integration between GAS project and this Chromebook app
+  - [ ] Ensure GChat notifications continue working
+  - [ ] Document any environment variables/configuration needed
+
+**Note:** The Google Apps Script project manages the Google Form backend separately. Changes there will need to be coordinated with this project for the AirTable integration.
+
+### 0.1 Prepare AirTable
 
 - [ ] **Prepare AirTable**
   - [ ] Create Airtable "Tickets" table that mirrors current spreadsheet (possibly import data?)
@@ -10,7 +25,7 @@
   - [ ] Create automations in AirTable as needed / lookup fields back (so we can see e.g. tickets from asset table)
   - [ ] Create airtable connectors here for new "Tickets" table.
 
-### 0.1 Modify Existing Google Form Backend
+### 0.2 Modify Existing Google Form Backend
 
 - [ ] **Update Google Form submission handler**
   - [ ] Change destination from Google Sheets to AirTable Tickets table
@@ -19,7 +34,7 @@
   - [ ] Add error handling for AirTable API calls
   - [ ] Test with existing form to ensure no student-facing changes
 
-### 0.2 Form Field Mapping
+### 0.3 Form Field Mapping
 
 - [ ] **Map Google Form responses to Ticket fields**
   - [ ] Student info → Link to Students table
@@ -30,7 +45,7 @@
   - [ ] Set default Status to "New"
   - [ ] Auto-populate Date Created
 
-### 0.3 Transition Strategy
+### 0.4 Transition Strategy
 
 - [ ] **Phase out Google Sheets dependency**
   - [ ] Run dual system temporarily (both Sheets and Tickets)
@@ -82,6 +97,35 @@
 ---
 
 ## Phase 1 MVP: Ticket Triaging & Billing
+
+### 1.0 Optional Enhancement: SIS API Integration
+
+#### Student Schedule Lookup (`src/functions/sisApi.ts`)
+
+- [ ] **Secure SIS API endpoint**
+
+  - [ ] Implement authentication header validation (session token)
+  - [ ] Verify user email domain and staff status
+  - [ ] Rate limiting to prevent abuse
+  - [ ] Input validation and sanitization
+  - [ ] Audit logging for all SIS access attempts
+
+- [ ] **OpenRoster API Integration**
+
+  - [ ] Set up OPENROSTER_API_KEY in Netlify environment variables
+  - [ ] Set up OPENROSTER_BASE_URL in environment variables
+  - [ ] Create function to lookup student schedule by email
+  - [ ] Filter schedule data to show only relevant course info
+  - [ ] Extract advisory period times for optimal student contact
+  - [ ] Error handling for API failures and missing students
+
+- [ ] **Frontend Integration**
+  - [ ] Add "Show Student Schedule" button to student lookup results
+  - [ ] Display advisory times and current courses in ticket context
+  - [ ] Show "best time to contact" recommendations
+  - [ ] Graceful fallback when SIS data unavailable
+
+**Security Note:** SIS endpoint must validate staff authentication before returning any student data. Never expose student schedule information to unauthenticated users.
 
 ### 1.1 Backend API Development
 
