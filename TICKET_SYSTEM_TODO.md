@@ -29,26 +29,31 @@
 
 1. **Initial Submission**
 
-   - Student fills out Google form: "Screen cracked on my laptop CB-12345"
-   - **System automatically sends confirmation email**: "Repair request received for CB-12345. Bring your device to the library within 2 school days."
+   - **Student fills out Google form from classroom**: "Screen cracked on my laptop CB-12345"
+   - **System automatically sends Google Chat notification** to tech team (keeps existing workflow)
+   - **System automatically sends confirmation email** to student (+ CC advisors/parents via existing contact lookups): "Repair request received for CB-12345."
 
-2. **Device Drop-off & Loaner Assignment**
+2. **Librarian Temp Preparation**
+
+   - **Librarian clicks link in Google Chat notification** to view ticket
+   - **Sees ticket details**: "Jane Smith - CB-12345 - Broken keyboard"
+   - **Librarian prepares temp device** and **clicks "Temp Ready"** in ticket interface
+   - **System automatically emails student**: "A temporary device is ready for you. Please bring CB-12345 to the library to exchange it."
+
+3. **Device Drop-off & Loaner Assignment**
 
    - Student brings device to librarian
-   - Librarian assigns loaner device CB-LOAN-018
-   - **System automatically sends update email**: "Your device CB-12345 is now in for repair. You've been assigned temporary device CB-LOAN-018. Keep this device safe - you're responsible for it until your repair is complete."
-
-3. **Repair in Progress**
-
-   - Tech begins work on device
-   - **System automatically sends progress email**: "Your device CB-12345 repair is in progress."
+   - Librarian scans temp device and assigns it
+   - System updates ticket status and emails: "Your device CB-12345 is now in for repair. You've been assigned temporary device CB-LOAN-018."
 
 4. **Repair Complete & Pickup**
 
-   - Tech completes screen replacement
-   - **System automatically sends completion email**: "Your device CB-12345 is ready for pickup at the library! Please bring loaner device CB-LOAN-018 to exchange. Your family will receive an invoice for $40 for the screen repair."
+   - Tech completes repair and marks ticket complete
+   - Librarian gets notification, prepares device (charges, etc.)
+   - Librarian clicks "Ready for Pickup"
+   - System emails student: "Your device CB-12345 is ready for pickup! Bring CB-LOAN-018 to exchange."
 
-5. **Billing Notification**
+5. **Billing Notification**d
    - Business office receives billing details automatically
    - **Family receives invoice** through business office's system
    - **Student/family knows exactly what the charge is for** (linked to specific repair)
@@ -56,17 +61,23 @@
 #### Story B: Librarian-Assisted Intake (Addresses Problem #1)
 
 **As a** librarian  
-**I want to** quickly create tickets when students bring broken devices  
-**So that** I can efficiently process repairs and have integrated ticket/inventory data
+**I want to** have integrated ticket and inventory data when students need help  
+**So that** I can efficiently manage repairs with full context of device and student history
 
-- Student brings device to checkout desk
-- Librarian scans asset tag or looks up student
-- **When scanning asset tag: System immediately shows machine history, current status, and any existing open tickets**
-- **When looking up student: System shows any devices assigned to them and related ticket history**
-- Quick damage assessment and ticket creation with full context
-- Immediate loaner assignment if needed
-- **Machine-to-ticket integration**: When looking up device CB-12345 in the future, librarian sees all related tickets and repair history
+**Key Insight**: Students fill out the online form from their classrooms first (this part is working great!)
+
+- **Student inquiry**: "I submitted a repair request last week - any updates?"
+- **Librarian workflow**: Search student name or ask for asset tag
+- **When scanning asset tag**: System immediately shows machine history, current status, and any existing open tickets
+- **When looking up student**: System shows any devices assigned to them and related ticket history
+- **Result**: Quick, accurate status updates with full context
+
+**Integration Benefits**:
+
+- **Machine-to-ticket integration**: When looking up device CB-12345, librarian sees all related tickets and repair history
 - **Ticket-to-machine integration**: When viewing a ticket, librarian sees complete device details, assignment history, and current status
+
+**Note**: Physical intake and damage assessment remains complex and cannot be rushed - the system provides context but doesn't replace technical expertise
 
 #### Story C: Quick Fix & Billing (Addresses Problems #2 & #4)
 
@@ -142,7 +153,41 @@
 - Librarian provides immediate, accurate status update
 - Student knows exactly what to expect
 
-#### Story F: Management Reporting & Inventory Planning (Addresses Problem #1)
+#### Story F: Temp Machine Management & Alerts (Addresses Problem #3)
+
+**As a** librarian  
+**I want to** manage a healthy pool of temporary devices and get alerts about problems  
+**So that** I can maintain 30 good temp machines and avoid shortages
+
+**Key Requirements**:
+
+- **Start with 30 temp machines in good condition** (not 25 running low)
+- **Track temp machine health**: Alert when temp devices also break down
+- **Alert for unfixable devices**: "CB-12345 cannot be repaired → Issue new device to student + return temp CB-LOAN-018 to pool"
+- **Monitor temp machine circulation**: Track which students have had temp devices for extended periods
+
+**Critical Scenarios**:
+
+1. **Unfixable Device**: Student gets permanent replacement, temp device returns to circulation
+2. **Temp Device Breakdown**: Remove from circulation, repair or retire
+3. **Extended Temp Use**: Flag students who've had temp devices >2 weeks for follow-up
+
+#### Story G: Prevent Lost Temp Devices (Addresses Problem #3)
+
+**As a** librarian  
+**I want to** track and prevent students from keeping temp devices permanently  
+**So that** temp devices stay in circulation for other students
+
+**Scenario**: Student forgets they have a temp device
+
+- **System tracks**: "Student Jane has had CB-LOAN-018 for 3 weeks"
+- **Alert generated**: "Jane's original device CB-23456 was repaired 2 weeks ago - pickup overdue"
+- **Automated reminder**: Email to student/parents/advisor about returning temp device
+- **Escalation**: After 4 weeks, involve administration for device return
+
+**Integration needed**: Clear connection between original ticket, temp assignment, and pickup requirements
+
+#### Story H: Management Reporting & Inventory Planning (Addresses Problem #1)
 
 **As an** IT Director  
 **I want to** get overview reports on repair volume and inventory health  
@@ -164,9 +209,210 @@
   - Plan staff time allocation based on repair volume
 - Export reports for budget meetings and purchasing decisions
 
-### Technical Integration Requirements
+---
 
-#### Google Form → Ticket Integration (Addresses Problem #1)
+## Critical Requirements from Librarian Feedback
+
+### ⚠️ Must-Have Workflow Changes
+
+1. **Google Form Workflow (KEEP)**: Students fill out form from classroom first - this is working great!
+2. **Scheduled Drop-off (NEW)**: Students cannot just show up - librarian needs advance notice to manage workflow
+3. **Librarian-Controlled Pickup (NEW)**:
+   - Tech marks repair complete → alerts librarian (not student)
+   - Librarian ensures device is charged and ready → triggers student pickup email
+4. **Communication CCs (NEW)**: Always CC advisors (grades 5-9) and parents (all grades) on all emails
+5. **Temp Device Management (CRITICAL)**:
+   - Start year with 30 temp devices in good condition (not 25 running low)
+   - Alert system for devices that can't be fixed (student gets new device, temp returns to pool)
+   - Track students who keep temp devices too long
+
+### 🔍 Integration Requirements
+
+- **Machine-to-ticket lookup**: Scan device → see all repair history and current status
+- **Student-to-ticket lookup**: Search student → see all their repair requests and current temp assignments
+- **Status inquiries are complex**: Provide context but don't rush physical assessment
+
+## Critical Tech Team Feedback
+
+### ⚠️ Data Quality & Ticket Editing (from Nick)
+
+**Problem**: "Students have shown they are fairly incapable of doing it [form submission] reliably"
+
+**Common Issues**:
+
+- Asset tags: "ao333" instead of "A0333"
+- Descriptions: "it wasn't my fault just feel" instead of actual issue description
+- Wrong student/device mappings
+
+**Solution**: Ticket editing/triaging workflow
+
+- Google Chat notification includes link: `cb.innovationcharter.org/ticket/123`
+- Untriaged tickets view: `cb.innovationcharter.org/tickets/status/untriaged`
+- Staff can immediately edit ticket to fix asset tags, descriptions, student mappings
+
+### 🔧 Flexible Temp Assignment (from Nick)
+
+**Scenario**: "If they come straight to me but end up needing a temp, can I mark as getting temp without knowing the asset tag?"
+
+**Solution**: Separate device status and temp status tracking
+
+- **Device Status**: "Waiting on Device", "In Repair", "Ready for Pickup"
+- **Temp Status**: "Needs Temp", "Temp Ready", "Has Temp A0912"
+
+**Multiple Workflows Supported**:
+
+1. **Student → Amy → Temp → Nick → Amy → Swap**
+2. **Student → Nick → Quick Fix**
+3. **Student → Nick → "You need temp" → Amy → Nick → Amy → Swap**
+
+### 📋 Ticket Workflow States
+
+**New Workflow Statuses**:
+
+- **New** - Just submitted, needs triaging
+- **Triaged** - Staff has reviewed and corrected any issues
+- **Waiting on Device** - Student needs to bring device in
+- **Waiting on Temp** - Student needs temp device prepared
+- **In Repair** - Device with tech for repair
+- **Ready for Pickup** - Repair complete, ready for student
+
+## 🗂️ Systems Being Replaced
+
+**Current Systems to Sunset**:
+
+- "Chromebook Repairs & Fees" (Google Sheet)
+- "Chromebook Ticket (Responses)" (Google Form responses sheet)
+- Library's separate temp tracking system
+
+**New Unified System**:
+
+- AirTable Tickets table (replaces all of the above)
+- Integrated temp device tracking in main CB app
+- Business office handles invoicing (they already have software for this)
+
+## Updated Schema Requirements
+
+### Tickets Table (New in AirTable)
+
+**Core Fields:**
+
+- [ ] Ticket ID (Auto Number - Primary Field)
+- [ ] **Student** (Link to Students table - existing)
+- [ ] **Asset** (Link to Inventory table - existing)
+- [ ] **Issue Description** (Long text - cleaned up from form data)
+- [ ] **Device Status** (Single select: New, Triaged, Waiting on Device, In Repair, Ready for Pickup)
+- [ ] **Temp Status** (Single select: No Temp Needed, Needs Temp, Temp Ready, Has Temp)
+- [ ] **Final Cost** (Currency)
+- [ ] **Repair Notes** (Long text)
+
+**Form Data (Raw - may need editing):**
+
+- [ ] **Form Asset Tag** (Single line text - as entered by student, may have errors like "ao333")
+- [ ] **Form Student Email** (Email - as entered, may be wrong)
+- [ ] **Form Description** (Long text - raw description, may need cleanup)
+
+**Workflow Fields:**
+
+- [ ] **Temp Device Assigned** (Link to Inventory table - specific temp device)
+- [ ] **Chat Notification Sent** (Checkbox - track Google Chat sent)
+- [ ] **Needs Triaging** (Checkbox - auto-set for new tickets, cleared when staff reviews)
+
+**Lookup Fields (from existing tables):**
+
+- [ ] **Student Email** (Lookup from Student - correct email after mapping)
+- [ ] **Student Grade** (Lookup from Student)
+- [ ] **Advisor Email** (Lookup from Student → Advisor - for CC)
+- [ ] **Parent Contacts** (Lookup from Student → existing contact fields)
+- [ ] **Asset Tag** (Lookup from Asset - correct tag after triaging)
+
+### Key UI Components Needed
+
+**URL Structure:**
+
+- [ ] **Individual Ticket** - `cb.innovationcharter.org/ticket/1234`
+- [ ] **Ticket Views by Status:**
+  - [ ] `cb.innovationcharter.org/tickets/status/untriaged` - New tickets needing staff review
+  - [ ] `cb.innovationcharter.org/tickets/status/active` - All open tickets
+  - [ ] `cb.innovationcharter.org/tickets/status/waiting-device` - Student needs to bring device
+  - [ ] `cb.innovationcharter.org/tickets/status/waiting-temp` - Temp device needs prep
+  - [ ] `cb.innovationcharter.org/tickets/status/in-repair` - With tech for repair
+  - [ ] `cb.innovationcharter.org/tickets/status/ready-pickup` - Ready for student pickup
+- [ ] **Lookup Views:**
+  - [ ] `cb.innovationcharter.org/student/jane.smith` - All tickets for student
+  - [ ] `cb.innovationcharter.org/asset/A1234` - All tickets for device
+- [ ] **Actions:**
+  - [ ] `cb.innovationcharter.org/ticket/create` - Manual ticket creation
+  - [ ] `cb.innovationcharter.org/temp-devices` - Temp device management dashboard
+
+**Core Interfaces:**
+
+- [ ] **Ticket Triage Interface** - Fix asset tags, descriptions, student mappings
+- [ ] **Asset Tag Correction** - Easy dropdown to fix student errors
+- [ ] **Student Mapping** - Lookup and correct student assignment
+- [ ] **Status Management** - Separate device and temp status controls
+
+### Simple Automations
+
+- [ ] **New ticket → Google Chat notification with edit link**
+- [ ] **New ticket → Email confirmation** (student + CC advisor/parents via lookups)
+- [ ] **Temp Status "Temp Ready" → Email student** "Temp device ready, bring your device to library"
+- [ ] **Device Status "Ready for Pickup" → Email student** "Device ready for pickup"
+
+## Quick Wins (MVP Features)
+
+**Phase 0** - Google Form Integration (Immediate Priority)
+
+1. **Update Google Form backend** - Route submissions to Tickets table instead of Sheets
+2. **Keep existing GChat notifications** - Don't break current tech team workflow
+3. **Add ticket edit links** - Include URL in Google Chat for immediate triaging
+
+**Phase 1 MVP** - Focus on Story C (Quick billing workflow - addresses Problems #2 & #4)
+
+1. **Basic Ticket Lookup** - Find tickets created from Google Form
+2. **Ticket Triaging Interface** - Fix student errors in asset tags and descriptions
+3. **Simple Cost Entry** - Add final cost to ticket
+4. **One-Click Billing Notification** - Send billing details to business office
+
+**Phase 2 Expansion** - Add Stories A, B, & D (addresses Problems #1, #3, & #4)
+
+1. **Separate Device/Temp Status Tracking** - Support Nick's flexible workflows
+2. **Automated Student Communications** - Email notifications throughout repair journey
+3. **Librarian Status Interface** - Quick student/device lookup for inquiries
+4. **Tech Repair Workflow** - Asset scan → complete repair context → completion workflow
+
+**Phase 3** - Full System
+
+1. **Management Dashboard** - Repair analytics and inventory planning
+2. **Advanced Temp Device Management** - 30-device pool tracking and alerts
+3. **Enhanced Automated Notifications** - Status updates, overdue alerts, reminders
+
+## Implementation Priority
+
+**Before School Year Starts**:
+
+- [ ] AirTable Tickets table setup
+- [ ] Google Form → AirTable integration
+- [ ] Basic ticket triaging interface
+- [ ] Business office billing integration
+
+**Early School Year**:
+
+- [ ] Student/staff training on new system
+- [ ] Sunset old Google Sheets workflow
+- [ ] Monitor and refine automation rules
+
+## Dependencies
+
+- AirTable API access and schema updates
+- Updated TypeScript types for new data structures
+- Enhanced error handling and validation
+- Updated navigation and routing for new components
+
+---
+
+## Technical Integration Requirements
+
+### Google Form → Ticket Integration (Addresses Problem #1)
 
 **Current Workflow (needs updating):**
 
@@ -204,7 +450,7 @@
   - [ ] Issue description → Issue Description field
   - [ ] Priority/urgency → Priority field
   - [ ] Photos/attachments → Photos field
-  - [ ] Set default Status to "Open"
+  - [ ] Set default Status to "New"
   - [ ] Auto-populate Date Created
 
 ### 0.3 Transition Strategy
@@ -230,7 +476,8 @@
     - [ ] Student (Link to Students table)
     - [ ] Staff Member (Link to Staff table)
     - [ ] Issue Description (Long text)
-    - [ ] Status (Single select: Open, In Progress, Waiting for Parts, Completed, Cancelled)
+    - [ ] Device Status (Single select: New, Triaged, Waiting on Device, In Repair, Ready for Pickup)
+    - [ ] Temp Status (Single select: No Temp Needed, Needs Temp, Temp Ready, Has Temp)
     - [ ] Priority (Single select: Low, Medium, High, Urgent)
     - [ ] Date Created (Date)
     - [ ] Date Resolved (Date)
@@ -238,7 +485,13 @@
     - [ ] Cost Estimate (Currency)
     - [ ] Final Cost (Currency)
     - [ ] Photos (Attachments)
-  - [ ] Create views for different ticket statuses (Open, In Progress, Waiting for Parts, Completed, etc.)
+    - [ ] Form Asset Tag (Single line text - raw from form)
+    - [ ] Form Student Email (Email - raw from form)
+    - [ ] Form Description (Long text - raw from form)
+    - [ ] Temp Device Assigned (Link to Inventory table)
+    - [ ] Chat Notification Sent (Checkbox)
+    - [ ] Needs Triaging (Checkbox)
+  - [ ] Create views for different ticket statuses (New, Triaged, In Repair, etc.)
   - [ ] Add automation rules for status transitions
 
 - [ ] **Billing Notifications Table** (Create in AirTable interface)
@@ -282,16 +535,15 @@
 
 - [ ] **AirTable Automations** (Configure in AirTable interface)
 
-  - [ ] When Ticket Status changes to "In Progress" → Update linked Asset Repair Status to "In Repair"
-  - [ ] When Ticket Status changes to "Completed" → Update linked Asset Repair Status to "In Service"
+  - [ ] When Ticket Device Status changes to "In Repair" → Update linked Asset Repair Status to "In Repair"
+  - [ ] When Ticket Device Status changes to "Ready for Pickup" → Update linked Asset Repair Status to "In Service"
   - [ ] When Ticket is marked for billing → Create new Billing Notification record with linked Ticket
   - [ ] When Billing Notification Status changes to "Paid" → Send confirmation email
   - [ ] When Asset Repair Status changes → Send notification to assigned Staff Member
-  - [ ] **Student Communication Automations (KEY for Story F):**
+  - [ ] **Student Communication Automations (KEY for Story A):**
     - [ ] When new Ticket created → Send confirmation email to student: "Repair request received"
-    - [ ] When Asset status changes to "In Repair" → Send update email: "Device in for repair, loaner assigned"
-    - [ ] When Ticket status changes to "In Progress" → Send progress email: "Repair in progress"
-    - [ ] When Ticket status changes to "Completed" → Send pickup email: "Device ready, return loaner, billing info"
+    - [ ] When Temp Status changes to "Temp Ready" → Send email: "Temp device ready, bring your device to library"
+    - [ ] When Device Status changes to "Ready for Pickup" → Send email: "Device ready for pickup"
 
 - [ ] **AirTable API Setup**
   - [ ] Set up AirTable API access tokens for the application
@@ -341,7 +593,7 @@
   - [ ] Alert librarian when repair marked complete with integrated details
   - [ ] **Universal search**: Accept asset tags, student names, or ticket numbers from single search interface
 
-### 2.2 Reporting & Analytics Functions (KEY for Story E - Management Dashboard)
+### 2.2 Reporting & Analytics Functions (KEY for Story H - Management Dashboard)
 
 - [ ] **Inventory Health Reports**
   - [ ] Get count of devices currently in repair
@@ -379,15 +631,16 @@
   - [ ] Handle confirmation from business office
   - [ ] Simple audit trail for billing communications
 
-### 2.5 Student Communication Functions (KEY for Story F)
+### 2.5 Student Communication Functions (KEY for Story A)
 
 - [ ] **Automated Email Notifications** (`src/functions/notifications.ts`)
 
   - [ ] Ticket confirmation email when new ticket created
-  - [ ] Loaner assignment notification when device goes in for repair
+  - [ ] Temp device ready notification when librarian prepares temp
   - [ ] Progress update email when repair begins
   - [ ] Completion email with pickup and billing information
   - [ ] Email template system with dynamic content (student name, asset ID, costs, etc.)
+  - [ ] CC advisors (grades 5-9) and parents (all grades) on all emails
 
 - [ ] **Communication Tracking**
   - [ ] Log all sent emails with timestamps
@@ -422,7 +675,15 @@
   - [ ] Cost tracking
   - [ ] Related loaner information
 
-- [ ] **Tech Repair Workflow View** (`src/TechRepairWorkflow.svelte`) - **KEY COMPONENT for Story C**
+- [ ] **Ticket Triage Interface** (`src/TicketTriage.svelte`) - **KEY COMPONENT for Data Quality**
+
+  - [ ] View untriaged tickets from Google Form submissions
+  - [ ] Edit asset tags with dropdown corrections (A0333 vs ao333)
+  - [ ] Fix student mappings with lookup and autocomplete
+  - [ ] Clean up issue descriptions
+  - [ ] Mark tickets as triaged when corrections complete
+
+- [ ] **Tech Repair Workflow View** (`src/TechRepairWorkflow.svelte`) - **KEY COMPONENT for Story D**
 
   - [ ] Asset tag scan/lookup interface for repair queue
   - [ ] Display complete repair context: student info, ticket details, loaner status, repair history
@@ -430,7 +691,7 @@
   - [ ] "Mark Complete & Alert Librarian" action with integrated notification
   - [ ] Show clear next steps and handoff information
 
-- [ ] **Student Status Lookup** (`src/StudentStatusLookup.svelte`) - **KEY COMPONENT for Story D**
+- [ ] **Student Status Lookup** (`src/StudentStatusLookup.svelte`) - **KEY COMPONENT for Story E**
 
   - [ ] Universal search interface (student names, asset tags, ticket numbers)
   - [ ] Student repair history view with current status
@@ -438,7 +699,7 @@
   - [ ] Timeline information and estimated completion dates
   - [ ] Loaner device information and contact details
 
-- [ ] **Management Dashboard** (`src/ManagementDashboard.svelte`) - **KEY COMPONENT for Story E**
+- [ ] **Management Dashboard** (`src/ManagementDashboard.svelte`) - **KEY COMPONENT for Story H**
   - [ ] Current repair queue overview (devices in repair, waiting for parts, etc.)
   - [ ] Loaner utilization statistics and availability
   - [ ] Repair trend analysis (costs, frequency, common issues)
@@ -454,9 +715,16 @@
   - [ ] Integration with ticket system
 
 - [ ] **Loaner Return Process** (`src/LoanerReturn.svelte`)
+
   - [ ] Scan/select returning loaner
   - [ ] Process device swap
   - [ ] Update all related records
+
+- [ ] **Temp Device Management Dashboard** (`src/TempDeviceManagement.svelte`) - **KEY for Story F & G**
+  - [ ] Monitor 30-device temp pool health
+  - [ ] Alert for temp devices needing repair
+  - [ ] Track students with extended temp assignments (>2 weeks)
+  - [ ] Flag unfixable devices for replacement workflow
 
 ### 3.3 Enhanced Checkout Process
 
@@ -566,41 +834,3 @@
 - [ ] Barcode scanning for faster processing
 - [ ] Integration with vendor repair systems
 - [ ] Predictive maintenance alerts
-
----
-
-## Quick Wins (MVP Features)
-
-**Phase 0** - Google Form Integration (Immediate Priority)
-
-1. **Update Google Form backend** - Route submissions to Tickets table instead of Sheets
-2. **Keep existing GChat notifications** - Don't break current tech team workflow
-
-**Phase 1 MVP** - Focus on Story C (Quick billing workflow - addresses Problems #2 & #4)
-
-1. **Basic Ticket Lookup** - Find tickets created from Google Form
-2. **Simple Cost Entry** - Add final cost to ticket
-3. **One-Click Billing Notification** - Send billing details to business office
-4. **AirTable Email Automation** - Automated notification with student/cost/asset details
-
-**Phase 2 Expansion** - Add Stories A, B, & D (addresses Problems #1, #3, & #4)
-
-1. **Automated Student Communications** - Email notifications throughout repair journey (Story A)
-2. **Librarian Intake Interface** - Create tickets for walk-ins with full device context (Story B)
-3. **Tech Repair Workflow** - Asset scan → complete repair context → completion workflow (Story D)
-4. **Simple Loaner Assignment** - Clear temporary device tracking during repairs
-5. **Student Status Lookup** - Quick status inquiries for librarian (Story E)
-
-**Phase 3** - Full System
-
-1. **Management Dashboard** - Repair analytics and inventory planning (Story F)
-2. **Advanced Reporting** - Cost tracking, repair history, asset health
-3. **Complex Loaner Workflows** - Full repair-to-return process
-4. **Enhanced Automated Notifications** - Status updates, overdue alerts, reminders
-
-## Dependencies
-
-- AirTable API access and schema updates
-- Updated TypeScript types for new data structures
-- Enhanced error handling and validation
-- Updated navigation and routing for new components
