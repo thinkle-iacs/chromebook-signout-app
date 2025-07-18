@@ -112,9 +112,12 @@
 
 - [ ] **OpenRoster API Integration**
 
-  - [ ] Set up OPENROSTER_API_KEY in Netlify environment variables
-  - [ ] Set up OPENROSTER_BASE_URL in environment variables
-  - [ ] Create function to lookup student schedule by email
+  - [ ] Set up SIS_CLIENT_IDENTIFIER in Netlify environment variables
+  - [ ] Set up SIS_SECRET in Netlify environment variables
+  - [ ] Set up SIS_URL in Netlify environment variables
+  - [ ] Implement SIS authentication endpoint to get Bearer token
+  - [ ] Create function to lookup student by email (first API call)
+  - [ ] Create function to lookup student schedule by student ID (second API call)
   - [ ] Filter schedule data to show only relevant course info
   - [ ] Extract advisory period times for optimal student contact
   - [ ] Error handling for API failures and missing students
