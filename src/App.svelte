@@ -13,6 +13,7 @@
   import { fade } from "svelte/transition";
   import LookupStaff from "./LookupStaff.svelte";
   import Reports from "./reports/Reports.svelte";
+  import SISTest from "./SISTest.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -111,6 +112,10 @@
       page = Reports;
       title = "IACS Chromebook Reports";
     });
+    router("/sis-test/", (ctx) => {
+      page = SISTest;
+      title = "SIS API Test Tool";
+    });
     router.start();
   });
   let navActive;
@@ -193,6 +198,13 @@
         class:w3-blue={title == IT_NAME}
         href="/it/"
         on:click={l("/it/")}>IT Tool</a
+      >
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == SISTest}
+        class:w3-blue={page == SISTest}
+        href="/sis-test/"
+        on:click={l("/sis-test/")}>🧪 SIS Test</a
       >
     {/if}
   </nav>

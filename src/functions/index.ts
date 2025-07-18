@@ -10,6 +10,8 @@ import { handler as contactHandler } from "./contacts";
 import { handler as messageHandler } from "./messages";
 import { handler as googleHandler } from "./googleAdmin";
 import { handler as updateStudent } from "./updateStudent";
+import { handler as sisApiHandler } from "./sisApi";
+
 let modes = {
   student: studentHandler,
   asset: inventoryHandler,
@@ -22,6 +24,7 @@ let modes = {
   message: messageHandler,
   google: googleHandler,
   updateStudent: updateStudent,
+  sisApi: sisApiHandler,
 };
 
 export async function handler(
