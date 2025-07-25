@@ -620,7 +620,7 @@ export const HIGH_SCHOOL_SCHEDULE: BellSchedule = {
         },
         {
           id: "block_2",
-          name: "Block 2", 
+          name: "Block 2",
           displayName: "Block 2",
           startTime: "09:40",
           endTime: "11:02",
@@ -629,7 +629,7 @@ export const HIGH_SCHOOL_SCHEDULE: BellSchedule = {
         {
           id: "block_3",
           name: "Block 3",
-          displayName: "Block 3", 
+          displayName: "Block 3",
           startTime: "11:05",
           endTime: "12:27",
           durationMinutes: 82,
@@ -643,7 +643,7 @@ export const HIGH_SCHOOL_SCHEDULE: BellSchedule = {
           durationMinutes: 24,
         },
         {
-          id: "adv_l_2", 
+          id: "adv_l_2",
           name: "Adv/L 2",
           displayName: "Adv/Lunch 2",
           startTime: "12:55",
@@ -744,7 +744,7 @@ export function parseProjectScheduleFromSIS(
 
   const dayMap: Record<string, string> = {
     Mon: "monday",
-    Tues: "tuesday", 
+    Tues: "tuesday",
     Wed: "wednesday",
     Thur: "thursday",
     Fri: "friday",
@@ -756,8 +756,9 @@ export function parseProjectScheduleFromSIS(
 
     for (const periodString of cls.periods) {
       // Check if this is Middle School format: "BLOCK A(Mon) BLOCK D(Thu)"
-      const msBlockMatches = periodString.match(/BLOCK ([A-E])\(([^)]+)\)/g) || [];
-      
+      const msBlockMatches =
+        periodString.match(/BLOCK ([A-E])\(([^)]+)\)/g) || [];
+
       if (msBlockMatches.length > 0) {
         // Handle Middle School format
         for (const blockMatch of msBlockMatches) {
@@ -780,17 +781,18 @@ export function parseProjectScheduleFromSIS(
         }
       } else {
         // Check if this is High School format: "Block 1(D1) Block 3(D3) Block 4(D4)"
-        const hsBlockMatches = periodString.match(/Block (\d+)\(([^)]+)\)/g) || [];
-        
+        const hsBlockMatches =
+          periodString.match(/Block (\d+)\(([^)]+)\)/g) || [];
+
         if (hsBlockMatches.length > 0) {
-          // Handle High School format 
+          // Handle High School format
           // For now, map cycle days to weekdays: D1=Mon, D2=Tue, D3=Wed, D4=Thu, D5=Fri
           const cycleToDay: Record<string, string> = {
-            "D1": "monday",
-            "D2": "tuesday", 
-            "D3": "wednesday",
-            "D4": "thursday",
-            "D5": "friday"
+            D1: "monday",
+            D2: "tuesday",
+            D3: "wednesday",
+            D4: "thursday",
+            D5: "friday",
           };
 
           for (const blockMatch of hsBlockMatches) {
@@ -800,7 +802,7 @@ export function parseProjectScheduleFromSIS(
             const blockNum = match[1]; // 1, 2, 3, 4
             const cycleDaysString = match[2]; // "D1" or "D1,D2"
 
-            // Handle multiple cycle days like "D1,D2" 
+            // Handle multiple cycle days like "D1,D2"
             const cycleDays = cycleDaysString.split(",").map((d) => d.trim());
 
             for (const cycleDay of cycleDays) {
@@ -813,8 +815,9 @@ export function parseProjectScheduleFromSIS(
           }
         } else {
           // Handle other formats like "Adv/L 1(D1-D2,D4-D5)"
-          const advLunchMatches = periodString.match(/(Adv\/L \d+)\(([^)]+)\)/g) || [];
-          
+          const advLunchMatches =
+            periodString.match(/(Adv\/L \d+)\(([^)]+)\)/g) || [];
+
           for (const advMatch of advLunchMatches) {
             const match = advMatch.match(/(Adv\/L \d+)\(([^)]+)\)/);
             if (!match) continue;
@@ -824,11 +827,11 @@ export function parseProjectScheduleFromSIS(
 
             // Parse ranges and individual days
             const cycleToDay: Record<string, string> = {
-              "D1": "monday",
-              "D2": "tuesday",
-              "D3": "wednesday", 
-              "D4": "thursday",
-              "D5": "friday"
+              D1: "monday",
+              D2: "tuesday",
+              D3: "wednesday",
+              D4: "thursday",
+              D5: "friday",
             };
 
             // Split by comma and handle ranges
@@ -842,14 +845,16 @@ export function parseProjectScheduleFromSIS(
                 for (let i = startNum; i <= endNum; i++) {
                   const weekDay = cycleToDay[`D${i}`];
                   if (weekDay) {
-                    weekSchedule[weekDay][periodName] = cls.title || cls.courseName || "Unknown Class";
+                    weekSchedule[weekDay][periodName] =
+                      cls.title || cls.courseName || "Unknown Class";
                   }
                 }
               } else {
                 // Handle individual days like "D4"
                 const weekDay = cycleToDay[part.trim()];
                 if (weekDay) {
-                  weekSchedule[weekDay][periodName] = cls.title || cls.courseName || "Unknown Class";
+                  weekSchedule[weekDay][periodName] =
+                    cls.title || cls.courseName || "Unknown Class";
                 }
               }
             }

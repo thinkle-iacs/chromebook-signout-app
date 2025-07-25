@@ -14,6 +14,7 @@
   import LookupStaff from "./LookupStaff.svelte";
   import Reports from "./reports/Reports.svelte";
   import SISTest from "./SISTest.svelte";
+  import ScheduleTester from "./ScheduleTester.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -116,6 +117,10 @@
       page = SISTest;
       title = "SIS API Test Tool";
     });
+    router("/schedule-test/", (ctx) => {
+      page = ScheduleTester;
+      title = "Schedule Structure Tester";
+    });
     router.start();
   });
   let navActive;
@@ -205,6 +210,13 @@
         class:w3-blue={page == SISTest}
         href="/sis-test/"
         on:click={l("/sis-test/")}>🧪 SIS Test</a
+      >
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == ScheduleTester}
+        class:w3-blue={page == ScheduleTester}
+        href="/schedule-test/"
+        on:click={l("/schedule-test/")}>📅 Schedule Test</a
       >
     {/if}
   </nav>

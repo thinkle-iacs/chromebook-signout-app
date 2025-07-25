@@ -4,7 +4,6 @@
     testSISAuth,
     testStudentLookup,
     testScheduleLookup,
-    testScheduleAnalysis,
     isValidStudentEmail,
   } from "./data/sisData";
 
@@ -65,8 +64,6 @@
     runTest("C. Student Lookup", () => testStudentLookup(studentEmail));
   const testD = () =>
     runTest("D. Schedule Lookup", () => testScheduleLookup(studentEmail));
-  const testE = () =>
-    runTest("E. Structured Schedule", () => testScheduleAnalysis(studentEmail));
 </script>
 
 <div class="w3-container w3-padding">
@@ -142,15 +139,11 @@
           Test D: Can we get schedule?
         </button>
 
-        <button
-          class="w3-button w3-teal w3-margin-right w3-margin-bottom"
-          on:click={testE}
-          disabled={loading ||
-            !studentEmail ||
-            !isValidStudentEmail(studentEmail)}
-        >
-          Test E: Get structured schedule
-        </button>
+        <div class="w3-container w3-margin">
+          <p class="w3-text-grey">
+            <em>Note: Backend schedule parsing has been removed. Use the new ScheduleTester.svelte for comprehensive frontend schedule testing with enhanced debugging capabilities.</em>
+          </p>
+        </div>
 
         <button
           class="w3-button w3-gray w3-margin-bottom"
