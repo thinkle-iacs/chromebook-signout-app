@@ -4,6 +4,7 @@
     testSISAuth,
     testStudentLookup,
     testScheduleLookup,
+    testScheduleAnalysis,
     isValidStudentEmail,
   } from "./data/sisData";
 
@@ -64,6 +65,8 @@
     runTest("C. Student Lookup", () => testStudentLookup(studentEmail));
   const testD = () =>
     runTest("D. Schedule Lookup", () => testScheduleLookup(studentEmail));
+  const testE = () =>
+    runTest("E. Structured Schedule", () => testScheduleAnalysis(studentEmail));
 </script>
 
 <div class="w3-container w3-padding">
@@ -74,9 +77,10 @@
 
     <div class="w3-container w3-padding">
       <div class="w3-panel w3-pale-yellow w3-border">
-        <p><strong>Test Order:</strong> A → B → C → D</p>
+        <p><strong>Test Order:</strong> A → B → C → D → E</p>
         <p>
-          <strong>Goal:</strong> See exactly where the SIS connection fails and why
+          <strong>Goal:</strong> Test SIS integration and schedule analysis with
+          bell schedules
         </p>
       </div>
 
@@ -139,6 +143,16 @@
         </button>
 
         <button
+          class="w3-button w3-teal w3-margin-right w3-margin-bottom"
+          on:click={testE}
+          disabled={loading ||
+            !studentEmail ||
+            !isValidStudentEmail(studentEmail)}
+        >
+          Test E: Get structured schedule
+        </button>
+
+        <button
           class="w3-button w3-gray w3-margin-bottom"
           on:click={clearResults}
         >
@@ -177,7 +191,7 @@
               >
             </h4>
 
-            {#if result.success}
+            {#if result.success && !result.result?.error}
               <p class="w3-text-green"><strong>Success!</strong></p>
               <details class="w3-small">
                 <summary class="w3-text-blue" style="cursor: pointer;"
@@ -191,7 +205,10 @@
                   )}</pre>
               </details>
             {:else}
-              <p class="w3-text-red"><strong>Error:</strong> {result.error}</p>
+              <p class="w3-text-red">
+                <strong>Error:</strong>
+                {result.result?.error || result.error || "Unknown error"}
+              </p>
               <details class="w3-small">
                 <summary class="w3-text-blue" style="cursor: pointer;"
                   >View error details</summary

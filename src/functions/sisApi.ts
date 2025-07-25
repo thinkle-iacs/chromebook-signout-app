@@ -147,6 +147,46 @@ export async function handler(event: APIGatewayEvent, context: Context) {
       }
     }
 
+    // Step E: Test schedule analysis with bell schedules
+    if (testStep === "analysis" && studentEmail) {
+      console.log("[SIS API] Testing schedule analysis for:", studentEmail);
+      try {
+        const token = await authenticateWithSIS();
+        const baseUrl = process.env.SIS_URL || "";
+        const student = await lookupStudentByEmail(
+          studentEmail,
+          token,
+          baseUrl
+        );
+        const schedule = await fetchStudentClasses(student, token, baseUrl); // Perform schedule analysis
+        const analysis = analyzeStudentSchedule(student, schedule);
+
+        console.log("[SIS API] Schedule analysis completed:", analysis);
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            success: true,
+            message: "Schedule analysis successful",
+            student: student,
+            schedule: schedule,
+            analysis: analysis,
+          }),
+        };
+      } catch (analysisError: any) {
+        console.error(
+          "[SIS API] Schedule analysis failed:",
+          analysisError.message
+        );
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            error: "Schedule analysis failed",
+            details: analysisError.message,
+          }),
+        };
+      }
+    }
+
     // Default usage info
     console.log("[SIS API] Missing required parameters");
     return {
@@ -154,7 +194,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
       body: JSON.stringify({
         error: "Missing required parameters",
         usage:
-          "Use testStep=connect|auth|student|schedule and studentEmail for student/schedule tests",
+          "Use testStep=connect|auth|student|schedule|analysis and studentEmail for student/schedule tests",
       }),
     };
   } catch (error: any) {
@@ -340,4 +380,27 @@ async function fetchStudentClasses(
   console.log("[SIS Classes] Response data:", JSON.stringify(data, null, 2));
 
   return data;
+}
+
+// Simple schedule analysis function - placeholder for actual analysis logic
+function analyzeStudentSchedule(student: any, schedule: any): any {
+  console.log(
+    "[SIS Analysis] Analyzing schedule for student:",
+    student?.sourcedId || "unknown"
+  );
+
+  // Placeholder: Implement actual analysis logic here
+  const analysis = {
+    totalCredits: 0,
+    classesCount: 0,
+    // Add more analysis fields as needed
+  };
+
+  if (Array.isArray(schedule)) {
+    analysis.classesCount = schedule.length;
+    // Calculate total credits or other metrics based on schedule data
+  }
+
+  console.log("[SIS Analysis] Schedule analysis result:", analysis);
+  return analysis;
 }
