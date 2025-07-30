@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { getTickets, ticketsStore, type Ticket } from "../data/tickets";
-  import StudentTag from "../StudentTag.svelte";
   import AssetDisplay from "../AssetDisplay.svelte";
+  import StudentTag from "../StudentTag.svelte";
 
   let loading = true;
   let error: string | null = null;
@@ -112,7 +112,7 @@
                 {/if}
               </td>
               <td class="w3-text-blue">
-                {#if ticket.Student}
+                {#if ticket._linked.Student}
                   <StudentTag student={ticket._linked.Student} />
                 {:else}
                   <span class="w3-text-gray">-</span>

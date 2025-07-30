@@ -5,7 +5,7 @@
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
   import NameDropdown from "./NameDropdown.svelte";
-  import StudentTag from "./StudentTag.svelte";
+  import StudentInfo from "./StudentInfo.svelte";
   import { studentName, validateStudent } from "./validators";
   import { getStudent, studentsStore } from "./data/students";
 
@@ -169,7 +169,7 @@ automatically
       </FormField>
 
       {#if student}
-        Found student: <StudentTag {student} />
+        Found student: <StudentInfo {student} />
       {:else}
         Searching...
       {/if}
