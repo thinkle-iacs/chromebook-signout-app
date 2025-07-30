@@ -20,15 +20,6 @@
     }
   }
 
-  // Format name as "Last, First"
-  function formatName(fullName: string): string {
-    const parts = fullName.trim().split(/\s+/);
-    if (parts.length < 2) return fullName;
-
-    const firstName = parts[0];
-    const lastName = parts.slice(1).join(" ");
-    return `${lastName}, ${firstName}`;
-  }
   $: contacts = student.LASID ? $contactStore[student.LASID] : null;
 
   // Check if contact emails are available as direct fields (from tickets lookup)
@@ -49,7 +40,7 @@
     role="button"
     tabindex="0"
   >
-    {formatName(student.Name)}
+    {student.Name}
     {#if student.YOG}
       ({student.YOG}) {getSchoolLevel(student.YOG)}
     {/if}
