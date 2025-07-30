@@ -136,7 +136,7 @@
               <td>
                 {#if ticket._linked.Staff}
                   <span class="w3-text-blue">
-                    {ticket._linked.Staff["FullName"]}
+                    {ticket._linked.Staff["Full Name"]}
                     <a href="mailto:{ticket._linked.Staff.Email}"
                       >{ticket._linked.Staff.Email}</a
                     >
