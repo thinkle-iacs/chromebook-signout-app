@@ -3,7 +3,7 @@ import {
   parseProjectScheduleFromSIS,
   getBellScheduleForStudentDay,
 } from "./bellSchedules";
-import { test56schedule } from "../data/scheduleSampleData";
+import { test56schedule } from "./scheduleSampleData";
 
 /**
  * Quick unit test you can run to debug schedule parsing

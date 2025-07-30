@@ -3,12 +3,12 @@
     test78schedule as testMSschedule,
     test56schedule as testMS56schedule,
     testHSschedule,
-  } from "./data/scheduleSampleData";
-  import { buildStructuredSchedule } from "./scheduling/structuredSchedule";
+  } from "./scheduleSampleData";
+  import { buildStructuredSchedule } from "./structuredSchedule";
   import {
     parseProjectScheduleFromSIS,
     getBellScheduleForStudentDay,
-  } from "./scheduling/bellSchedules";
+  } from "./bellSchedules";
 
   let selectedSample = "ms78";
   let structuredResult: any = null;
