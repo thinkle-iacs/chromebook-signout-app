@@ -14,7 +14,7 @@
   import LookupStaff from "./LookupStaff.svelte";
   import Reports from "./reports/Reports.svelte";
   import SISTest from "./SISTest.svelte";
-  import ScheduleTester from "./ScheduleTester.svelte";
+  import ScheduleTester from "./scheduling/ScheduleTester.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
