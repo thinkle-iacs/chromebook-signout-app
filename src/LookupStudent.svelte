@@ -1,5 +1,5 @@
 <script lang="ts">
-  import StudentTag from "./StudentTag.svelte";
+  import StudentInfo from "./StudentInfo.svelte";
 
   import router from "page";
   import type { Student } from "./data/students";
@@ -134,7 +134,7 @@
 {#if student}
   <div class="w3-container">
     <article class="w3-card w3-cell-middle">
-      <StudentTag {student} />
+      <StudentInfo {student} />
       <nav class="w3-nav w3-bar w3-border-bottom">
         <button
           class="w3-bar-item w3-button"

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import StudentTag from "./StudentTag.svelte";
+  import StudentInfo from "./StudentInfo.svelte";
   import router from "page";
   import type { Staff } from "./data/staff"; // Import Staff type
   import type { Asset } from "./data/inventory";
