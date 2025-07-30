@@ -13,3 +13,4 @@ export let contractsBase = base("Contracts");
 export let contactsBase = base("Contacts");
 export let notificationsBase = base("Notifications");
 export let messagesBase = base("Messages");
+export let ticketsBase = base("Tickets");

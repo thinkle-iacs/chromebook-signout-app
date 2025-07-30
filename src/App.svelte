@@ -15,6 +15,7 @@
   import Reports from "./reports/Reports.svelte";
   import SISTest from "./SISTest.svelte";
   import ScheduleTester from "./scheduling/ScheduleTester.svelte";
+  import TicketBrowser from "./tickets/TicketBrowser.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -113,6 +114,7 @@
       page = Reports;
       title = "IACS Chromebook Reports";
     });
+
     router("/sis-test/", (ctx) => {
       page = SISTest;
       title = "SIS API Test Tool";
@@ -120,6 +122,10 @@
     router("/schedule-test/", (ctx) => {
       page = ScheduleTester;
       title = "Schedule Structure Tester";
+    });
+    router("/tickets/", (ctx) => {
+      page = TicketBrowser;
+      title = "Ticket Browser";
     });
     router.start();
   });
@@ -189,6 +195,13 @@
         class:w3-blue={page == Contracts}
         href="/contracts/"
         on:click={l("/contracts/")}>Manage Contracts</a
+      >
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == TicketBrowser}
+        class:w3-blue={page == TicketBrowser}
+        href="/tickets/"
+        on:click={l("/tickets/")}>Tickets</a
       >
       <a
         class="w3-bar-item w3-button"
