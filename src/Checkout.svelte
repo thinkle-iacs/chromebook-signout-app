@@ -37,6 +37,7 @@
   import { onMount } from "svelte";
   import { createEmail } from "./messageUtils";
   import StudentNote from "./StudentNote.svelte";
+  import StudentTag from "./StudentTag.svelte";
 
   let status: CheckoutStatus = "Out";
   let notes = "";
@@ -373,15 +374,7 @@ Hinge bolts:New screws needed for display hinges*/
         {/if}
         <div slot="details">
           {#if studentMode && student}
-            <a
-              tabindex="-1"
-              href={`/student/${student.Name}`}
-              on:click={l(`/student/${student.Name}`)}
-            >
-              {student.Email}
-              {student.Advisor} Class of {student.YOG}
-              (LASID: {student.LASID})
-            </a>
+            <StudentTag {student} />
             <StudentNote {student} />
             <StudentContractStatus {student} />
           {/if}
