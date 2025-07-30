@@ -3,6 +3,16 @@ Next Steps (June 2025):
 - Clean up UI for bulk emailer so we don't double-click send while it's sending.
 - Make it easy to see messages that have been sent in the past
 - Implement ticket and billing system
+
+Student Tag Component Refactoring TODO:
+- [ ] Refactor data backends to pull in linked student data (similar to tickets backend)
+- [ ] Use restructureLookups utility function to create .linked.student objects 
+- [ ] Replace manual student displays with StudentTag component in:
+  - [ ] BulkMessageSender.svelte (email + YOG displays)
+  - [ ] AssetDisplay.svelte (student status + email + YOG)
+  - [ ] NameDropdown.svelte (person.name + YOG displays)
+  - [ ] Other places with manual student formatting
+
 - Ticket & Billing System Plan...
   - We will need new tables in AirTable, specifically for...
     -> Tracking tickets (replace google spreadsheet).
