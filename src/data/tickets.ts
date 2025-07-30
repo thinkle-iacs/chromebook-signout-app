@@ -60,7 +60,7 @@ export type Ticket = {
     };
     Staff: {
       Email: string[];
-      FullName: string;
+      "Full Name": string;
       Role: string;
       Department: string;
     };
