@@ -55,17 +55,43 @@ async function updateTicket(event: APIGatewayEvent) {
 }
 
 async function getTickets(event: APIGatewayEvent) {
-  const { minNumber, maxNumber, ticketStatus, tempStatus, deviceStatus } =
-    event.queryStringParameters || {};
+  const {
+    minNumber,
+    maxNumber,
+    ticketStatus,
+    tempStatus,
+    deviceStatus,
+    ticketNumber,
+    user,
+    asset,
+  } = event.queryStringParameters || {};
 
   let filterConditions = [];
 
-  if (minNumber) {
-    filterConditions.push(`{Number} >= ${minNumber}`);
+
+  if (ticketNumber) {
+    filterConditions.push(`{Number} = ${ticketNumber}`);
+  } else {
+    if (minNumber) {
+      filterConditions.push(`{Number} >= ${minNumber}`);
+    }
+    if (maxNumber) {
+      filterConditions.push(`{Number} <= ${maxNumber}`);
+    }
   }
 
-  if (maxNumber) {
-    filterConditions.push(`{Number} <= ${maxNumber}`);
+  if (user) {
+    // Match either FormEmail, Email (from Student), or Email (from Staff)
+    filterConditions.push(
+      `OR({FormEmail} = '${user}', {Email (from Student)} = '${user}', {Email (from Staff)} = '${user}')`
+    );
+  }
+
+  if (asset) {
+    // Match Asset Tag (from Device) or Asset Tag (from Temporary Device)
+    filterConditions.push(
+      `OR({Asset Tag (from Device)} = '${asset}', {Asset Tag (from Temporary Device)} = '${asset}')`
+    );
   }
 
   if (ticketStatus) {
