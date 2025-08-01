@@ -173,3 +173,39 @@ export async function getStudentLoans(
 export async function getNonLoanedChromebooks() {
   return await fetchReport({ chromebookOnly: true, notLoaned: true });
 }
+
+// Update asset function
+export async function updateAsset(id: string, fields: any) {
+  try {
+    const response = await fetch("/.netlify/functions/inventory", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id, fields }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const updatedAsset = await response.json();
+
+    // Update the store with the new data
+    assetStore.update(($assetStore) => {
+      const assetTag = updatedAsset.fields["Asset Tag"];
+      if (assetTag) {
+        $assetStore[assetTag] = {
+          ...updatedAsset.fields,
+          _id: updatedAsset.id,
+        };
+      }
+      return $assetStore;
+    });
+
+    return updatedAsset;
+  } catch (error) {
+    console.error("Error updating asset:", error);
+    throw error;
+  }
+}

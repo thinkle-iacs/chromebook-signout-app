@@ -16,6 +16,7 @@
   import SISTest from "./SISTest.svelte";
   import ScheduleTester from "./scheduling/ScheduleTester.svelte";
   import TicketBrowser from "./tickets/TicketBrowser.svelte";
+  import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -126,6 +127,13 @@
     router("/tickets/", (ctx) => {
       page = TicketBrowser;
       title = "Ticket Browser";
+    });
+
+    // Route for /ticket/number/:number
+    router("/ticket/number/:number", (ctx) => {
+      params = { number: ctx.params.number };
+      page = TicketNumberPage;
+      title = `Ticket #${ctx.params.number}`;
     });
     router.start();
   });
