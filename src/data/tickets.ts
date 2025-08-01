@@ -76,6 +76,11 @@ export async function getTickets(
     ticketStatus?: string;
     tempStatus?: string;
     deviceStatus?: string;
+    assetTag?: string;
+    student?: string;
+    ticketNumber?: number;
+    user?: string;
+    asset?: string;
   } = {}
 ) {
   const queryString = new URLSearchParams(
@@ -95,20 +100,54 @@ export async function getTickets(
   );
   let json = await response.json();
   json = json.map(restructureLookupFields); // restructure linked fields
-
+  let tickets = json.map((ticket) => ({
+    ...ticket.fields,
+    _id: ticket.id,
+    _linked: ticket.linkedFields || {},
+  }));
   ticketsStore.update(($ticketsStore) => {
-    for (let result of json) {
-      $ticketsStore[result.id] = {
-        ...result.fields,
-        _id: result.id,
-        _linked: result.linkedFields || {},
-      };
+    for (let ticket of tickets) {
+      $ticketsStore[ticket._id] = ticket;
     }
     return $ticketsStore;
   });
 
   cachedQueries[cacheKey] = json;
-  return json;
+  return tickets;
+}
+
+// Helper function to get open tickets for a specific asset
+export async function getOpenTicketsForAsset(
+  assetTag: string
+): Promise<Ticket[]> {
+  try {
+    const allTickets = await getTickets({ assetTag });
+    return allTickets.filter(
+      (ticket) =>
+        ticket["Ticket Status"] !== "Closed" &&
+        ticket["Ticket Status"] !== "Resolved"
+    );
+  } catch (error) {
+    console.error("Error getting tickets for asset:", error);
+    return [];
+  }
+}
+
+// Helper function to get open tickets for a specific student
+export async function getOpenTicketsForStudent(
+  studentName: string
+): Promise<Ticket[]> {
+  try {
+    const allTickets = await getTickets({ student: studentName });
+    return allTickets.filter(
+      (ticket) =>
+        ticket["Ticket Status"] !== "Closed" &&
+        ticket["Ticket Status"] !== "Resolved"
+    );
+  } catch (error) {
+    console.error("Error getting tickets for student:", error);
+    return [];
+  }
 }
 
 export function getTicket(id: string): Ticket {
@@ -165,4 +204,23 @@ export async function updateTicket(id: string, updates: Partial<Ticket>) {
   cachedQueries = {};
 
   return json;
+}
+
+export async function getTicketByNumber(
+  number: number
+): Promise<Ticket | null> {
+  const tickets = await getTickets({ ticketNumber: number });
+  return tickets.length > 0 ? tickets[0] : null;
+}
+
+export async function getTicketsForStudent(
+  studentEmail: string
+): Promise<Ticket[]> {
+  // Uses the backend 'user' param to match FormEmail, student, or staff
+  return await getTickets({ user: studentEmail });
+}
+
+export async function getTicketsForAsset(assetTag: string): Promise<Ticket[]> {
+  // Uses the backend 'asset' param to match Asset Tag (from Device) or (from Temporary Device)
+  return await getTickets({ asset: assetTag });
 }
