@@ -2,6 +2,24 @@ import type { APIGatewayEvent, Context } from "aws-lambda";
 import { inventoryBase } from "./Airtable";
 
 export async function handler(event: APIGatewayEvent, context: Context) {
+  // Handle PUT requests for updates
+  if (event.httpMethod === "PUT") {
+    try {
+      const { id, fields } = JSON.parse(event.body || "{}");
+      const updatedRecord = await updateAsset(id, fields);
+      return {
+        statusCode: 200,
+        body: JSON.stringify(updatedRecord),
+      };
+    } catch (error) {
+      console.error("Error in PUT handler:", error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Failed to update asset" }),
+      };
+    }
+  }
+
   const {
     tag,
     lasid,
@@ -141,4 +159,15 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     statusCode: 200,
     body: JSON.stringify(allRecords), // Return original records
   };
+}
+
+export async function updateAsset(id: string, fields: any) {
+  try {
+    const updatedRecord = await inventoryBase.update(id, fields);
+    console.log(`Updated asset ${id}:`, updatedRecord);
+    return updatedRecord;
+  } catch (error) {
+    console.error("Error updating asset:", error);
+    throw error;
+  }
 }
