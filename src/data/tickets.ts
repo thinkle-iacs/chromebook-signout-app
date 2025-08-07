@@ -41,6 +41,7 @@ export type Ticket = {
   SubmittedBy: string;
   History: string;
   PrivateNotes: string;
+  "Repair Cost": number;
   _id: string;
   _linked: {
     Device: {
