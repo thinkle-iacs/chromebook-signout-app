@@ -68,7 +68,6 @@ async function getTickets(event: APIGatewayEvent) {
 
   let filterConditions = [];
 
-
   if (ticketNumber) {
     filterConditions.push(`{Number} = ${ticketNumber}`);
   } else {
@@ -125,6 +124,8 @@ async function getTickets(event: APIGatewayEvent) {
       "Student",
       "FormAsset",
       "Device",
+      "PrivateNotes",
+      "History",
       "Notes",
       "Temporary Device",
       "SubmittedBy",
@@ -153,6 +154,8 @@ async function getTickets(event: APIGatewayEvent) {
     ],
   });
   let result = await query.all();
+  console.log("Got tickets:", result.length, "records found");
+  console.log("First one: ", result[0] ? result[0].fields : "No records");
   return {
     statusCode: 200,
     body: JSON.stringify(result),

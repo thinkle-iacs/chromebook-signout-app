@@ -7,6 +7,8 @@
   import EditableTextField from "./EditableTextField.svelte";
   import TicketStudentAssignment from "./TicketStudentAssignment.svelte";
   import TicketAssetAssignment from "./TicketAssetAssignment.svelte";
+  import { studentsStore } from "../data/students";
+  import { assetStore } from "../data/inventory";
 
   export let ticket: Ticket;
   export let readOnly: boolean = false;
@@ -151,7 +153,43 @@
     newValue: string | null
   ) {
     let updates: Partial<Ticket> = {};
-    updates[field] = newValue || "";
+    updates[field] = newValue ? [newValue] : [];
+
+    // Get human-readable names for history
+    let fromName = "none";
+    let toName = "none";
+
+    if (field === "Student") {
+      // Use existing _linked data for current student
+      if (ticket._linked?.Student) {
+        const existingStudent = ticket._linked.Student;
+        fromName = `${existingStudent.Name} (${existingStudent.Email})`;
+      }
+      // Look up new student in store
+      if (newValue) {
+        const newStudent = Object.values($studentsStore).find(
+          (s) => s._id === newValue
+        );
+        toName = newStudent
+          ? `${newStudent.Name} (${newStudent.Email})`
+          : newValue;
+      }
+    } else if (field === "Device") {
+      // Use existing _linked data for current device
+      if (ticket._linked?.Device) {
+        const existingAsset = ticket._linked.Device;
+        fromName = `${existingAsset.AssetTag} (${existingAsset.Model})`;
+      }
+      // Look up new asset in store
+      if (newValue) {
+        const newAsset = Object.values($assetStore).find(
+          (a) => a._id === newValue
+        );
+        toName = newAsset
+          ? `${newAsset["Asset Tag"]} (${newAsset.Model})`
+          : newValue;
+      }
+    }
 
     const historyEntry = {
       timestamp: new Date().toISOString(),
@@ -160,7 +198,7 @@
       from: ticket[field],
       to: newValue,
       user: $user.email,
-      note: `${field} changed from ${ticket[field] || "none"} to ${newValue || "none"}`,
+      note: `${field} changed from ${fromName} to ${toName}`,
     };
 
     await doTicketUpdate(updates, historyEntry);
@@ -365,7 +403,3 @@
     </div>
   </div>
 </div>
-
-<style>
-  /* ...existing code... */
-</style>

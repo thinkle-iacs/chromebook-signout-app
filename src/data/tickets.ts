@@ -191,19 +191,31 @@ export async function updateTicket(id: string, updates: Partial<Ticket>) {
   let json = await response.json();
   console.log("Updated ticket:", json);
 
-  // Update store with updated ticket
-  ticketsStore.update(($ticketsStore) => {
-    $ticketsStore[id] = {
+  // If the API returns the Airtable record object, convert it to our Ticket shape
+  // (fields, id, etc). If already in Ticket shape, this is a no-op.
+  let ticket: Ticket;
+  if (json.fields && json.id) {
+    ticket = {
       ...json.fields,
       _id: json.id,
     };
+  } else if (json._id) {
+    ticket = json;
+  } else {
+    // fallback, just return as-is
+    ticket = json;
+  }
+
+  // Update store with updated ticket
+  ticketsStore.update(($ticketsStore) => {
+    $ticketsStore[ticket._id] = ticket;
     return $ticketsStore;
   });
 
   // Clear cache since we have updated data
   cachedQueries = {};
 
-  return json;
+  return ticket;
 }
 
 export async function getTicketByNumber(
