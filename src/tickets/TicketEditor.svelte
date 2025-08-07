@@ -5,6 +5,8 @@
   import StudentTag from "../StudentTag.svelte";
   import AssetDisplay from "../AssetDisplay.svelte";
   import EditableTextField from "./EditableTextField.svelte";
+  import TicketStudentAssignment from "./TicketStudentAssignment.svelte";
+  import TicketAssetAssignment from "./TicketAssetAssignment.svelte";
 
   export let ticket: Ticket;
   export let readOnly: boolean = false;
@@ -161,13 +163,7 @@
       note: `${field} changed from ${ticket[field] || "none"} to ${newValue || "none"}`,
     };
 
-    // Await the update and get the new ticket object
-    const updated = await doTicketUpdate(updates, historyEntry);
-
-    // Ensure UI updates by calling onTicketChange with the updated ticket
-    if (updated) {
-      onTicketChange(updated);
-    }
+    await doTicketUpdate(updates, historyEntry);
   }
 
   function handleStatusChange(field: keyof Ticket, event: Event) {
@@ -211,63 +207,23 @@
       <div class="w3-row-padding w3-section">
         <div class="w3-col s6">
           <h5>Student</h5>
-          {#if ticket._linked?.Student}
-            <StudentTag student={ticket._linked.Student} />
-            {#if !readOnly}
-              <button
-                class="w3-btn w3-gray w3-small w3-margin-top"
-                on:click={() => updateLinkedField("Student", null)}
-                disabled={saving}
-              >
-                Remove Student
-              </button>
-            {/if}
-          {:else}
-            <span class="w3-text-gray">No student linked</span>
-            {#if !readOnly}
-              <!-- Replace with your student picker if available -->
-              <button
-                class="w3-btn w3-blue w3-small w3-margin-top"
-                on:click={() => {
-                  const studentId = prompt("Enter Student ID to link:");
-                  if (studentId) updateLinkedField("Student", studentId);
-                }}
-                disabled={saving}
-              >
-                Link Student
-              </button>
-            {/if}
-          {/if}
+          <TicketStudentAssignment
+            {ticket}
+            disabled={saving || readOnly}
+            onSave={async (studentId) => {
+              await updateLinkedField("Student", studentId);
+            }}
+          />
         </div>
         <div class="w3-col s6">
           <h5>Device</h5>
-          {#if ticket._linked?.Device}
-            <AssetDisplay asset={ticket._linked.Device} />
-            {#if !readOnly}
-              <button
-                class="w3-btn w3-gray w3-small w3-margin-top"
-                on:click={() => updateLinkedField("Device", null)}
-                disabled={saving}
-              >
-                Remove Device
-              </button>
-            {/if}
-          {:else}
-            <span class="w3-text-gray">No device linked</span>
-            {#if !readOnly}
-              <!-- Replace with your device picker if available -->
-              <button
-                class="w3-btn w3-blue w3-small w3-margin-top"
-                on:click={() => {
-                  const deviceId = prompt("Enter Device ID to link:");
-                  if (deviceId) updateLinkedField("Device", deviceId);
-                }}
-                disabled={saving}
-              >
-                Link Device
-              </button>
-            {/if}
-          {/if}
+          <TicketAssetAssignment
+            {ticket}
+            disabled={saving || readOnly}
+            onSave={async (deviceId) => {
+              await updateLinkedField("Device", deviceId);
+            }}
+          />
         </div>
       </div>
 
@@ -313,7 +269,6 @@
         </div>
       </div>
     </div>
-
     <div class="w3-col l4 m12">
       <!-- Status Management -->
       <div class="w3-panel w3-border w3-light-blue">
