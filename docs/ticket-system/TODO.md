@@ -19,11 +19,11 @@
 
 ### 0.1 Prepare AirTable
 
-- [ ] **Prepare AirTable**
-  - [ ] Create Airtable "Tickets" table that mirrors current spreadsheet (possibly import data?)
-  - [ ] Refine/Improve schema for Tickets table (add lookup fields for asset, student, temp device, etc)
-  - [ ] Create automations in AirTable as needed / lookup fields back (so we can see e.g. tickets from asset table)
-  - [ ] Create airtable connectors here for new "Tickets" table.
+- [ x ] **Prepare AirTable**
+  - [ x ] Create Airtable "Tickets" table that mirrors current spreadsheet (possibly import data?)
+  - [ x ] Refine/Improve schema for Tickets table (add lookup fields for asset, student, temp device, etc)
+  - [ x ] Create automations in AirTable as needed / lookup fields back (so we can see e.g. tickets from asset table)
+  - [ x ] Create airtable connectors here for new "Tickets" table.
 
 ### 0.2 Modify Existing Google Form Backend
 
@@ -59,8 +59,16 @@
 
 ### 1.1 Create Tickets Table
 
-- [ ] **Create new table called "Tickets" in AirTable**
-- [ ] **Add all core fields** (see [SCHEMA.md](./SCHEMA.md) for complete field list)
+- [ x ] **Create new table called "Tickets" in AirTable**
+- [ x ] **Add all core fields** (see [SCHEMA.md](./SCHEMA.md) for complete field list)
+- [ ] **Create Ticket Editor UI**
+  - [ x ] Basic field editing
+  - [ x ] Linked field editing (student, asset)
+  - [ ] Device status update (on device table)
+  - [ ] Workflows for common actions like...
+    - [ ] Sign-out temp device that's needed
+    - [ ] Check in device for repair
+    - [ ] Return repaired device & collect temp device
 - [ ] **Create views for different ticket statuses**
   - [ ] Untriaged - New tickets needing staff review
   - [ ] Active - All open tickets
