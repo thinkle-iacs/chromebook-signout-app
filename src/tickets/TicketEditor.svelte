@@ -1,15 +1,16 @@
 <script lang="ts">
+  import { user } from "./../data/user.ts";
   import type { Ticket } from "../data/tickets";
   import { updateTicket } from "../data/tickets";
   import StudentTag from "../StudentTag.svelte";
   import AssetDisplay from "../AssetDisplay.svelte";
+  import EditableTextField from "./EditableTextField.svelte";
 
   export let ticket: Ticket;
   export let readOnly: boolean = false;
+  export let onTicketChange: (ticket: Ticket) => void = () => {};
 
   let saving = false;
-  let newNote = "";
-  let newPrivateNote = "";
 
   // Status options for dropdowns
   const ticketStatusOptions = [
@@ -43,49 +44,47 @@
 
   // Parse existing history or create empty structure
   let historyData;
-  try {
-    historyData = ticket.History ? JSON.parse(ticket.History) : { entries: [] };
-  } catch (e) {
-    // If History is plain text, convert it to structured format
-    historyData = {
-      entries: ticket.History
-        ? [
-            {
-              timestamp: new Date().toISOString(),
-              action: "legacy_note",
-              content: ticket.History,
-              user: "system",
-            },
-          ]
-        : [],
-    };
+  function parseHistoryData(history: string | undefined) {
+    try {
+      return history ? JSON.parse(history) : { entries: [] };
+    } catch (e) {
+      // If History is plain text, convert it to structured format
+      return {
+        entries: history
+          ? [
+              {
+                timestamp: new Date().toISOString(),
+                action: "legacy_note",
+                content: history,
+                user: "system",
+              },
+            ]
+          : [],
+      };
+    }
+  }
+  historyData = parseHistoryData(ticket.History);
+
+  function getCurrentHistoryEntries() {
+    // Always parse the latest ticket.History to avoid overwriting
+    return parseHistoryData(ticket.History).entries;
   }
 
-  async function updateStatus(field: keyof Ticket, newValue: any) {
+  // --- Centralized update function with history ---
+  async function doTicketUpdate(updates: Partial<Ticket>, historyEntry?: any) {
     if (readOnly) return;
     saving = true;
     try {
-      // Add history entry for status change
-      const historyEntry = {
-        timestamp: new Date().toISOString(),
-        action: "status_change",
-        field: field,
-        from: ticket[field],
-        to: newValue,
-        user: "current_user@school.edu", // TODO: Get from auth
-        note: `${field} changed from ${ticket[field]} to ${newValue}`,
-      };
-
-      historyData.entries.push(historyEntry);
-
-      await updateTicket(ticket._id, {
-        [field]: newValue,
-        History: JSON.stringify(historyData),
-      });
-
-      // Update ticket object - need to be careful with typing
-      (ticket as any)[field] = newValue;
-      ticket.History = JSON.stringify(historyData);
+      let entries = getCurrentHistoryEntries();
+      if (historyEntry) {
+        entries.push(historyEntry);
+        updates = { ...updates, History: JSON.stringify({ entries }) };
+      }
+      const updated = await updateTicket(ticket._id, updates);
+      Object.assign(ticket, updated);
+      historyData = parseHistoryData(ticket.History);
+      onTicketChange(ticket);
+      return updated;
     } catch (error) {
       console.error("Error updating ticket:", error);
       alert("Failed to update ticket");
@@ -94,51 +93,80 @@
     }
   }
 
-  async function addNote(type: "public" | "private") {
-    if (readOnly) return;
-    const note = type === "public" ? newNote : newPrivateNote;
-    if (!note.trim()) return;
+  // --- Status update ---
+  async function updateStatus(field: keyof Ticket, newValue: any) {
+    const historyEntry = {
+      timestamp: new Date().toISOString(),
+      action: "status_change",
+      field: field,
+      from: ticket[field],
+      to: newValue,
+      user: $user.email,
+      note: `${field} changed from ${ticket[field]} to ${newValue}`,
+    };
+    await doTicketUpdate({ [field]: newValue }, historyEntry);
+  }
 
-    saving = true;
-    try {
-      // Add history entry for note
-      const historyEntry = {
-        timestamp: new Date().toISOString(),
-        action: "note_added",
-        type: type,
-        content: note,
-        user: "current_user@school.edu", // TODO: Get from auth
-      };
+  // --- Notes and User Description update ---
+  async function saveNotes(type: "public" | "private", newValue: string) {
+    let updates: Partial<Ticket> = {};
+    let noteContent: string = newValue;
+    if (type === "public") {
+      updates.Notes = noteContent;
+    } else {
+      updates.PrivateNotes = noteContent;
+    }
 
-      historyData.entries.push(historyEntry);
+    const historyEntry = {
+      timestamp: new Date().toISOString(),
+      action: "note_edited",
+      type: type,
+      content: noteContent,
+      user: $user.email,
+    };
 
-      const updates: Partial<Ticket> = {
-        History: JSON.stringify(historyData),
-      };
+    await doTicketUpdate(updates, historyEntry);
+  }
 
-      if (type === "public") {
-        updates.Notes =
-          (ticket.Notes || "") +
-          "\n\n" +
-          `[${new Date().toLocaleDateString()}] ${note}`;
-        newNote = "";
-      } else {
-        updates.PrivateNotes =
-          (ticket.PrivateNotes || "") +
-          "\n\n" +
-          `[${new Date().toLocaleDateString()}] ${note}`;
-        newPrivateNote = "";
-      }
+  async function saveUserDescription(newValue: string) {
+    let updates: Partial<Ticket> = {
+      "User Description": newValue,
+    };
 
-      await updateTicket(ticket._id, updates);
+    const historyEntry = {
+      timestamp: new Date().toISOString(),
+      action: "user_description_edited",
+      content: newValue,
+      user: $user.email,
+    };
 
-      // Update local ticket object
-      Object.assign(ticket, updates);
-    } catch (error) {
-      console.error("Error adding note:", error);
-      alert("Failed to add note");
-    } finally {
-      saving = false;
+    await doTicketUpdate(updates, historyEntry);
+  }
+
+  // --- Device/Student association update ---
+  async function updateLinkedField(
+    field: "Device" | "Student",
+    newValue: string | null
+  ) {
+    let updates: Partial<Ticket> = {};
+    updates[field] = newValue || "";
+
+    const historyEntry = {
+      timestamp: new Date().toISOString(),
+      action: "linked_field_updated",
+      field,
+      from: ticket[field],
+      to: newValue,
+      user: $user.email,
+      note: `${field} changed from ${ticket[field] || "none"} to ${newValue || "none"}`,
+    };
+
+    // Await the update and get the new ticket object
+    const updated = await doTicketUpdate(updates, historyEntry);
+
+    // Ensure UI updates by calling onTicketChange with the updated ticket
+    if (updated) {
+      onTicketChange(updated);
     }
   }
 
@@ -164,7 +192,19 @@
       <!-- Basic Info -->
       <div class="w3-section">
         <h4>Issue Description</h4>
-        <p class="w3-panel w3-light-gray">{ticket["User Description"]}</p>
+        {#if !readOnly}
+          <EditableTextField
+            textValue={ticket["User Description"] || ""}
+            onSave={saveUserDescription}
+            disabled={saving}
+            textareaClass="w3-input w3-border w3-small"
+            buttonClass="w3-btn w3-green w3-small w3-margin-top"
+            rows={5}
+            placeholder="Describe the issue..."
+          />
+        {:else}
+          <p class="w3-panel w3-light-gray">{ticket["User Description"]}</p>
+        {/if}
       </div>
 
       <!-- People & Devices -->
@@ -173,16 +213,60 @@
           <h5>Student</h5>
           {#if ticket._linked?.Student}
             <StudentTag student={ticket._linked.Student} />
+            {#if !readOnly}
+              <button
+                class="w3-btn w3-gray w3-small w3-margin-top"
+                on:click={() => updateLinkedField("Student", null)}
+                disabled={saving}
+              >
+                Remove Student
+              </button>
+            {/if}
           {:else}
             <span class="w3-text-gray">No student linked</span>
+            {#if !readOnly}
+              <!-- Replace with your student picker if available -->
+              <button
+                class="w3-btn w3-blue w3-small w3-margin-top"
+                on:click={() => {
+                  const studentId = prompt("Enter Student ID to link:");
+                  if (studentId) updateLinkedField("Student", studentId);
+                }}
+                disabled={saving}
+              >
+                Link Student
+              </button>
+            {/if}
           {/if}
         </div>
         <div class="w3-col s6">
           <h5>Device</h5>
           {#if ticket._linked?.Device}
             <AssetDisplay asset={ticket._linked.Device} />
+            {#if !readOnly}
+              <button
+                class="w3-btn w3-gray w3-small w3-margin-top"
+                on:click={() => updateLinkedField("Device", null)}
+                disabled={saving}
+              >
+                Remove Device
+              </button>
+            {/if}
           {:else}
             <span class="w3-text-gray">No device linked</span>
+            {#if !readOnly}
+              <!-- Replace with your device picker if available -->
+              <button
+                class="w3-btn w3-blue w3-small w3-margin-top"
+                on:click={() => {
+                  const deviceId = prompt("Enter Device ID to link:");
+                  if (deviceId) updateLinkedField("Device", deviceId);
+                }}
+                disabled={saving}
+              >
+                Link Device
+              </button>
+            {/if}
           {/if}
         </div>
       </div>
@@ -192,47 +276,37 @@
         <div class="w3-row-padding">
           <div class="w3-col s6">
             <h5>Public Notes</h5>
-            <div class="w3-panel w3-border w3-light-gray w3-small">
-              {ticket.Notes || "No notes yet"}
-            </div>
             {#if !readOnly}
-              <div class="w3-margin-top">
-                <textarea
-                  bind:value={newNote}
-                  class="w3-input w3-border"
-                  placeholder="Add public note..."
-                  rows="3"
-                ></textarea>
-                <button
-                  class="w3-btn w3-blue w3-small w3-margin-top"
-                  on:click={() => addNote("public")}
-                  disabled={saving || !newNote.trim()}
-                >
-                  Add Note
-                </button>
+              <EditableTextField
+                textValue={ticket.Notes || ""}
+                onSave={(val) => saveNotes("public", val)}
+                disabled={saving}
+                textareaClass="w3-input w3-border w3-small"
+                buttonClass="w3-btn w3-blue w3-small w3-margin-top"
+                rows={8}
+                placeholder="Enter public notes..."
+              />
+            {:else}
+              <div class="w3-panel w3-border w3-light-gray w3-small">
+                {ticket.Notes || "No notes yet"}
               </div>
             {/if}
           </div>
           <div class="w3-col s6">
             <h5>Private Notes</h5>
-            <div class="w3-panel w3-border w3-light-red w3-small">
-              {ticket.PrivateNotes || "No private notes yet"}
-            </div>
             {#if !readOnly}
-              <div class="w3-margin-top">
-                <textarea
-                  bind:value={newPrivateNote}
-                  class="w3-input w3-border"
-                  placeholder="Add private note..."
-                  rows="3"
-                ></textarea>
-                <button
-                  class="w3-btn w3-red w3-small w3-margin-top"
-                  on:click={() => addNote("private")}
-                  disabled={saving || !newPrivateNote.trim()}
-                >
-                  Add Private Note
-                </button>
+              <EditableTextField
+                textValue={ticket.PrivateNotes || ""}
+                onSave={(val) => saveNotes("private", val)}
+                disabled={saving}
+                textareaClass="w3-input w3-border w3-small"
+                buttonClass="w3-btn w3-red w3-small w3-margin-top"
+                rows={8}
+                placeholder="Enter private notes..."
+              />
+            {:else}
+              <div class="w3-panel w3-border w3-light-red w3-small">
+                {ticket.PrivateNotes || "No private notes yet"}
               </div>
             {/if}
           </div>
@@ -338,17 +412,5 @@
 </div>
 
 <style>
-  .history-timeline {
-    max-height: 400px;
-    overflow-y: auto;
-  }
-
-  .history-entry {
-    border-left: 3px solid #2196f3 !important;
-  }
-
-  textarea {
-    resize: vertical;
-    min-height: 60px;
-  }
+  /* ...existing code... */
 </style>
