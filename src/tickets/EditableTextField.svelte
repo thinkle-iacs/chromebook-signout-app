@@ -27,7 +27,6 @@
   }
 </script>
 
-ETF:
 <textarea
   bind:value={editedValue}
   class={textareaClass}
