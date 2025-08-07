@@ -9,6 +9,7 @@
   import TicketAssetAssignment from "./TicketAssetAssignment.svelte";
   import { studentsStore } from "../data/students";
   import { assetStore } from "../data/inventory";
+  import EditableNumberField from "./EditableNumberField.svelte";
 
   export let ticket: Ticket;
   export let readOnly: boolean = false;
@@ -204,6 +205,25 @@
     await doTicketUpdate(updates, historyEntry);
   }
 
+  // --- Repair Cost update ---
+  async function updateRepairCost(newValue: number | undefined) {
+    if (readOnly) return;
+    const historyEntry = {
+      timestamp: new Date().toISOString(),
+      action: "repair_cost_updated",
+      from: ticket["Repair Cost"],
+      to: newValue,
+      user: $user.email,
+      note: `Repair Cost changed from ${ticket["Repair Cost"] ?? "none"} to ${newValue ?? "none"}`,
+    };
+    await doTicketUpdate({ "Repair Cost": newValue }, historyEntry);
+  }
+
+  function formatDollar(val: number | undefined) {
+    if (val === undefined || val === null || isNaN(val)) return "";
+    return `$${val.toFixed(2)}`;
+  }
+
   function handleStatusChange(field: keyof Ticket, event: Event) {
     const target = event.target as HTMLSelectElement;
     let value: any = target.value;
@@ -218,6 +238,7 @@
   }
 </script>
 
+Ô
 <div class="ticket-detail w3-card w3-white w3-padding">
   <div class="w3-row">
     <div class="w3-col l8 m12">
@@ -363,6 +384,28 @@
               <option value={status}>{status}</option>
             {/each}
           </select>
+        </div>
+
+        <!-- Repair Cost Field -->
+        <div class="w3-margin-bottom">
+          <label for="repair-cost" class="w3-text-blue"
+            ><b>Repair Cost</b></label
+          >
+          {#if !readOnly}
+            <EditableNumberField
+              value={ticket["Repair Cost"]}
+              onSave={updateRepairCost}
+              disabled={saving}
+              inputClass="w3-input w3-border"
+              buttonClass="w3-btn w3-green w3-small"
+              min={0}
+              placeholder="0.00"
+            />
+          {:else}
+            <div class="w3-panel w3-border w3-light-gray w3-small">
+              {formatDollar(ticket["Repair Cost"])}
+            </div>
+          {/if}
         </div>
 
         {#if saving}

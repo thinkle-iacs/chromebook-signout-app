@@ -129,6 +129,7 @@ async function getTickets(event: APIGatewayEvent) {
       "Notes",
       "Temporary Device",
       "SubmittedBy",
+      "Repair Cost",
       // Student fields
       "Name (from Student)",
       "LASID (from Student)",
