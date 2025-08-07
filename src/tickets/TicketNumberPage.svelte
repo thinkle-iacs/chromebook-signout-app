@@ -35,5 +35,12 @@
 {:else if error}
   <div class="w3-panel w3-red">{error}</div>
 {:else if ticket}
-  <TicketEditor {ticket} readOnly={false} />
+  <TicketEditor
+    {ticket}
+    readOnly={false}
+    onTicketChange={(newTicket) => {
+      console.log("Got me a change to the ticket!", newTicket);
+      ticket = newTicket;
+    }}
+  />
 {/if}
