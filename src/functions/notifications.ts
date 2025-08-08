@@ -6,7 +6,6 @@ import { notificationsBase } from "./Airtable";
   A PATCH event is used to update...
 */
 export async function handler(event: APIGatewayEvent, context: Context) {
-  console.log("We are arriving via", event.httpMethod);
   if (event.httpMethod == "POST") {
     console.log("Create!");
     const records = JSON.parse(event.body);
