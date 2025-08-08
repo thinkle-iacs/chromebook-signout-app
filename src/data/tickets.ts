@@ -8,14 +8,24 @@ export type Ticket = {
   FormID: string;
   "User Description": string;
   "Ticket Status":
-    | "Untriaged"
-    | "Triaged"
-    | "Assigned"
+    | "New"
+    | "Awaiting Drop-Off"
+    | "Have Device"
+    | "In Repair"
+    | "Ready for Pickup"
     | "In Progress"
-    | "Waiting on Student"
-    | "Waiting on Tech"
-    | "Resolved"
     | "Closed";
+  // NEW fields
+  Resolution?:
+    | "Fixed"
+    | "Replaced Device"
+    | "Unable to Reproduce"
+    | "Won't FIx"
+    | "Duplicate"
+    | "Canceled"
+    | "No Issue Found"
+    | "User Education";
+  Assignee?: string; // email
   "Device Status":
     | undefined
     | "New"
@@ -82,6 +92,9 @@ export async function getTickets(
     ticketNumber?: number;
     user?: string;
     asset?: string;
+    // NEW optional filters
+    assignee?: string;
+    resolution?: string;
   } = {}
 ) {
   const queryString = new URLSearchParams(
@@ -123,11 +136,7 @@ export async function getOpenTicketsForAsset(
 ): Promise<Ticket[]> {
   try {
     const allTickets = await getTickets({ assetTag });
-    return allTickets.filter(
-      (ticket) =>
-        ticket["Ticket Status"] !== "Closed" &&
-        ticket["Ticket Status"] !== "Resolved"
-    );
+    return allTickets.filter((ticket) => ticket["Ticket Status"] !== "Closed");
   } catch (error) {
     console.error("Error getting tickets for asset:", error);
     return [];
@@ -140,11 +149,7 @@ export async function getOpenTicketsForStudent(
 ): Promise<Ticket[]> {
   try {
     const allTickets = await getTickets({ student: studentName });
-    return allTickets.filter(
-      (ticket) =>
-        ticket["Ticket Status"] !== "Closed" &&
-        ticket["Ticket Status"] !== "Resolved"
-    );
+    return allTickets.filter((ticket) => ticket["Ticket Status"] !== "Closed");
   } catch (error) {
     console.error("Error getting tickets for student:", error);
     return [];
