@@ -238,7 +238,6 @@
   }
 </script>
 
-Ô
 <div class="ticket-detail w3-card w3-white w3-padding">
   <div class="w3-row">
     <div class="w3-col l8 m12">
