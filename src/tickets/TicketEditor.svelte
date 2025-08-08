@@ -19,13 +19,12 @@
 
   // Status options for dropdowns
   const ticketStatusOptions = [
-    "Untriaged",
-    "Triaged",
-    "Assigned",
+    "New",
+    "Awaiting Drop-Off",
+    "Have Device",
+    "In Repair",
+    "Ready for Pickup",
     "In Progress",
-    "Waiting on Student",
-    "Waiting on Tech",
-    "Resolved",
     "Closed",
   ];
 

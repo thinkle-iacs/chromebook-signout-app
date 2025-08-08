@@ -24,7 +24,7 @@ async function createTicket(event: APIGatewayEvent) {
   } catch (error) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ error: (error as Error).message }),
     };
   }
 }
@@ -49,7 +49,7 @@ async function updateTicket(event: APIGatewayEvent) {
   } catch (error) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ error: (error as Error).message }),
     };
   }
 }
@@ -64,9 +64,12 @@ async function getTickets(event: APIGatewayEvent) {
     ticketNumber,
     user,
     asset,
+    // NEW optional filters
+    assignee,
+    resolution,
   } = event.queryStringParameters || {};
 
-  let filterConditions = [];
+  let filterConditions: string[] = [];
 
   if (ticketNumber) {
     filterConditions.push(`{Number} = ${ticketNumber}`);
@@ -105,6 +108,14 @@ async function getTickets(event: APIGatewayEvent) {
     filterConditions.push(`{Device Status} = "${deviceStatus}"`);
   }
 
+  if (assignee) {
+    filterConditions.push(`{Assignee} = '${assignee}'`);
+  }
+
+  if (resolution) {
+    filterConditions.push(`{Resolution} = "${resolution}"`);
+  }
+
   let filterByFormula =
     filterConditions.length > 0 ? `AND(${filterConditions.join(", ")})` : "";
 
@@ -130,6 +141,9 @@ async function getTickets(event: APIGatewayEvent) {
       "Temporary Device",
       "SubmittedBy",
       "Repair Cost",
+      // NEW fields
+      "Assignee",
+      "Resolution",
       // Student fields
       "Name (from Student)",
       "LASID (from Student)",

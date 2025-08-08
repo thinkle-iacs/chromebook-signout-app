@@ -48,20 +48,18 @@
 
   function getStatusColor(status: string): string {
     switch (status) {
-      case "Untriaged":
+      case "New":
         return "w3-red";
-      case "Triaged":
+      case "Awaiting Drop-Off":
         return "w3-orange";
-      case "Assigned":
+      case "Have Device":
         return "w3-yellow";
-      case "In Progress":
+      case "In Repair":
         return "w3-blue";
-      case "Waiting on Student":
-        return "w3-purple";
-      case "Waiting on Tech":
-        return "w3-indigo";
-      case "Resolved":
+      case "Ready for Pickup":
         return "w3-green";
+      case "In Progress":
+        return "w3-indigo";
       case "Closed":
         return "w3-gray";
       default:
