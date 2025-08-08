@@ -2,10 +2,16 @@
   // ---- imports identical style to your TicketEditor ----
   import { user } from "./../data/user.ts";
   import type { Ticket } from "../data/tickets";
-  import { updateTicket } from "../data/tickets";
-
-  // Step components you’ll implement (tiny, focused UIs)
-  // Fix me...
+  import { updateTicket as saveTicket } from "../data/tickets";
+  import type { HistoryEntry } from "./history";
+  // New step components
+  import NewTicketWorkflow from "./steps/NewTicketWorkflow.svelte";
+  import DropoffWorkflow from "./steps/DropoffWorkflow.svelte";
+  import HaveDeviceWorkflow from "./steps/HaveDeviceWorkflow.svelte";
+  import RepairWorkflow from "./steps/RepairWorkflow.svelte";
+  import PickupWorkflow from "./steps/PickupWorkflow.svelte";
+  import InProgressWorkflow from "./steps/InProgressWorkflow.svelte";
+  import ClosedWorkflow from "./steps/ClosedWorkflow.svelte";
 
   // ---- props ----
   export let ticket: Ticket;
@@ -42,44 +48,42 @@
         return "In Progress";
       case "Closed":
         return "Closed";
-      // Legacy mappings
-      case "Untriaged":
-        return "New";
-      case "Triaged":
-        return "Awaiting Drop-Off";
-      case "Assigned":
-        return "Awaiting Drop-Off";
-      case "Waiting on Student":
-        return "Awaiting Drop-Off";
-      case "In Progress":
-        return "In Progress";
-      case "Waiting on Tech":
-        return "In Repair";
-      case "Waiting on Part":
-        return "In Repair";
-      case "Resolved":
-        return "Ready for Pickup";
-      default:
-        return "New";
     }
   }
+
+  /* 
+    Our main workflows would look like...
+
+    New -> Awaiting Drop-Off -> Have Device -> In Repair -> Ready for Pickup ->  Closed
+    
+    Or... sometimes, the new ticket might be created with the device already in hand, so we'd go...
+    
+    New -> Have Device -> In Repair -> Ready for Pickup -> Closed
+    
+    Or... sometimes we might not need the device at all, but we might assign some user education or 
+    configuration task to someone in which case it might look like...
+
+    New -> In Progress -> Closed
+  */
 
   function stepComponent(step: FlowStep) {
     switch (step) {
       case "New":
         return NewTicketWorkflow;
       case "Awaiting Drop-Off":
-        return WaitingOnStudentWorkflow; // closest existing placeholder
+        return DropoffWorkflow;
       case "Have Device":
         return HaveDeviceWorkflow;
       case "In Repair":
-        return WaitingOnTechWorkflow; // reuse existing
+        return RepairWorkflow;
       case "Ready for Pickup":
-        return RepairedWorkflow; // reuse existing
+        return PickupWorkflow;
       case "In Progress":
-        return HaveDeviceWorkflow; // reuse existing
+        return InProgressWorkflow;
       case "Closed":
         return ClosedWorkflow;
+      default:
+        return null;
     }
   }
 
@@ -95,15 +99,17 @@
     return JSON.stringify({ entries });
   }
 
-  // Pull dates for timeline from history entries that include a {status:{from,to}}
+  // Pull dates for timeline from history entries that include a status
   function stepDatesFromHistory(
     historyStr: string | undefined
   ): Record<FlowStep, string> {
     const dates: Record<FlowStep, string> = Object.create(null);
     const entries = parseHistoryEntries(historyStr);
     for (const e of entries) {
-      if (e?.status?.to) {
-        const toStep = statusToStep(e.status.to);
+      // Support both legacy {status:{to}} and new {status:"..."}
+      const dest = typeof e?.status === "string" ? e.status : e?.status?.to;
+      if (dest) {
+        const toStep = statusToStep(dest);
         if (toStep && !dates[toStep]) dates[toStep] = e.timestamp;
       }
     }
@@ -127,39 +133,20 @@
         return "In Progress";
       case "Closed":
         return "Closed";
-      // Legacy mappings
-      case "Untriaged":
-        return "New";
-      case "Triaged":
-        return "Awaiting Drop-Off";
-      case "Assigned":
-        return "Awaiting Drop-Off";
-      case "Waiting on Student":
-        return "Awaiting Drop-Off";
-      case "Waiting on Tech":
-        return "In Repair";
-      case "Waiting on Part":
-        return "In Repair";
-      case "Resolved":
-        return "Ready for Pickup";
       default:
         return null;
     }
   }
 
-  // ---- atomic commit exposed to steps ----
-  type CommitOptions = {
-    /** Optional human-readable note for history */
-    note?: string;
-    /** If you changed status in updates, you can also pass a friendlier status label for the history bubble */
-    statusLabel?: string;
-    /** Side-effect to run AFTER save (e.g., send email, check-in/out). */
-    after?: () => Promise<void> | void;
-  };
-
+  // ---- updateTicket callback exposed to steps ----
   let saving = false;
 
-  async function commit(updates: Partial<Ticket>, opts: CommitOptions = {}) {
+  async function updateTicket(
+    updates: Partial<Ticket>,
+    historyEntry?: HistoryEntry<
+      Record<string, { from?: unknown; to?: unknown }>
+    >
+  ) {
     if (readOnly) return;
 
     const now = new Date().toISOString();
@@ -168,39 +155,37 @@
       | string
       | undefined;
 
-    const entries = parseHistoryEntries(ticket.History);
-    const historyEntry = {
+    // Build changes map from updates (excluding History)
+    const changes: Record<string, { from?: unknown; to?: unknown }> = {};
+    Object.keys(updates).forEach((k) => {
+      if (k === "History") return;
+      // @ts-ignore index access on Ticket
+      changes[k] = { from: (ticket as any)[k], to: (updates as any)[k] };
+    });
+
+    const composed: HistoryEntry<typeof changes> = {
       timestamp: now,
-      action: "workflow_commit",
-      user: $user?.email ?? "system",
-      note: opts.note ?? "",
-      // include status change if it happened so the timeline can light up
-      ...(beforeStatus !== afterStatus
-        ? {
-            status: {
-              from: beforeStatus ?? null,
-              to: afterStatus ?? null,
-              label: opts.statusLabel ?? afterStatus,
-            },
-          }
-        : {}),
-      // light trace of fields changed (useful for future-you)
-      fields: Object.keys(updates),
+      action: historyEntry?.action || "workflow_update",
+      status: (afterStatus as Ticket["Ticket Status"]) || beforeStatus,
+      changes: { ...changes, ...(historyEntry?.changes as any) },
+      note: historyEntry?.note,
+      user: (user && (user as any).email) || "system",
+      payload: historyEntry?.payload,
     };
 
+    const entries = parseHistoryEntries(ticket.History);
     const merged = {
       ...updates,
-      History: stringifyHistory([...entries, historyEntry]),
+      History: stringifyHistory([...entries, composed]),
     };
 
     saving = true;
     try {
-      const updated = await updateTicket(ticket._id, merged);
+      const updated = await saveTicket(ticket._id, merged);
       Object.assign(ticket, updated);
-      onUpdateTicket(updated, historyEntry);
-      if (opts.after) await opts.after();
+      onUpdateTicket(updated, composed);
     } catch (err) {
-      console.error("TicketWorkflow commit failed:", err);
+      console.error("TicketWorkflow updateTicket failed:", err);
       alert("Failed to save ticket changes.");
     } finally {
       saving = false;
@@ -248,8 +233,7 @@
 <svelte:component
   this={stepComponent(currentStep(ticket["Ticket Status"]))}
   {ticket}
-  {commit}
-  {readOnly}
+  {updateTicket}
 />
 
 <style>
