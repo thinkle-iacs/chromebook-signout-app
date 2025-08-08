@@ -3,6 +3,7 @@ import { user } from "./user";
 
 export type Notification = {
   "Signout History": string[];
+  Ticket: string[];
   Messages: string[];
   Recipient?: string;
   Recipient2?: string;
@@ -15,6 +16,7 @@ export type Notification = {
 export type NotificationFields = {
   Num?: number;
   "Signout History"?: string[];
+  Ticket?: string[];
   Messages?: string[];
   ExtraText?: string;
   Recipient?: string[];
