@@ -1,9 +1,10 @@
 <script lang="ts">
-  import StudentTag from "../StudentTag.svelte";
-  import NameDropdown from "../NameDropdown.svelte";
-  import { getStudent, studentsStore } from "../data/students";
-  import { studentName, validateStudent } from "../validators";
-  import type { Ticket } from "../data/tickets";
+  import EditButton from "./EditButton.svelte";
+  import StudentTag from "../../StudentTag.svelte";
+  import NameDropdown from "../../NameDropdown.svelte";
+  import { getStudent, studentsStore } from "../../data/students";
+  import { studentName, validateStudent } from "../../validators";
+  import type { Ticket } from "../../data/tickets";
 
   export let ticket: Ticket;
   export let disabled: boolean = false;
@@ -113,13 +114,7 @@
   </div>
 {:else if existingStudent}
   <StudentTag student={existingStudent} />
-  <button
-    class="w3-btn w3-gray w3-small w3-margin-top"
-    on:click={startEditing}
-    {disabled}
-  >
-    Edit
-  </button>
+  <EditButton on:click={startEditing} {disabled} />
 {:else}
   <span class="w3-text-gray">No student linked</span>
   <button

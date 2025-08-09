@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "delete moved assignment components",
+      "command": "git rm -f src/tickets/TicketStudentAssignment.svelte src/tickets/TicketAssetAssignment.svelte && git status --porcelain",
+      "args": [],
+      "group": "build",
+      "isBackground": false,
+      "problemMatcher": []
+    }
+  ]
+}

@@ -2,8 +2,6 @@
   export let value: number | undefined = undefined;
   export let onSave: (newValue: number | undefined) => void;
   export let disabled: boolean = false;
-  export let inputClass: string = "";
-  export let buttonClass: string = "";
   export let min: number | undefined = undefined;
   export let max: number | undefined = undefined;
   export let step: number = 5; // $5 increments by default
@@ -35,7 +33,7 @@
   <span>$</span>
   <input
     type="number"
-    class={inputClass}
+    class="w3-input w3-border w3-small"
     bind:value={editedValue}
     {min}
     {max}
@@ -48,7 +46,7 @@
     }}
   />
   <button
-    class={buttonClass + " w3-gray"}
+    class="w3-btn w3-gray w3-small"
     type="button"
     on:click={handleRevert}
     disabled={disabled || editedValue === (value != null ? String(value) : "")}
@@ -58,7 +56,7 @@
     ⤺
   </button>
   <button
-    class={buttonClass}
+    class="w3-btn w3-green w3-small"
     type="button"
     on:click={handleSave}
     disabled={disabled || editedValue === (value != null ? String(value) : "")}

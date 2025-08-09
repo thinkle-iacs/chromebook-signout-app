@@ -2,17 +2,14 @@
   export let textValue: string = "";
   export let onSave: (newValue: string) => void;
   export let disabled: boolean = false;
-  export let textareaClass: string = "";
-  export let buttonClass: string = "";
   export let rows: number = 8;
   export let placeholder: string = "";
 
   let editedValue = textValue;
   let origTextValue = textValue;
 
-  if (textValue != origTextValue) {
-    // change from on high...
-    editedValue = textValue;
+  $: if (textValue !== origTextValue) {
+    editedValue = textValue || "";
     origTextValue = textValue;
   }
 
@@ -23,36 +20,31 @@
   }
 
   function handleRevert() {
-    editedValue = textValue;
+    editedValue = textValue || "";
   }
 </script>
 
 <textarea
   bind:value={editedValue}
-  class={textareaClass}
+  class="w3-input w3-border w3-small"
   {rows}
   {placeholder}
   {disabled}
 />
 <div
-  style="
-    display: flex;
-    gap: 0.5em;
-    margin-top: 0.5em;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-  "
+  class="w3-margin-top"
+  style="display:flex; gap:0.5em; justify-content:flex-end; flex-wrap:wrap;"
 >
   <button
     type="button"
-    class={buttonClass + " w3-gray"}
+    class="w3-btn w3-gray w3-small"
     on:click={handleRevert}
     disabled={disabled || editedValue === textValue}
   >
     Revert
   </button>
   <button
-    class={buttonClass}
+    class="w3-btn w3-green w3-small"
     on:click={handleSave}
     disabled={disabled || editedValue === textValue}
   >

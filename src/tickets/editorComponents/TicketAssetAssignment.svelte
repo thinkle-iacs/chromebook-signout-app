@@ -1,8 +1,9 @@
 <script lang="ts">
-  import AssetDisplay from "../AssetDisplay.svelte";
-  import { assetStore, searchForAsset } from "../data/inventory";
-  import { assetTag, validateAsset } from "../validators";
-  import type { Ticket } from "../data/tickets";
+  import EditButton from "./EditButton.svelte";
+  import AssetDisplay from "../../AssetDisplay.svelte";
+  import { assetStore, searchForAsset } from "../../data/inventory";
+  import { assetTag, validateAsset } from "../../validators";
+  import type { Ticket } from "../../data/tickets";
   import { get } from "svelte/store";
 
   export let ticket: Ticket;
@@ -117,14 +118,10 @@
     </div>
   </div>
 {:else if existingAsset}
-  <AssetDisplay asset={existingAsset} />
-  <button
-    class="w3-btn w3-gray w3-small w3-margin-top"
-    on:click={startEditing}
-    {disabled}
-  >
-    Edit
-  </button>
+  <div style="display: flex; align-items: start;">
+    <AssetDisplay asset={existingAsset} />
+    <EditButton on:click={startEditing} {disabled} />
+  </div>
 {:else}
   <span class="w3-text-gray">No device linked</span>
   <button

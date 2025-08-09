@@ -125,6 +125,7 @@ async function getTickets(event: APIGatewayEvent) {
     sort: [{ field: "Number", direction: "desc" }],
     fields: [
       "Number",
+      "Created",
       "FormID",
       "User Description",
       "Ticket Status",

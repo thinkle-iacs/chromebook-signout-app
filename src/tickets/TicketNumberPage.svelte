@@ -1,5 +1,7 @@
 <script lang="ts">
+  import TicketWorkflow from "./TicketWorkflow.svelte";
   import TicketEditor from "./TicketEditor.svelte";
+
   import { onMount } from "svelte";
   import { getTicketByNumber } from "../data/tickets";
   import type { Ticket } from "../data/tickets";
@@ -35,12 +37,19 @@
 {:else if error}
   <div class="w3-panel w3-red">{error}</div>
 {:else if ticket}
-  <TicketEditor
+  <TicketWorkflow
+    {ticket}
+    onUpdateTicket={(updatedTicket, history) => {
+      console.log("Ticket updated!", updatedTicket, history);
+      ticket = updatedTicket;
+    }}
+  />
+  <!-- <TicketEditor
     {ticket}
     readOnly={false}
     onTicketChange={(newTicket) => {
       console.log("Got me a change to the ticket!", newTicket);
       ticket = newTicket;
     }}
-  />
+  /> -->
 {/if}
