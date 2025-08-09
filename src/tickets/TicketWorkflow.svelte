@@ -106,37 +106,33 @@
     const dates: Record<FlowStep, string> = Object.create(null);
     const entries = parseHistoryEntries(historyStr);
     for (const e of entries) {
-      // Support both legacy {status:{to}} and new {status:"..."}
       const dest = typeof e?.status === "string" ? e.status : e?.status?.to;
       if (dest) {
-        const toStep = statusToStep(dest);
+        const toStep = currentStep(dest as any);
         if (toStep && !dates[toStep]) dates[toStep] = e.timestamp;
       }
     }
     return dates;
   }
-  function statusToStep(status: string | undefined): FlowStep | null {
-    if (!status) return null;
-    switch (status) {
-      // New set
-      case "New":
-        return "New";
-      case "Awaiting Drop-Off":
-        return "Awaiting Drop-Off";
-      case "Have Device":
-        return "Have Device";
-      case "In Repair":
-        return "In Repair";
-      case "Ready for Pickup":
-        return "Ready for Pickup";
-      case "In Progress":
-        return "In Progress";
-      case "Closed":
-        return "Closed";
-      default:
-        return null;
+
+  // New: include Created timestamp for the "New" step when not present in history
+  function stepDates(t: Ticket): Record<FlowStep, string> {
+    const dates = stepDatesFromHistory(t.History);
+    if (!dates["New"]) {
+      const created = (t as any).Created;
+      if (created) {
+        const ts =
+          created instanceof Date
+            ? created.toISOString()
+            : new Date(created).toISOString();
+        dates["New"] = ts;
+      }
     }
+    return dates;
   }
+
+  // Compute dates (includes Created for New if missing)
+  $: timelineDates = stepDates(ticket);
 
   // ---- updateTicket callback exposed to steps ----
   let saving = false;
@@ -191,6 +187,27 @@
       saving = false;
     }
   }
+
+  function canJumpTo(step: FlowStep) {
+    return (
+      !readOnly &&
+      !saving &&
+      step !== currentStep(ticket["Ticket Status"]) &&
+      Boolean(step)
+    );
+  }
+
+  async function jumpTo(step: FlowStep) {
+    if (!canJumpTo(step)) return;
+    const ok = confirm(`Change status to "${step}"?`);
+    if (!ok) return;
+    await updateTicket({ "Ticket Status": step as any }, {
+      action: "timeline_jump",
+      status: step,
+      note: `Changed via timeline to ${step}`,
+      changes: { "Ticket Status": { from: ticket["Ticket Status"], to: step } },
+    } as any);
+  }
 </script>
 
 <!-- Timeline header -->
@@ -200,21 +217,23 @@
       {#key step}
         <div
           class="w3-col s12 m3 l1 w3-center w3-small"
+          class:clickable={canJumpTo(step)}
           style="margin-right:8px;"
+          role="button"
+          tabindex={canJumpTo(step) ? 0 : -1}
+          on:click={() => jumpTo(step)}
         >
           <div
             class="dot"
             class:current={currentStep(ticket["Ticket Status"]) === step}
-            class:done={Boolean(stepDatesFromHistory(ticket.History)[step])}
+            class:done={Boolean(timelineDates[step])}
             title={step}
             style="width:10px;height:10px;border-radius:50%;display:inline-block;margin-bottom:4px;border:2px solid #2196F3;"
           />
           <div>{step}</div>
-          {#if stepDatesFromHistory(ticket.History)[step]}
+          {#if timelineDates[step]}
             <div class="w3-text-grey">
-              {new Date(
-                stepDatesFromHistory(ticket.History)[step]
-              ).toLocaleDateString()}
+              {new Date(timelineDates[step]).toLocaleDateString()}
             </div>
           {/if}
         </div>
@@ -237,10 +256,16 @@
 />
 
 <style>
+  .dot.done {
+    background: #e3f2fd;
+  }
   .dot.current {
     background: #2196f3;
   }
-  .dot.done {
-    background: #e3f2fd;
+  .dot.current ~ div {
+    font-weight: bold;
+  }
+  .clickable {
+    cursor: pointer;
   }
 </style>

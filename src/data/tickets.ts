@@ -4,6 +4,7 @@ import { restructureLookupFields } from "./restructureLookups";
 export let ticketsStore = writable({});
 
 export type Ticket = {
+  Created: Date;
   Number: number;
   FormID: string;
   "User Description": string;
@@ -201,9 +202,11 @@ export async function updateTicket(id: string, updates: Partial<Ticket>) {
   // (fields, id, etc). If already in Ticket shape, this is a no-op.
   let ticket: Ticket;
   if (json.fields && json.id) {
+    json = restructureLookupFields(json); // restructure linked fields
     ticket = {
       ...json.fields,
       _id: json.id,
+      _linked: json.linkedFields || {},
     };
   } else if (json._id) {
     ticket = json;

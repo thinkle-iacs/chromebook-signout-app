@@ -4,12 +4,12 @@
   import { updateTicket } from "../data/tickets";
   import StudentTag from "../StudentTag.svelte";
   import AssetDisplay from "../AssetDisplay.svelte";
-  import EditableTextField from "./EditableTextField.svelte";
-  import TicketStudentAssignment from "./TicketStudentAssignment.svelte";
-  import TicketAssetAssignment from "./TicketAssetAssignment.svelte";
+  import EditableTextField from "./editorComponents/EditableTextField.svelte";
+  import TicketStudentAssignment from "./editorComponents/TicketStudentAssignment.svelte";
+  import TicketAssetAssignment from "./editorComponents/TicketAssetAssignment.svelte";
   import { studentsStore } from "../data/students";
   import { assetStore } from "../data/inventory";
-  import EditableNumberField from "./EditableNumberField.svelte";
+  import EditableNumberField from "./editorComponents/EditableNumberField.svelte";
 
   export let ticket: Ticket;
   export let readOnly: boolean = false;
@@ -250,8 +250,6 @@
             textValue={ticket["User Description"] || ""}
             onSave={saveUserDescription}
             disabled={saving}
-            textareaClass="w3-input w3-border w3-small"
-            buttonClass="w3-btn w3-green w3-small w3-margin-top"
             rows={5}
             placeholder="Describe the issue..."
           />
@@ -294,8 +292,6 @@
                 textValue={ticket.Notes || ""}
                 onSave={(val) => saveNotes("public", val)}
                 disabled={saving}
-                textareaClass="w3-input w3-border w3-small"
-                buttonClass="w3-btn w3-blue w3-small w3-margin-top"
                 rows={8}
                 placeholder="Enter public notes..."
               />
@@ -312,8 +308,6 @@
                 textValue={ticket.PrivateNotes || ""}
                 onSave={(val) => saveNotes("private", val)}
                 disabled={saving}
-                textareaClass="w3-input w3-border w3-small"
-                buttonClass="w3-btn w3-red w3-small w3-margin-top"
                 rows={8}
                 placeholder="Enter private notes..."
               />
@@ -394,8 +388,6 @@
               value={ticket["Repair Cost"]}
               onSave={updateRepairCost}
               disabled={saving}
-              inputClass="w3-input w3-border"
-              buttonClass="w3-btn w3-green w3-small"
               min={0}
               placeholder="0.00"
             />
