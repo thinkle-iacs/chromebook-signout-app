@@ -2,6 +2,7 @@
   import type { Student } from "./data/students";
   import { contactStore } from "./data/contacts";
   import Contacts from "./Contacts.svelte";
+  import StudentScheduleButton from "./components/StudentScheduleButton.svelte";
 
   export let student: Student;
 
@@ -45,6 +46,9 @@
       ({student.YOG}) {getSchoolLevel(student.YOG)}
     {/if}
   </span>
+  {#if student?.Email}
+    <StudentScheduleButton class="inline-schedule" studentEmail={student.Email} />
+  {/if}
 
   {#if expanded}
     <div class="expanded-details w3-card w3-white w3-padding w3-margin-top">
@@ -55,6 +59,9 @@
           <a href="mailto:{student.Email}" class="w3-text-blue"
             >{student.Email}</a
           >
+          {#if student?.Email}
+            <StudentScheduleButton class="inline-schedule" studentEmail={student.Email} />
+          {/if}
         </div>
         <div><strong>LASID:</strong> {student.LASID}</div>
         <div>
@@ -88,7 +95,9 @@
 <style>
   .student-tag {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .compact-display {
@@ -100,6 +109,10 @@
 
   .compact-display:hover {
     background-color: #f1f1f1;
+  }
+
+  .inline-schedule {
+    margin-left: 4px;
   }
 
   .inactive {
