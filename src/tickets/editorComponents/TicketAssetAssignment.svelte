@@ -55,6 +55,7 @@
 
   // New: optimistic local selection until parent persists ticket updates
   let localAsset: any = null;
+  // Compute what to display: local override > existing
   $: displayAsset = localAsset || existingAsset;
   // Clear override once ticket reflects the same asset
   $: if (localAsset && existingAsset && localAsset._id === existingAsset._id) {

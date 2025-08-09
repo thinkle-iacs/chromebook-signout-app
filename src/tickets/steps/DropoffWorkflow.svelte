@@ -176,7 +176,7 @@
   <TicketInfo {ticket} onChange={handleChange} disabled={processing} />
   <TicketDescription {ticket} onChange={handleChange} />
 
-  <TicketNotification {ticket} />
+  <TicketNotification {ticket} defaultMessage="BringMachineForRepairLoanReady" />
 
   <div class="w3-section">
     <label class="w3-small">

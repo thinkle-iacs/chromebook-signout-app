@@ -6,10 +6,15 @@
     testScheduleLookup,
     isValidStudentEmail,
   } from "./data/sisData";
+  import { buildStructuredSchedule } from "./scheduling/structuredSchedule";
 
   let studentEmail = "";
   let results: any[] = [];
   let loading = false;
+
+  // New: structured schedule output for Step E
+  let structured: any[] | null = null;
+  let eError: string | null = null;
 
   async function runTest(testName: string, testFunction: () => Promise<any>) {
     loading = true;
@@ -55,6 +60,8 @@
 
   function clearResults() {
     results = [];
+    structured = null;
+    eError = null;
   }
 
   // Test functions
@@ -64,6 +71,60 @@
     runTest("C. Student Lookup", () => testStudentLookup(studentEmail));
   const testD = () =>
     runTest("D. Schedule Lookup", () => testScheduleLookup(studentEmail));
+
+  // New: Step E - Fetch schedule and display parsed view
+  async function testE() {
+    if (!studentEmail || !isValidStudentEmail(studentEmail)) return;
+    loading = true;
+    eError = null;
+    structured = null;
+
+    try {
+      const [studentResp, scheduleResp] = await Promise.all([
+        testStudentLookup(studentEmail),
+        testScheduleLookup(studentEmail),
+      ]);
+
+      const student = studentResp?.student || studentResp;
+      const sisSchedule = scheduleResp?.schedule || scheduleResp;
+
+      if (!sisSchedule?.classes) {
+        throw new Error("Schedule response missing classes array");
+      }
+
+      structured = buildStructuredSchedule(student, sisSchedule);
+    } catch (err: any) {
+      console.error("Step E failed:", err);
+      eError = err?.message || "Unknown error";
+    } finally {
+      loading = false;
+    }
+  }
+
+  // Helpers for highlighting current time
+  function timeToMinutes(t: string): number {
+    // t like "8:05" or "1:30"
+    const [h, m] = t.split(":").map((x) => parseInt(x, 10));
+    let hour = isNaN(h) ? 0 : h;
+    const minutes = isNaN(m) ? 0 : m;
+    // Heuristic: afternoon blocks use 1-3 without AM/PM; map 1-6 -> 13-18
+    if (hour >= 1 && hour <= 6) hour += 12;
+    return hour * 60 + minutes;
+  }
+
+  function isNowBetween(start: string, end: string): boolean {
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const s = timeToMinutes(start);
+    const e = timeToMinutes(end);
+    return nowMin >= s && nowMin < e;
+  }
+
+  function todayWeekdayIndex(): number {
+    // 1=Mon..5=Fri else -1
+    const d = new Date().getDay();
+    return d >= 1 && d <= 5 ? d : -1;
+  }
 </script>
 
 <div class="w3-container w3-padding">
@@ -83,10 +144,11 @@
 
       <!-- Student Email Input -->
       <div class="w3-section">
-        <label class="w3-text-blue"
-          ><b>Student Email (for tests C & D):</b></label
-        >
+        <label class="w3-text-blue" for="sis-email">
+          <b>Student Email (for tests C, D & E):</b>
+        </label>
         <input
+          id="sis-email"
           class="w3-input w3-border w3-margin-bottom"
           type="email"
           bind:value={studentEmail}
@@ -144,6 +206,17 @@
             <em>Note: Backend schedule parsing has been removed. Use the new ScheduleTester.svelte for comprehensive frontend schedule testing with enhanced debugging capabilities.</em>
           </p>
         </div>
+
+        <!-- New: Step E Button -->
+        <button
+          class="w3-button w3-teal w3-margin-right w3-margin-bottom"
+          on:click={testE}
+          disabled={loading ||
+            !studentEmail ||
+            !isValidStudentEmail(studentEmail)}
+        >
+          Test E: Display Parsed Schedule
+        </button>
 
         <button
           class="w3-button w3-gray w3-margin-bottom"
@@ -220,6 +293,62 @@
     </div>
   {/if}
 
+  <!-- New: Step E Display -->
+  {#if structured}
+    <div class="w3-card w3-white w3-margin">
+      <header class="w3-container w3-teal">
+        <h3>📅 Parsed Weekly Schedule</h3>
+      </header>
+      <div class="w3-container w3-padding">
+        <div class="schedule-display">
+          {#each structured as day, dayIndex}
+            {@const dayNames = [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+            ]}
+            {#if day?.blocks?.length}
+              <div class="day-column" class:today={todayWeekdayIndex() === day.weekday}>
+                <h3 class="day-header">{dayNames[dayIndex]}</h3>
+                <div class="blocks-list">
+                  {#each day.blocks as block}
+                    <div
+                      class="block-item"
+                      class:current={todayWeekdayIndex() === day.weekday && isNowBetween(block.start, block.end)}
+                      class:free={block.isFree}
+                    >
+                      <div class="block-header">
+                        <div class="block-name">{block.blockName}</div>
+                        <div class="block-time">{block.start} - {block.end}</div>
+                      </div>
+                      <div class="block-content">
+                        <div class="class-name">{block.class}</div>
+                        {#if block.room}
+                          <div class="room-info">Room: {block.room}</div>
+                        {/if}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {:else}
+              <div class="day-column empty">
+                <h3 class="day-header">{dayNames[dayIndex]}</h3>
+                <div class="no-classes">No classes</div>
+              </div>
+            {/if}
+          {/each}
+        </div>
+      </div>
+    </div>
+  {:else if eError}
+    <div class="w3-panel w3-pale-red w3-border w3-margin">
+      <strong>Step E Error:</strong> {eError}
+    </div>
+  {/if}
+
   <!-- Debug Info -->
   <div class="w3-card w3-pale-gray w3-margin">
     <header class="w3-container w3-gray">
@@ -243,6 +372,10 @@
         <li>
           <strong>Test D:</strong> Gets student's class schedule (needs student lookup
           working first)
+        </li>
+        <li>
+          <strong>Test E:</strong> Displays parsed weekly schedule with locations and
+          highlights the current block for today.
         </li>
       </ul>
 
@@ -276,5 +409,84 @@
     100% {
       transform: rotate(360deg);
     }
+  }
+
+  /* New styles for Step E */
+  .schedule-display {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 10px 0;
+  }
+  .day-column {
+    flex: 1;
+    min-width: 220px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+  }
+  .day-column.today .day-header {
+    background: #046b99;
+  }
+  .day-header {
+    background: #007cba;
+    color: white;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .blocks-list {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .block-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    background: #f8f9fa;
+  }
+  .block-item.current {
+    border-color: #ff9800;
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+    background: #fff9e6;
+  }
+  .block-item.free {
+    background: #f1f3f4;
+    border-color: #ccc;
+    opacity: 0.9;
+  }
+  .block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .block-name {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+  }
+  .block-time {
+    font-size: 12px;
+    color: #666;
+    background: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+  }
+  .block-content .class-name {
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .room-info {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
   }
 </style>

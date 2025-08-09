@@ -35,6 +35,11 @@
     }
   }
 
+  // Selected template object for preview
+  $: selectedTemplate = (templates || []).find(
+    (t: any) => t && t._id === selectedMessageId
+  );
+
   let extraText = "";
   let sending = false;
   let result: any[] | null = null;
@@ -77,6 +82,11 @@
 
 <div class="w3-panel w3-border">
   <h5>Send Ticket Notification</h5>
+  <div class="w3-small w3-text-gray">
+    Selected: {selectedTemplate
+      ? selectedTemplate.Name || selectedTemplate.Subject || selectedTemplate.ID || selectedTemplate._id
+      : "(none)"}
+  </div>
   <div class="w3-row-padding">
     <div class="w3-col s12 m6">
       <label for="msg-template" class="w3-small">Message Template</label>
@@ -86,31 +96,35 @@
         bind:value={selectedMessageId}
         disabled={templates.length === 0}
       >
-        <option value=""
-          >{templates.length === 0 ? "Loading…" : "Select…"}</option
-        >
+        <option value="">{templates.length === 0 ? "Loading…" : "Select…"}</option>
         {#each templates as t (t._id)}
           <option value={t._id}>{t.Name || t.Subject || t.ID || t._id}</option>
         {/each}
       </select>
+
+      {#if selectedTemplate}
+        <details class="w3-margin-top">
+          <summary class="w3-small">Preview message</summary>
+          <div class="w3-small w3-section">
+            <div><strong>Subject:</strong> {selectedTemplate.Subject || "(no subject)"}</div>
+            <pre class="w3-code w3-light-gray" style="white-space: pre-wrap;">{selectedTemplate.Body || "(no body)"}</pre>
+          </div>
+        </details>
+      {/if}
     </div>
     <div class="w3-col s12 m6">
       <label for="extra-text" class="w3-small">Extra Text</label>
       <textarea
         id="extra-text"
         class="w3-input w3-border"
-        rows="3"
+        rows="5"
         bind:value={extraText}
         placeholder="Optional note…"
       />
     </div>
   </div>
   <div class="w3-section">
-    <button
-      class="w3-button w3-blue"
-      on:click={send}
-      disabled={sending || templates.length === 0}
-    >
+    <button class="w3-button w3-blue" on:click={send} disabled={sending || templates.length === 0}>
       {sending ? "Sending…" : "Send Notification"}
     </button>
   </div>
