@@ -7,17 +7,59 @@
   import { get } from "svelte/store";
 
   export let ticket: Ticket;
+  export let field: "Device" | "Temporary Device" = "Device";
   export let disabled: boolean = false;
-  export let onSave: (
-    deviceId: string | null
-  ) => Promise<void> = async () => {};
+  export let onSave: (assetId: string | null) => Promise<void> = async () => {};
 
   let editing = false;
   let inputElement: HTMLInputElement | null = null;
 
   // Track existing vs current asset
-  let existingAsset = ticket._linked?.Device || null;
+  let existingAsset = null;
+  $: existingAsset =
+    field === "Device" ? ticket._linked?.Device || null : getTempLinkedAsset();
+
+  function getTempLinkedAsset() {
+    // Prefer the record id from the link field
+    const tmpArr: any = (ticket as any)["Temporary Device"];
+    const id: string | undefined = tmpArr && tmpArr[0];
+
+    // 1) If API provided a linked object, use it and attach id
+    const linked = (ticket as any)._linked?.["Temporary Device"];
+    if (linked) {
+      return { _id: id, ...linked };
+    }
+
+    // 2) Try assetStore by id (populated via inventory lookups)
+    if (id) {
+      const storeById = get(assetStore) as any;
+      if (storeById && storeById[id]) return storeById[id];
+    }
+
+    // 3) Fallback: use the denormalized tag field if present
+    const tagFromField = (ticket as any)[
+      "Asset Tag (from Temporary Device)"
+    ]?.[0];
+    if (tagFromField) {
+      const storeByTag = get(assetStore) as any;
+      const fromStore = storeByTag?.[tagFromField.toUpperCase()];
+      if (fromStore) return fromStore;
+      // Minimal object so AssetDisplay can render something
+      return { _id: id, "Asset Tag": tagFromField } as any;
+    }
+
+    return null;
+  }
+
   let currentAsset = null;
+
+  // New: optimistic local selection until parent persists ticket updates
+  let localAsset: any = null;
+  $: displayAsset = localAsset || existingAsset;
+  // Clear override once ticket reflects the same asset
+  $: if (localAsset && existingAsset && localAsset._id === existingAsset._id) {
+    localAsset = null;
+  }
 
   // When assetTag changes, update currentAsset and trigger validation
   $: if ($assetTag) {
@@ -30,13 +72,13 @@
     currentAsset = null;
   }
 
-  // Check if we have changes to save
-  $: hasChanges = currentAsset?._id !== existingAsset?._id;
+  // Check if we have changes to save (compare with what we currently display)
+  $: hasChanges = currentAsset?._id !== displayAsset?._id;
 
   function startEditing() {
     editing = true;
-    // Set the global store to the existing asset's tag
-    $assetTag = existingAsset?.AssetTag || "";
+    // Set the global store to the currently displayed asset's tag
+    $assetTag = displayAsset?.["Asset Tag"] || "";
   }
 
   function cancelEditing() {
@@ -57,7 +99,8 @@
       }
     }
     await onSave(currentAsset._id);
-    existingAsset = currentAsset;
+    // Optimistically show the selection until parent persists
+    localAsset = currentAsset;
     editing = false;
     $assetTag = "";
     currentAsset = null;
@@ -65,7 +108,8 @@
 
   async function removeAsset() {
     await onSave(null);
-    existingAsset = null;
+    // Clear local override immediately
+    localAsset = null;
     editing = false;
     $assetTag = "";
     currentAsset = null;
@@ -105,7 +149,7 @@
       >
         Cancel
       </button>
-      {#if existingAsset}
+      {#if displayAsset}
         <button
           class="w3-btn w3-red w3-small w3-margin-left"
           title="Remove asset"
@@ -117,18 +161,20 @@
       {/if}
     </div>
   </div>
-{:else if existingAsset}
+{:else if displayAsset}
   <div style="display: flex; align-items: start;">
-    <AssetDisplay asset={existingAsset} />
+    <AssetDisplay asset={displayAsset} />
     <EditButton on:click={startEditing} {disabled} />
   </div>
 {:else}
-  <span class="w3-text-gray">No device linked</span>
+  <span class="w3-text-gray"
+    >No {field === "Device" ? "device" : "temporary device"} linked</span
+  >
   <button
     class="w3-btn w3-blue w3-small w3-margin-top"
     on:click={startEditing}
     {disabled}
   >
-    Link Device
+    {field === "Device" ? "Link Device" : "Link Temp Device"}
   </button>
 {/if}

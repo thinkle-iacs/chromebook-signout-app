@@ -60,6 +60,8 @@ export async function searchForAsset(
       if (result.fields["Serial"]) {
         $assetStore[result.fields["Serial"].toLowerCase()] = item;
       }
+      // New: also index by record id for quick lookup when we only have the id
+      $assetStore[result.id] = item;
     }
     console.log("assetStore:", JSON.stringify($assetStore));
     return $assetStore;
@@ -177,7 +179,7 @@ export async function getNonLoanedChromebooks() {
 // Update asset function
 export async function updateAsset(id: string, fields: any) {
   try {
-    const response = await fetch("/.netlify/functions/inventory", {
+    const response = await fetch("/.netlify/functions/index?mode=asset", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
