@@ -5,6 +5,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
   // Handle PUT requests for updates
   if (event.httpMethod === "PUT") {
     try {
+      console.log("Inventory PUT handler called: ", event.body);
       const { id, fields } = JSON.parse(event.body || "{}");
       const updatedRecord = await updateAsset(id, fields);
       return {

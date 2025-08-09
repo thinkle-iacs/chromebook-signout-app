@@ -24,53 +24,53 @@
   let editUserDescription = false;
 </script>
 
-<div class="w3-section">
-  <div style="display:flex; flex-direction: row; align-items: start;">
-    <h4>Issue Description</h4>
-    <EditButton
-      on:click={() => {
-        editUserDescription = !editUserDescription;
+<div class="w3-section w3-row">
+  <div class="w3-col s12 m6 l4 w3-padding">
+    <div style="display:flex; flex-direction: row; align-items: start;">
+      <h4>Issue Description</h4>
+      <EditButton
+        on:click={() => {
+          editUserDescription = !editUserDescription;
+        }}
+      />
+    </div>
+    {#if editUserDescription}
+      <InstantTextArea
+        rows={5}
+        placeholder="Describe the issue..."
+        value={userDescription}
+        onChange={(val) => {
+          userDescription = val;
+          onChange({ "User Description": val });
+        }}
+      />
+    {:else}
+      <div>{userDescription}</div>
+    {/if}
+  </div>
+
+  <div class="w3-col s12 m6 l4 w3-padding">
+    <h5>Public Notes</h5>
+    <InstantTextArea
+      rows={6}
+      placeholder="Enter public notes..."
+      value={publicNotes}
+      onChange={(val) => {
+        publicNotes = val;
+        onChange({ Notes: val });
       }}
     />
   </div>
-  {#if editUserDescription}
+  <div class="w3-col s12 m6 l4 w3-padding">
+    <h5>Private Notes</h5>
     <InstantTextArea
-      rows={5}
-      placeholder="Describe the issue..."
-      value={userDescription}
+      rows={6}
+      placeholder="Enter private notes..."
+      value={privateNotes}
       onChange={(val) => {
-        userDescription = val;
-        onChange({ "User Description": val });
+        privateNotes = val;
+        onChange({ PrivateNotes: val });
       }}
     />
-  {:else}
-    <div>{userDescription}</div>
-  {/if}
-
-  <div class="w3-row-padding w3-section">
-    <div class="w3-col s6">
-      <h5>Public Notes</h5>
-      <InstantTextArea
-        rows={6}
-        placeholder="Enter public notes..."
-        value={publicNotes}
-        onChange={(val) => {
-          publicNotes = val;
-          onChange({ Notes: val });
-        }}
-      />
-    </div>
-    <div class="w3-col s6">
-      <h5>Private Notes</h5>
-      <InstantTextArea
-        rows={6}
-        placeholder="Enter private notes..."
-        value={privateNotes}
-        onChange={(val) => {
-          privateNotes = val;
-          onChange({ PrivateNotes: val });
-        }}
-      />
-    </div>
   </div>
 </div>

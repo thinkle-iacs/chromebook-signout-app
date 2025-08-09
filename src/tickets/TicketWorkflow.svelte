@@ -208,6 +208,16 @@
       changes: { "Ticket Status": { from: ticket["Ticket Status"], to: step } },
     } as any);
   }
+
+  // Add keyboard support for accessibility
+  function onStepKeyDown(event: KeyboardEvent, step: FlowStep) {
+    if (!canJumpTo(step)) return;
+    const key = event.key;
+    if (key === "Enter" || key === " ") {
+      event.preventDefault();
+      jumpTo(step);
+    }
+  }
 </script>
 
 <!-- Timeline header -->
@@ -222,6 +232,7 @@
           role="button"
           tabindex={canJumpTo(step) ? 0 : -1}
           on:click={() => jumpTo(step)}
+          on:keydown={(e) => onStepKeyDown(e, step)}
         >
           <div
             class="dot"
