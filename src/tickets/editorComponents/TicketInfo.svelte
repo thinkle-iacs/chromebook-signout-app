@@ -3,10 +3,14 @@
   import type { Ticket } from "../../data/tickets";
   import TicketStudentAssignment from "./TicketStudentAssignment.svelte";
   import TicketAssetAssignment from "./TicketAssetAssignment.svelte";
+  import TicketNotificationsSummary from "../components/TicketNotificationsSummary.svelte";
+  import TicketInvoicesSummary from "../components/TicketInvoicesSummary.svelte";
 
   export let ticket: Ticket;
   export let onChange: (updates: Partial<Ticket>) => void = () => {};
   export let disabled: boolean = false;
+
+  let device = getTicketDevice(ticket);
 
   function getTicketDevice(ticket, assetStoreForForceUpdate) {
     console.log("Checking ticket for device", ticket);
@@ -26,8 +30,6 @@
       return ticket._linked?.Device;
     }
   }
-
-  let device = getTicketDevice(ticket);
 
   $: device = getTicketDevice(ticket, $assetStore);
   $: console.log("TicketInfo has device: ", device);
@@ -76,5 +78,11 @@
         }}
       />
     </div>
+  </div>
+
+  <div class="w3-small w3-margin-top">
+    <TicketNotificationsSummary {ticket} />
+    <span style="display:inline-block; width: 8px;"></span>
+    <TicketInvoicesSummary {ticket} />
   </div>
 </div>

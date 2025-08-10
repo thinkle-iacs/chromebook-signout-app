@@ -4,6 +4,9 @@
   import TicketInfo from "../editorComponents/TicketInfo.svelte";
   import TicketDescription from "../editorComponents/TicketDescription.svelte";
   import { updateAsset } from "../../data/inventory";
+  import { createInvoices } from "../../data/invoices";
+  import { createEventDispatcher } from "svelte";
+  import Toast from "../../components/Toast.svelte";
 
   export let ticket: Ticket;
   export let updateTicket: (
@@ -94,10 +97,45 @@
     }
   }
 
-  // Placeholder messaging/invoicing hooks
-  async function sendInvoicePlaceholder() {
-    // TODO: implement real invoicing
-    console.log("[invoice] Would invoice for:", ticket["Repair Cost"], ticket);
+  // Invoice sending
+  let sendingInvoice = false;
+  let toast: { kind: "success" | "error" | "info"; message: string } | null =
+    null;
+  let confirmOpen = false;
+
+  function showToast(kind: "success" | "error" | "info", message: string) {
+    toast = { kind, message };
+    setTimeout(() => (toast = null), 3500);
+  }
+
+  function openConfirm() {
+    confirmOpen = true;
+  }
+  function closeConfirm() {
+    confirmOpen = false;
+  }
+
+  async function sendInvoice() {
+    if (sendingInvoice) return;
+    sendingInvoice = true;
+    try {
+      const studentIds = (ticket as any).Student as string[] | undefined;
+      const ticketId = (ticket as any)._id as string;
+      if (!studentIds?.length || !ticketId) {
+        showToast("error", "Missing Student or Ticket link");
+        return;
+      }
+      await createInvoices([
+        { Student: [studentIds[0]], Ticket: [ticketId], "Send Email": true },
+      ] as any);
+      showToast("success", "Invoice queued to send.");
+      closeConfirm();
+    } catch (e) {
+      console.error("Failed to send invoice:", e);
+      showToast("error", "Failed to send invoice");
+    } finally {
+      sendingInvoice = false;
+    }
   }
 
   async function markReadyForPickup() {
@@ -108,7 +146,7 @@
       await saveChanges();
 
       // Then perform messaging placeholder (invoice only)
-      await sendInvoicePlaceholder();
+      await sendInvoice();
 
       // Finally update ticket status
       await updateTicket(
@@ -135,6 +173,11 @@
       saving = false;
     }
   }
+
+  let studentEmailText = "";
+  let assetTagText = "";
+  $: studentEmailText = (ticket as any)?._linked?.Student?.Email || "-";
+  $: assetTagText = (ticket as any)?._linked?.Device?.["Asset Tag"] || "-";
 </script>
 
 <div class="w3-panel w3-pale-blue w3-border">
@@ -195,5 +238,43 @@
     >
       Mark Ready for Pickup
     </button>
+    <button
+      class="w3-button w3-amber w3-margin-left"
+      on:click={openConfirm}
+      disabled={sendingInvoice}
+    >
+      Send Invoice
+    </button>
   </div>
+
+  {#if confirmOpen}
+    <div class="w3-modal" style="display:block">
+      <div class="w3-modal-content w3-animate-top w3-card-4">
+        <header class="w3-container w3-amber">
+          <h5>Send Invoice</h5>
+        </header>
+        <div class="w3-container">
+          <p>
+            We will ask the business office to invoice
+            <b>{studentEmailText}</b>
+            for <b>${ticket["Repair Cost"] || 0}</b> related to the repair of
+            asset
+            <b>{assetTagText}</b>.
+          </p>
+        </div>
+        <footer class="w3-container w3-padding">
+          <button class="w3-button w3-light-grey" on:click={closeConfirm}
+            >Cancel</button
+          >
+          <button class="w3-button w3-amber w3-right" on:click={sendInvoice}
+            >Confirm & Send</button
+          >
+        </footer>
+      </div>
+    </div>
+  {/if}
+
+  {#if toast}
+    <Toast kind={toast.kind} message={toast.message} show={true} />
+  {/if}
 </div>

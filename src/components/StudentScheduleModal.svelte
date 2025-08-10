@@ -1,7 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import { buildStructuredSchedule } from "../scheduling/structuredSchedule";
-  import { testStudentLookup, testScheduleLookup, isValidStudentEmail } from "../data/sisData";
+  import {
+    testStudentLookup,
+    testScheduleLookup,
+    isValidStudentEmail,
+  } from "../data/sisData";
 
   export let studentEmail: string = "";
   export let open: boolean = false;
@@ -75,7 +79,12 @@
       if (e.key === "Escape" || e.key === "Enter") close();
     }}
   >
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Student Schedule">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Student Schedule"
+    >
       <header class="modal-header">
         <h3>Student Schedule</h3>
         <button class="close-btn" on:click={close} aria-label="Close">×</button>
@@ -83,23 +92,43 @@
 
       <div class="modal-body">
         {#if !valid}
-          <div class="w3-panel w3-pale-yellow w3-border">Enter a valid student email.</div>
+          <div class="w3-panel w3-pale-yellow w3-border">
+            Enter a valid student email.
+          </div>
         {:else if loading}
-          <div class="w3-panel w3-blue w3-border"><i class="fa fa-spinner fa-spin"></i> Loading…</div>
+          <div class="w3-panel w3-blue w3-border">
+            <i class="fa fa-spinner fa-spin"></i> Loading…
+          </div>
         {:else if error}
           <div class="w3-panel w3-pale-red w3-border">{error}</div>
         {:else if structured}
           <div class="schedule-display">
             {#each structured as day}
-              {@const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]}
-              <div class="day-column" class:today={todayWeekdayIndex() === day.weekday}>
+              {@const dayNames = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+              ]}
+              <div
+                class="day-column"
+                class:today={todayWeekdayIndex() === day.weekday}
+              >
                 <h3 class="day-header">{dayNames[day.weekday - 1]}</h3>
                 <div class="blocks-list">
                   {#each day.blocks as block}
-                    <div class="block-item" class:current={todayWeekdayIndex() === day.weekday && isNowBetween(block.start, block.end)} class:free={block.isFree}>
+                    <div
+                      class="block-item"
+                      class:current={todayWeekdayIndex() === day.weekday &&
+                        isNowBetween(block.start, block.end)}
+                      class:free={block.isFree}
+                    >
                       <div class="block-header">
                         <div class="block-name">{block.blockName}</div>
-                        <div class="block-time">{block.start} - {block.end}</div>
+                        <div class="block-time">
+                          {block.start} - {block.end}
+                        </div>
                       </div>
                       <div class="block-content">
                         <div class="class-name">{block.class}</div>
@@ -127,7 +156,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,7 +168,7 @@
     width: min(1400px, 98vw);
     max-height: 90vh;
     overflow: auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   }
   .modal-header {
     display: flex;
@@ -154,19 +183,84 @@
     font-size: 24px;
     cursor: pointer;
   }
-  .modal-body { padding: 16px; }
+  .modal-body {
+    padding: 16px;
+  }
 
-  .schedule-display { display: flex; gap: 18px; overflow-x: auto; }
-  .day-column { flex: 1; min-width: 240px; border: 1px solid #ddd; border-radius: 8px; background: white; }
-  .day-column.today .day-header { background: #046b99; }
-  .day-header { background: #007cba; color: white; margin: 0; padding: 12px 16px; border-radius: 8px 8px 0 0; text-align: center; font-size: 16px; font-weight: bold; }
-  .blocks-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .block-item { border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; background: #f8f9fa; }
-  .block-item.current { border-color: #ff9800; box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2); background: #fff9e6; }
-  .block-item.free { background: #f1f3f4; border-color: #ccc; opacity: 0.9; }
-  .block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .block-name { font-weight: bold; color: #333; font-size: 14px; }
-  .block-time { font-size: 12px; color: #666; background: white; padding: 2px 6px; border-radius: 3px; border: 1px solid #ddd; }
-  .block-content .class-name { font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
-  .room-info { font-size: 12px; color: #666; font-style: italic; }
+  .schedule-display {
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+  }
+  .day-column {
+    flex: 1;
+    min-width: 240px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+  }
+  .day-column.today .day-header {
+    background: #046b99;
+  }
+  .day-header {
+    background: #007cba;
+    color: white;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .blocks-list {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .block-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    background: #f8f9fa;
+  }
+  .block-item.current {
+    border-color: #ff9800;
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+    background: #fff9e6;
+  }
+  .block-item.free {
+    background: #f1f3f4;
+    border-color: #ccc;
+    opacity: 0.9;
+  }
+  .block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .block-name {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+  }
+  .block-time {
+    font-size: 12px;
+    color: #666;
+    background: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+  }
+  .block-content .class-name {
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .room-info {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+  }
 </style>

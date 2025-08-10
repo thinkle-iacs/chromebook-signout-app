@@ -17,6 +17,7 @@
   import ScheduleTester from "./scheduling/ScheduleTester.svelte";
   import TicketBrowser from "./tickets/TicketBrowser.svelte";
   import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
+  import Invoices from "./Invoices.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -128,6 +129,10 @@
       page = TicketBrowser;
       title = "Ticket Browser";
     });
+    router("/invoices/", (ctx) => {
+      page = Invoices;
+      title = "Invoices";
+    });
 
     // Route for /ticket/number/:number
     router("/ticket/number/:number", (ctx) => {
@@ -144,6 +149,11 @@
   class="w3-main"
   on:click={() => {
     navActive = false;
+  }}
+  on:keydown={(e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      navActive = false;
+    }
   }}
 >
   <nav class="w3-sidebar w3-light-grey" class:navActive>
@@ -210,6 +220,13 @@
         class:w3-blue={page == TicketBrowser}
         href="/tickets/"
         on:click={l("/tickets/")}>Tickets</a
+      >
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == Invoices}
+        class:w3-blue={page == Invoices}
+        href="/invoices/"
+        on:click={l("/invoices/")}>Invoices</a
       >
       <a
         class="w3-bar-item w3-button"

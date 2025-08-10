@@ -13,7 +13,11 @@
   📅
 </button>
 
-<StudentScheduleModal {studentEmail} bind:open on:close={() => (open = false)} />
+<StudentScheduleModal
+  {studentEmail}
+  bind:open
+  on:close={() => (open = false)}
+/>
 
 <style>
   .schedule-icon {
@@ -24,5 +28,7 @@
     line-height: 1;
     padding: 2px 4px;
   }
-  .schedule-icon:hover { filter: brightness(0.9); }
+  .schedule-icon:hover {
+    filter: brightness(0.9);
+  }
 </style>

@@ -12,6 +12,7 @@ import { handler as googleHandler } from "./googleAdmin";
 import { handler as updateStudent } from "./updateStudent";
 import { handler as sisApiHandler } from "./sisApi";
 import { handler as ticketHandler } from "./tickets";
+import { handler as invoicesHandler } from "./invoices";
 
 let modes = {
   student: studentHandler,
@@ -27,6 +28,7 @@ let modes = {
   updateStudent: updateStudent,
   sisApi: sisApiHandler,
   tickets: ticketHandler,
+  invoices: invoicesHandler,
 };
 
 export async function handler(

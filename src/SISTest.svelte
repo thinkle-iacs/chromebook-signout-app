@@ -203,7 +203,11 @@
 
         <div class="w3-container w3-margin">
           <p class="w3-text-grey">
-            <em>Note: Backend schedule parsing has been removed. Use the new ScheduleTester.svelte for comprehensive frontend schedule testing with enhanced debugging capabilities.</em>
+            <em
+              >Note: Backend schedule parsing has been removed. Use the new
+              ScheduleTester.svelte for comprehensive frontend schedule testing
+              with enhanced debugging capabilities.</em
+            >
           </p>
         </div>
 
@@ -310,18 +314,24 @@
               "Friday",
             ]}
             {#if day?.blocks?.length}
-              <div class="day-column" class:today={todayWeekdayIndex() === day.weekday}>
+              <div
+                class="day-column"
+                class:today={todayWeekdayIndex() === day.weekday}
+              >
                 <h3 class="day-header">{dayNames[dayIndex]}</h3>
                 <div class="blocks-list">
                   {#each day.blocks as block}
                     <div
                       class="block-item"
-                      class:current={todayWeekdayIndex() === day.weekday && isNowBetween(block.start, block.end)}
+                      class:current={todayWeekdayIndex() === day.weekday &&
+                        isNowBetween(block.start, block.end)}
                       class:free={block.isFree}
                     >
                       <div class="block-header">
                         <div class="block-name">{block.blockName}</div>
-                        <div class="block-time">{block.start} - {block.end}</div>
+                        <div class="block-time">
+                          {block.start} - {block.end}
+                        </div>
                       </div>
                       <div class="block-content">
                         <div class="class-name">{block.class}</div>
@@ -345,7 +355,8 @@
     </div>
   {:else if eError}
     <div class="w3-panel w3-pale-red w3-border w3-margin">
-      <strong>Step E Error:</strong> {eError}
+      <strong>Step E Error:</strong>
+      {eError}
     </div>
   {/if}
 
@@ -374,8 +385,8 @@
           working first)
         </li>
         <li>
-          <strong>Test E:</strong> Displays parsed weekly schedule with locations and
-          highlights the current block for today.
+          <strong>Test E:</strong> Displays parsed weekly schedule with locations
+          and highlights the current block for today.
         </li>
       </ul>
 

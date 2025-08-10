@@ -145,6 +145,9 @@ async function getTickets(event: APIGatewayEvent) {
       // NEW fields
       "Assignee",
       "Resolution",
+      // Relations for summaries
+      "Notifications",
+      "Invoices",
       // Student fields
       "Name (from Student)",
       "LASID (from Student)",
