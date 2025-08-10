@@ -18,6 +18,8 @@
   import TicketBrowser from "./tickets/TicketBrowser.svelte";
   import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
   import Invoices from "./Invoices.svelte";
+  import Toast from "./components/Toast.svelte";
+  import { toastStore } from "./components/toastStore";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -45,6 +47,9 @@
 
   const SIGNOUT_TITLE = "IACS Chromebook Signout";
   const IT_NAME = "IACS IT Super Tool";
+
+  let toast: any = null;
+  $: toast = $toastStore;
 
   onMount(() => {
     router("/message", () => {
@@ -276,31 +281,9 @@
     {#if !$loggedIn}
       <LogIn />
     {:else if page}
-      <!-- This each logic had been there, presumably to 
-    try to fix some problem w/ stale data? At any rate, it seems that
-    by eliminating it I'm eliminating a buggy situation where I had multiple
-    pages rendering on top of each other.
-     -->
       {#key update}
         <svelte:component this={page} {...params} />
       {/key}
-      <!-- {#if page == History}
-        <div in:fade><History {...params} /></div>
-      {:else if page == LookupAsset}
-        <div in:fade><LookupAsset {...params} /></div>
-      {:else if page == Checkout}
-        <div in:fade><Checkout {...params} /></div>
-      {:else if page == LookupStudent}
-        <div in:fade><LookupStudent {...params} /></div>
-      {:else if page == History}
-        <div in:fade><History {...params} /></div>
-      {:else if page == LogIn}
-        <LogIn {...params} />
-      {:else if page == Contracts}
-        <Contracts />
-      {:else} 
-        <svelte:component this={page} {...params} />        
-      {/if} -->
     {:else}
       Weird, nobody's home
     {/if}
@@ -311,6 +294,10 @@
     Hi there, {$user?.user_metadata?.full_name} ({$user.email})
     <a href="/user" on:click={l("/user")}>(need to log out?)</a>
   </footer>
+{/if}
+
+{#if toast}
+  <Toast kind={toast.kind} message={toast.message} show={true} position={toast.position || "bottom"} timeout={toast.timeout || 3500} />
 {/if}
 
 <style>

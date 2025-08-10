@@ -9,6 +9,7 @@
   title="View student schedule"
   aria-label="View student schedule"
   on:click={() => (open = true)}
+  {...$$restProps}
 >
   📅
 </button>

@@ -47,15 +47,24 @@
       {:else if rows.length === 0}
         <div class="w3-small w3-text-gray">No invoices found.</div>
       {:else}
-        <ul class="w3-ul w3-small">
-          {#each rows as inv}
-            <li>
-              {inv.fields?.["Date Created"]}
-              · {formatDollar(inv.fields?.["Repair Cost (from Ticket)"])}
-              · {statusText(inv)}
-            </li>
-          {/each}
-        </ul>
+        <table class="w3-table w3-striped w3-small">
+          <thead>
+            <tr>
+              <th style="width:40%">Date</th>
+              <th style="width:30%">Amount</th>
+              <th style="width:30%">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each rows as inv}
+              <tr>
+                <td>{inv.fields?.["Date Created"]}</td>
+                <td>{formatDollar(inv.fields?.["Repair Cost (from Ticket)"])}</td>
+                <td>{statusText(inv)}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       {/if}
     </div>
   {/if}

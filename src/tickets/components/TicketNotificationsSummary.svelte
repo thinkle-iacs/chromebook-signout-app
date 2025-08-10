@@ -50,37 +50,46 @@
       {:else if rows.length === 0}
         <div class="w3-small w3-text-gray">No notifications found.</div>
       {:else}
-        <ul class="w3-ul w3-small">
-          {#each rows as n}
-            <li>
-              <button
-                class="w3-button w3-tiny"
-                on:click={() => toggleRow(n.id)}
-              >
-                {n.fields?.["Subject (from Messages)"]?.[0] || n.id}
-              </button>
-              <span class="w3-text-gray">
-                · {displayDate(n.fields?.Created)}</span
-              >
+        <table class="w3-table w3-striped w3-small">
+          <thead>
+            <tr>
+              <th style="width:60%">Subject</th>
+              <th style="width:40%">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each rows as n}
+              <tr class="clickable" on:click={() => toggleRow(n.id)}>
+                <td>{n.fields?.["Subject (from Messages)"]?.[0] || n.id}</td>
+                <td class="w3-text-gray">{displayDate(n.fields?.Created)}</td>
+              </tr>
               {#if expanded[n.id]}
-                <div class="w3-panel w3-light-gray w3-small w3-margin-top">
-                  {#if n.fields?.ExtraText}
-                    <div><b>Extra:</b> {n.fields.ExtraText}</div>
-                  {/if}
-                  {#if n.fields?.["Body (from Messages)"]}
-                    <div class="w3-margin-top">
-                      <b>Body:</b>
-                      <div style="white-space: pre-wrap;">
-                        {(n.fields["Body (from Messages)"] || []).join("\n")}
-                      </div>
+                <tr>
+                  <td colspan="2">
+                    <div class="w3-panel w3-light-gray w3-small">
+                      {#if n.fields?.ExtraText}
+                        <div><b>Extra:</b> {n.fields.ExtraText}</div>
+                      {/if}
+                      {#if n.fields?.["Body (from Messages)"]}
+                        <div class="w3-margin-top">
+                          <b>Body:</b>
+                          <div style="white-space: pre-wrap;">
+                            {(n.fields["Body (from Messages)"] || []).join("\n")}
+                          </div>
+                        </div>
+                      {/if}
                     </div>
-                  {/if}
-                </div>
+                  </td>
+                </tr>
               {/if}
-            </li>
-          {/each}
-        </ul>
+            {/each}
+          </tbody>
+        </table>
       {/if}
     </div>
   {/if}
 {/if}
+
+<style>
+  .clickable { cursor: pointer; }
+</style>
