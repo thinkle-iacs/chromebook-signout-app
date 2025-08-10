@@ -47,7 +47,10 @@
     {/if}
   </span>
   {#if student?.Email}
-    <StudentScheduleButton class="inline-schedule" studentEmail={student.Email} />
+    <StudentScheduleButton
+      style="margin-left: 4px;"
+      studentEmail={student.Email}
+    />
   {/if}
 
   {#if expanded}
@@ -60,7 +63,10 @@
             >{student.Email}</a
           >
           {#if student?.Email}
-            <StudentScheduleButton class="inline-schedule" studentEmail={student.Email} />
+            <StudentScheduleButton
+              style="margin-left: 4px;"
+              studentEmail={student.Email}
+            />
           {/if}
         </div>
         <div><strong>LASID:</strong> {student.LASID}</div>
@@ -109,10 +115,6 @@
 
   .compact-display:hover {
     background-color: #f1f1f1;
-  }
-
-  .inline-schedule {
-    margin-left: 4px;
   }
 
   .inactive {

@@ -93,17 +93,13 @@ export async function updateNotifications(
   return json;
 }
 
-export async function getNotifications(): Promise<NotificationResult[]> {
-  let params = {
-    mode: "notifications",
-    //records : notifications,
-  };
-  let response = await fetch(
-    "/.netlify/functions/index?" + new URLSearchParams(params),
-    {
-      method: "GET",
-    }
-  );
+export async function getNotifications(
+  params: { ticketNumber?: string } = {}
+): Promise<NotificationResult[]> {
+  let qs = new URLSearchParams({ mode: "notifications", ...params } as any);
+  let response = await fetch("/.netlify/functions/index?" + qs, {
+    method: "GET",
+  });
   let json = await response.json();
   return json;
 }
