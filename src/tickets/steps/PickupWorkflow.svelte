@@ -1,4 +1,5 @@
 <script lang="ts">
+  import TicketNotificationsSummary from "./../components/TicketNotificationsSummary.svelte";
   import type { Ticket } from "../../data/tickets";
   import type { HistoryEntry } from "../history";
   import TicketInfo from "../editorComponents/TicketInfo.svelte";
@@ -7,6 +8,9 @@
   import { signoutAsset } from "../../data/signout";
   import { assetStore } from "../../data/inventory";
   import { get } from "svelte/store";
+  import ShowPendingChanges from "../components/ShowPendingChanges.svelte";
+  import { mergeUpdates } from "./draftManager";
+  import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
 
   export let ticket: Ticket;
   export let updateTicket: (
@@ -18,11 +22,28 @@
   function handleChange(updates: Partial<Ticket>) {
     draft = { ...draft, ...updates };
   }
+  let mergedTicket: Ticket;
+  $: {
+    const { merged, updates } = mergeUpdates(ticket, draft);
+    mergedTicket = merged;
+    draft = updates;
+  }
 
   // Close actions
   let checkInTemp = true;
   let checkOutRepaired = true;
   let processing = false;
+
+  const resolutions: Ticket["Resolution"][] = [
+    "Fixed",
+    "Replaced Device",
+    "Unable to Reproduce",
+    "Won't FIx",
+    "Duplicate",
+    "Canceled",
+    "No Issue Found",
+    "User Education",
+  ];
 
   // Derive asset tags for labels
   $: mainTag =
@@ -41,7 +62,6 @@
       const updates: Partial<Ticket> = { ...draft };
       const historyChanges: Record<string, { from?: unknown; to?: unknown }> =
         {};
-
       const studentIds = (ticket as any).Student as string[] | undefined;
       const studentId = studentIds && studentIds[0];
       const deviceIds = (ticket as any).Device as string[] | undefined;
@@ -50,7 +70,6 @@
         | string[]
         | undefined;
       const tempId = tempArr && tempArr[0];
-
       const store: any = get(assetStore);
 
       // 1) Check IN temporary device
@@ -116,19 +135,24 @@
   }
 </script>
 
-<div class="w3-panel w3-pale-green w3-border">
-  <h4>In Repair → Ready for Pickup</h4>
+<div
+  class="w3-panel w3-pale-green w3-border pickup-content"
+  style="padding-bottom:90px;"
+>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <h4 style="margin:0;">In Repair → Ready for Pickup</h4>
+    <ShowPendingChanges {draft} onSave={closeTicket} saving={processing} />
+  </div>
   <div class="w3-small w3-text-gray">
     Ticket #{ticket.Number} · {ticket["Ticket Status"]}
   </div>
 
-  <TicketInfo {ticket} onChange={handleChange} />
-  <TicketDescription {ticket} onChange={handleChange} />
-
-  <TicketNotification {ticket} />
+  <TicketInfo ticket={mergedTicket} onChange={handleChange} />
+  <TicketDescription ticket={mergedTicket} onChange={handleChange} />
+  <TicketNotificationsSummary ticket={mergedTicket} />
 
   <div class="w3-section w3-padding w3-border w3-round">
-    <h5>Pickup Actions</h5>
+    <h5 style="margin-top:0;">Pickup Actions</h5>
     <label class="w3-small" style="display:block;margin-bottom:8px;">
       <input type="checkbox" bind:checked={checkInTemp} disabled={processing} />
       Check in temporary device{tempTag ? ` (${tempTag})` : ""}
@@ -143,13 +167,44 @@
     </label>
   </div>
 
-  <div class="w3-section">
-    <button
-      class="w3-button w3-green"
-      on:click={closeTicket}
-      disabled={processing}
+  <div class="w3-section w3-padding w3-border w3-round">
+    <h5 style="margin-top:0;">Resolution</h5>
+    <select
+      class="w3-select w3-border w3-small"
+      on:change={(e) => handleChange({ Resolution: e.target.value })}
     >
-      {processing ? "Processing…" : "Close Ticket"}
-    </button>
+      <option value="" disabled selected={!mergedTicket.Resolution}
+        >Select resolution...</option
+      >
+      {#each resolutions as r}
+        <option value={r} selected={mergedTicket.Resolution === r}>{r}</option>
+      {/each}
+    </select>
+    <div class="w3-small w3-text-gray" style="margin-top:4px;">
+      Required if closing now.
+    </div>
   </div>
 </div>
+
+<StickyBottomActionBar colorClass="w3-amber">
+  <div
+    class="w3-small"
+    style="flex:1 1 auto; display:flex; flex-direction:column; gap:4px;"
+  >
+    <strong>Finalize Pickup</strong>
+    <span
+      >{checkInTemp ? "Will mark temp returned" : "Temp unchanged"}; {checkOutRepaired
+        ? "repaired device out"
+        : "main device unchanged"}; {mergedTicket.Resolution
+        ? `resolution: ${mergedTicket.Resolution}`
+        : "choose resolution"}.</span
+    >
+  </div>
+  <button
+    class="w3-button w3-brown"
+    on:click={closeTicket}
+    disabled={processing || !mergedTicket.Resolution}
+  >
+    {processing ? "Processing…" : "Close Ticket"}
+  </button>
+</StickyBottomActionBar>

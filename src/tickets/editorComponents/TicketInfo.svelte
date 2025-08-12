@@ -124,12 +124,6 @@
       />
     </div>
   </div>
-
-  <div class="w3-small w3-margin-top">
-    <TicketNotificationsSummary {ticket} />
-    <span style="display:inline-block; width: 8px;"></span>
-    <TicketInvoicesSummary {ticket} />
-  </div>
 </div>
 
 <style>

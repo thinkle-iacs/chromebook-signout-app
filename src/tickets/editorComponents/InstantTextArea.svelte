@@ -6,11 +6,21 @@
   export let onChange: (val: string) => void = () => {};
 
   let text: string = value;
-  $: if (value !== text) text = value || "";
+  let internalUpdate = false;
+
+  // Only adopt parent value if it truly changed externally (avoid cursor jump)
+  $: if (!internalUpdate && value !== text) {
+    text = value || "";
+  }
 
   function handleInput(e: Event) {
+    internalUpdate = true;
     text = (e.target as HTMLTextAreaElement).value;
     onChange(text);
+    // Release the guard after the parent has had a chance to process this tick
+    queueMicrotask(() => {
+      internalUpdate = false;
+    });
   }
 </script>
 
