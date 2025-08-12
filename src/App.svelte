@@ -20,6 +20,7 @@
   import Invoices from "./Invoices.svelte";
   import Toast from "./components/Toast.svelte";
   import { toastStore } from "./components/toastStore";
+  import TestMenu from "./TestMenu.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -138,6 +139,10 @@
       page = Invoices;
       title = "Invoices";
     });
+    router("/test/", (ctx) => {
+      page = TestMenu;
+      title = "Internal Test Tools";
+    });
 
     // Route for /ticket/number/:number
     router("/ticket/number/:number", (ctx) => {
@@ -246,20 +251,6 @@
         class:w3-blue={title == IT_NAME}
         href="/it/"
         on:click={l("/it/")}>IT Tool</a
-      >
-      <a
-        class="w3-bar-item w3-button"
-        class:active={page == SISTest}
-        class:w3-blue={page == SISTest}
-        href="/sis-test/"
-        on:click={l("/sis-test/")}>🧪 SIS Test</a
-      >
-      <a
-        class="w3-bar-item w3-button"
-        class:active={page == ScheduleTester}
-        class:w3-blue={page == ScheduleTester}
-        href="/schedule-test/"
-        on:click={l("/schedule-test/")}>📅 Schedule Test</a
       >
     {/if}
   </nav>
