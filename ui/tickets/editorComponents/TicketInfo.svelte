@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { assetStore } from "./../../data/inventory.ts";
-  import type { Ticket } from "../../data/tickets";
+  import { assetStore } from "@data/inventory";
+  import type { Ticket } from "@data/tickets";
   import TicketStudentAssignment from "./TicketStudentAssignment.svelte";
   import TicketAssetAssignment from "./TicketAssetAssignment.svelte";
   import TicketNotificationsSummary from "../components/TicketNotificationsSummary.svelte";

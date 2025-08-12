@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Ticket } from "../../data/tickets";
-  import { getInvoices } from "../../data/invoices";
+  import type { Ticket } from "@data/tickets";
+  import { getInvoices } from "@data/invoices";
 
   export let ticket: Ticket;
 

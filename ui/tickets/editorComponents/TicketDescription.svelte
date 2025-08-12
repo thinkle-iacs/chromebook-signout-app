@@ -1,6 +1,6 @@
 <script lang="ts">
   import EditButton from "./EditButton.svelte";
-  import type { Ticket } from "../../data/tickets";
+  import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
   import InstantTextArea from "./InstantTextArea.svelte";
 

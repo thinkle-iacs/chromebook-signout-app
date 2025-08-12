@@ -28,8 +28,14 @@ You asked to avoid an extra `features/` layer. Proposal keeps top-level feature 
 
 ## Phase Two:
 
-[ ] Move svelte components into new ui/ subdirectory.
-[ ] If we keep App.svelte in the main directory, then we will have to update it's imports, otherwise, update our build command to point to ui/App.svelte
+- [ ] Migrate other UI code into ui/ directory
+  - [ ] Move sub-directories with feature branches into ui, updating any imports of them to @ui/subdir/
+    - [ ] tickets
+    - [ ] reports
+    - [ ] scheduling
+- [ ] Move remaining root dir .svelte files (src/\*.svelte) into ui/
+
+- [ ] If we keep App.svelte in the main directory, then we will have to update it's imports, otherwise, update our build command to point to ui/App.svelte
 
 ## Phase Three: Move a Feature
 

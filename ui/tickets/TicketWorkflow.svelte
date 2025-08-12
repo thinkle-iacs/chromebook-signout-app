@@ -1,6 +1,6 @@
 <script lang="ts">
   // ---- imports identical style to your TicketEditor ----
-  import { user } from "./../data/user.ts";
+  import { user } from "@data/user";
   import type { Ticket } from "@data/tickets";
   import { updateTicket as saveTicket } from "@data/tickets";
   import type { HistoryEntry } from "./history";

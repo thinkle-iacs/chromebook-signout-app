@@ -1,7 +1,7 @@
 <script lang="ts">
   import StickyBottomActionBar from "./../components/StickyBottomActionBar.svelte";
   import TicketInfo from "./../editorComponents/TicketInfo.svelte";
-  import type { Ticket } from "../../data/tickets";
+  import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
   import TicketDescription from "../editorComponents/TicketDescription.svelte";
   import ShowPendingChanges from "../components/ShowPendingChanges.svelte";

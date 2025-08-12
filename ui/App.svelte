@@ -8,7 +8,7 @@
   import router from "page";
   import LogIn from "@ui/LogIn.svelte";
   import { loggedIn, user } from "@data/user";
-  import { l } from "./util";
+  import { l, parseMarkdown } from "@ui/util";
   import { onMount, SvelteComponent } from "svelte";
   import { fade } from "svelte/transition";
   import LookupStaff from "@ui/LookupStaff.svelte";
@@ -144,7 +144,6 @@
       title = "Internal Test Tools";
     });
 
-    // Route for /ticket/number/:number
     router("/ticket/number/:number", (ctx) => {
       params = { number: ctx.params.number };
       page = TicketNumberPage;
@@ -155,6 +154,7 @@
   let navActive;
 </script>
 
+<!-- Markup copied from original App.svelte left unchanged intentionally -->
 <div
   class="w3-main"
   on:click={() => {

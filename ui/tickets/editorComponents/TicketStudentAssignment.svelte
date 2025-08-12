@@ -2,9 +2,9 @@
   import EditButton from "./EditButton.svelte";
   import StudentTag from "../../StudentTag.svelte";
   import NameDropdown from "../../NameDropdown.svelte";
-  import { getStudent, studentsStore } from "../../data/students";
-  import { studentName, validateStudent } from "../../validators";
-  import type { Ticket } from "../../data/tickets";
+  import { getStudent, studentsStore } from "@data/students";
+  import { studentName, validateStudent } from "@ui/validators";
+  import type { Ticket } from "@data/tickets";
 
   export let ticket: Ticket;
   export let disabled: boolean = false;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { user } from "./../data/user.ts";
+  import { user } from "@data/user";
   import type { Ticket } from "@data/tickets";
   import { updateTicket } from "@data/tickets";
   import StudentTag from "../StudentTag.svelte";

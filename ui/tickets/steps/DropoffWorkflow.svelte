@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Notification } from "./../../data/notifications.ts";
+  import { Notification } from "@data/notifications";
   import TicketNotificationsSummary from "./../components/TicketNotificationsSummary.svelte";
-  import type { Ticket } from "../../data/tickets";
+  import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
   import TicketInfo from "../editorComponents/TicketInfo.svelte";
   import TicketDescription from "../editorComponents/TicketDescription.svelte";
   import TicketAssetAssignment from "../editorComponents/TicketAssetAssignment.svelte";
   import TicketNotification from "../TicketNotification.svelte";
-  import { signoutAsset } from "../../data/signout";
-  import { assetStore } from "../../data/inventory";
+  import { signoutAsset } from "@data/signout";
+  import { assetStore } from "@data/inventory";
   import { get } from "svelte/store";
   import ShowPendingChanges from "../components/ShowPendingChanges.svelte";
   import { mergeUpdates } from "./draftManager";

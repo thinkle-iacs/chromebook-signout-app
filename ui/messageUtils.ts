@@ -1,7 +1,15 @@
 import { get } from "svelte/store";
 import { contactStore, getEmails } from "@data/contacts";
-
 import type { SignoutHistoryEntry } from "@data/signoutHistory";
+
+interface NotificationDraft {
+  message?: string;
+  entry?: SignoutHistoryEntry;
+  ExtraText?: string;
+  Recipient?: string;
+  Recipient2?: string;
+  studentIdentifier?: any;
+}
 
 export function buildMessageForExtras(extras: SignoutHistoryEntry[]) {
   let message = `\nStudent also has ${extras.length} additional computer out: `;
@@ -20,7 +28,7 @@ export function createEmail(
 ) {
   let $contactStore = get(contactStore);
   let LASID = entry.LASID && entry.LASID[0];
-  let notification = {};
+  let notification: NotificationDraft = {};
   notification.message = message;
   notification.entry = entry;
   let student = notification.entry.Student && notification.entry.Student[0];

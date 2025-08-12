@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Ticket } from "../../data/tickets";
+  import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
   import TicketInfo from "../editorComponents/TicketInfo.svelte";
   import TicketDescription from "../editorComponents/TicketDescription.svelte";
