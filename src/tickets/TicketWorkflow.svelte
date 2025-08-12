@@ -136,6 +136,25 @@
   // Compute dates (includes Created for New if missing)
   $: timelineDates = stepDates(ticket);
 
+  // Friendly date formatter (handles ISO strings or Date objects)
+  const stepDateFormatter = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  function formatStepDate(val: string | Date | undefined): string {
+    if (!val) return "";
+    try {
+      const d = val instanceof Date ? val : new Date(val);
+      if (isNaN(d.getTime())) return "";
+      return stepDateFormatter.format(d);
+    } catch (e) {
+      return "";
+    }
+  }
+
   // ---- updateTicket callback exposed to steps ----
   let saving = false;
 
@@ -245,8 +264,8 @@
           />
           <div>{step}</div>
           {#if timelineDates[step]}
-            <div class="w3-text-grey">
-              {new Date(timelineDates[step]).toLocaleDateString()}
+            <div class="w3-text-grey" title={timelineDates[step]}>
+              {formatStepDate(timelineDates[step])}
             </div>
           {/if}
         </div>
