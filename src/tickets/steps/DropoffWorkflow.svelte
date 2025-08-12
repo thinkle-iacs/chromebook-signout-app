@@ -45,12 +45,18 @@
     if (assetId) {
       handleChange({
         "Temporary Device": [assetId] as any,
-        "Temp Status": "Loaned" as any,
+        // Do not mark Loaned yet; only mark Needed until processing
+        "Temp Status": "Needed" as any,
       });
     } else {
       handleChange({
         "Temporary Device": [] as any,
-        "Temp Status": undefined as any,
+        // Clearing device resets status unless already processed
+        "Temp Status": provideTemp
+          ? ticket["Temp Status"] === "Loaned"
+            ? "Loaned"
+            : undefined
+          : undefined,
       });
     }
   }
@@ -78,9 +84,29 @@
   }
 
   async function saveDraft() {
-    if (!Object.keys(draft).length) return;
+    if (!Object.keys(draft).length && ticket["Temp Status"]) {
+      // still allow temp status change when toggling provideTemp even if no other draft keys
+    }
     try {
       const updates: Partial<Ticket> = { ...draft };
+
+      // Enforce Temp Status semantics on save (pre-processing)
+      if (provideTemp) {
+        const tempAssigned = selectedTempId;
+        // If temp requested but not yet processed, status should be Needed (unless already Loaned)
+        if (ticket["Temp Status"] !== "Loaned") {
+          (updates as any)["Temp Status"] = tempAssigned ? "Needed" : "Needed";
+        }
+      } else {
+        // No temp needed
+        (updates as any)["Temp Status"] = "Not Needed";
+        // Clear any temp device reference if present
+        if ((ticket as any)["Temporary Device"]?.length) {
+          (updates as any)["Temporary Device"] = [] as any;
+        }
+      }
+
+      // Build history changes AFTER applying enforced fields
       const changes = Object.fromEntries(
         Object.keys(updates).map((k) => [
           k,
