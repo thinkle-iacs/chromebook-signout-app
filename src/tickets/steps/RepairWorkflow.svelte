@@ -7,6 +7,9 @@
   import { createInvoices } from "../../data/invoices";
   import { createEventDispatcher } from "svelte";
   import Toast from "../../components/Toast.svelte";
+  import RepairPickList from "../components/RepairPickList.svelte";
+  import ShowPendingChanges from "../components/ShowPendingChanges.svelte";
+  import { mergeUpdates } from "./draftManager";
 
   export let ticket: Ticket;
   export let updateTicket: (
@@ -16,8 +19,17 @@
 
   // Local draft for general edits to ticket
   let draft: Partial<Ticket> = {};
+
   function handleChange(updates: Partial<Ticket>) {
     draft = { ...draft, ...updates };
+  }
+
+  // Merge view (read-only to children) preferring draft values
+  let mergedTicket: Ticket;
+  $: {
+    const { merged, updates } = mergeUpdates(ticket, draft);
+    mergedTicket = merged;
+    draft = updates;
   }
 
   // Device status (on Inventory asset, not on ticket)
@@ -40,9 +52,6 @@
   }
 
   $: updateDevicePreset(currentAssetStatus);
-
-  // Repair cost (on ticket)
-  let repairCost: number | undefined = ticket["Repair Cost"];
 
   let saving = false;
 
@@ -67,12 +76,14 @@
       // Build ticket updates from draft
       const updates: Partial<Ticket> = { ...draft };
 
-      // Include repair cost if changed
-      if (repairCost !== ticket["Repair Cost"]) {
-        updates["Repair Cost"] = repairCost as any;
+      // Add history entry for Repair Cost if present and changed
+      if (
+        Object.prototype.hasOwnProperty.call(updates, "Repair Cost") &&
+        updates["Repair Cost"] !== ticket["Repair Cost"]
+      ) {
         historyChanges["Repair Cost"] = {
           from: ticket["Repair Cost"],
-          to: repairCost,
+          to: updates["Repair Cost"],
         };
       }
 
@@ -178,16 +189,38 @@
   let assetTagText = "";
   $: studentEmailText = (ticket as any)?._linked?.Student?.Email || "-";
   $: assetTagText = (ticket as any)?._linked?.Device?.["Asset Tag"] || "-";
+
+  // Local input binding for Repair Cost (draft-managed)
+  let repairCostInput: string =
+    ticket["Repair Cost"] != null ? String(ticket["Repair Cost"]) : "";
+  $: if (mergedTicket) {
+    const current = (mergedTicket as any)["Repair Cost"];
+  }
+
+  function handleRepairPick(item: { label: string; amount: number }) {
+    handleChange({ "Repair Cost": item.amount as any });
+    const existingNotes = (mergedTicket.Notes || "").trim();
+    const line = `Repair Item: ${item.label}`;
+    let newNotes: string;
+    if (!existingNotes) newNotes = line;
+    else if (!existingNotes.split(/\r?\n/).includes(line))
+      newNotes = existingNotes + "\n" + line;
+    else newNotes = existingNotes; // avoid duplicate
+    handleChange({ Notes: newNotes });
+  }
 </script>
 
 <div class="w3-panel w3-pale-blue w3-border">
-  <h4>In Repair</h4>
-  <div class="w3-small w3-text-gray">
+  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <h4 style="margin:0;">In Repair</h4>
+    <ShowPendingChanges {draft} onSave={saveChanges} {saving} />
+  </div>
+  <div class="w3-small w3-text-gray" style="margin-top:4px;">
     Ticket #{ticket.Number} · {ticket["Ticket Status"]}
   </div>
 
-  <TicketInfo {ticket} onChange={handleChange} disabled={saving} />
-  <TicketDescription {ticket} onChange={handleChange} />
+  <TicketInfo ticket={mergedTicket} onChange={handleChange} disabled={saving} />
+  <TicketDescription ticket={mergedTicket} onChange={handleChange} />
 
   <div class="w3-row-padding w3-section">
     <div class="w3-col s12 m6">
@@ -220,12 +253,22 @@
         class="w3-input w3-border"
         min="0"
         step="0.01"
-        bind:value={repairCost}
+        value={mergedTicket["Repair Cost"] != null
+          ? String(mergedTicket["Repair Cost"])
+          : ""}
+        on:input={(e) => {
+          const num = e.target.valueAsNumber;
+          handleChange({
+            "Repair Cost": num === undefined || isNaN(num) ? undefined : num,
+          });
+        }}
         placeholder="0.00"
         disabled={saving}
       />
     </div>
   </div>
+
+  <RepairPickList onSelect={handleRepairPick} disabled={saving} />
 
   <div class="w3-section">
     <button class="w3-button w3-blue" on:click={saveChanges} disabled={saving}>

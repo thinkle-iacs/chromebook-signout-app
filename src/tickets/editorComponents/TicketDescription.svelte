@@ -15,13 +15,15 @@
   let publicNotes = "";
   let privateNotes = "";
 
-  $: if (ticket && ticket._id !== currentId) {
-    currentId = ticket._id;
-    userDescription = ticket["User Description"] || "";
-    publicNotes = ticket.Notes || "";
-    privateNotes = ticket.PrivateNotes || "";
-  }
   let editUserDescription = false;
+
+  // Sync local state with ticket; allow external updates (e.g. draft merge) to flow in
+  $: if (ticket) {
+    if (ticket._id !== currentId) {
+      editUserDescription = false; // reset edit mode on ID change
+    }
+    currentId = ticket._id;
+  }
 </script>
 
 <div class="w3-section w3-row">
@@ -38,7 +40,7 @@
       <InstantTextArea
         rows={5}
         placeholder="Describe the issue..."
-        value={userDescription}
+        value={ticket["User Description"] || ""}
         onChange={(val) => {
           userDescription = val;
           onChange({ "User Description": val });
@@ -54,7 +56,7 @@
     <InstantTextArea
       rows={6}
       placeholder="Enter public notes..."
-      value={publicNotes}
+      value={ticket["Notes"] || ""}
       onChange={(val) => {
         publicNotes = val;
         onChange({ Notes: val });
@@ -66,7 +68,7 @@
     <InstantTextArea
       rows={6}
       placeholder="Enter private notes..."
-      value={privateNotes}
+      value={ticket["PrivateNotes"] || ""}
       onChange={(val) => {
         privateNotes = val;
         onChange({ PrivateNotes: val });
