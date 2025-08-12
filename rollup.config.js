@@ -48,7 +48,8 @@ const svelteSetup = {
     alias({
       entries: [
         { find: "@data", replacement: path.resolve("src/data") },
-        { find: "@components", replacement: path.resolve("ui/components") }
+        { find: "@components", replacement: path.resolve("ui/components") },
+        { find: "@ui", replacement: path.resolve("ui") }
       ]
     }),
     svelte({

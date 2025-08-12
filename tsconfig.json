@@ -7,7 +7,9 @@
     "baseUrl": ".",
     "paths": {
       "@data/*": ["src/data/*"],
-      "@components/*": ["ui/components/*"]
+      "@components/*": ["ui/components/*"],
+      "@ui/*": ["ui/*"],
+      "@ui": ["ui"]
     }
   },
   "include": ["src/**/*", "ui/**/*"],
