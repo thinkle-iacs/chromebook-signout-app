@@ -41,10 +41,10 @@
     "Repaired",
     "Discarded",
   ];
-  
+
   const resolutions: Ticket["Resolution"][] = [
     "Fixed",
-    "Replaced Device", 
+    "Replaced Device",
     "Unable to Reproduce",
     "Won't Fix",
     "Duplicate",
@@ -52,7 +52,7 @@
     "No Issue Found",
     "User Education",
   ];
-  
+
   let currentAssetStatus: string | "" = "";
   let deviceStatus: string | "" = currentAssetStatus;
 
