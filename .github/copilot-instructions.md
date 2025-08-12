@@ -6,6 +6,8 @@ Remember, in svelte, we can often style just with class:w3-foo={bar} for conditi
 
 Avoid using `window.alert` for notifications; instead, use a custom `<Toast>` component.
 
+DO NOT ADD TYPE HINTING INSIDE OF SVELTE MARKUP. It will trigger a syntax error. Typescript is allowed only inside the `<script lang="ts">` block at the top of the file but NOT in the markup below. Also, avoid superfluous `as any` type assertions.
+
 # Working style
 
 When working in agent mode, please follow these guidelines:

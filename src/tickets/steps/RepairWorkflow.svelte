@@ -4,11 +4,12 @@
   import TicketInfo from "../editorComponents/TicketInfo.svelte";
   import TicketDescription from "../editorComponents/TicketDescription.svelte";
   import { updateAsset } from "../../data/inventory";
-  import { createInvoices } from "../../data/invoices";
   import { createEventDispatcher } from "svelte";
-  import Toast from "../../components/Toast.svelte";
   import RepairPickList from "../components/RepairPickList.svelte";
   import ShowPendingChanges from "../components/ShowPendingChanges.svelte";
+  import TicketInvoice from "../TicketInvoice.svelte";
+  import TicketNotification from "../TicketNotification.svelte";
+  import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
   import { mergeUpdates } from "./draftManager";
 
   export let ticket: Ticket;
@@ -40,6 +41,18 @@
     "Repaired",
     "Discarded",
   ];
+  
+  const resolutions: Ticket["Resolution"][] = [
+    "Fixed",
+    "Replaced Device", 
+    "Unable to Reproduce",
+    "Won't Fix",
+    "Duplicate",
+    "Canceled",
+    "No Issue Found",
+    "User Education",
+  ];
+  
   let currentAssetStatus: string | "" = "";
   let deviceStatus: string | "" = currentAssetStatus;
 
@@ -87,6 +100,17 @@
         };
       }
 
+      // Add history entry for Resolution if present and changed
+      if (
+        Object.prototype.hasOwnProperty.call(updates, "Resolution") &&
+        updates["Resolution"] !== ticket["Resolution"]
+      ) {
+        historyChanges["Resolution"] = {
+          from: ticket["Resolution"],
+          to: updates["Resolution"],
+        };
+      }
+
       // Persist if we have anything to save
       const hasTicketUpdates = Object.keys(updates).length > 0;
       const hasHistory = Object.keys(historyChanges).length > 0;
@@ -108,47 +132,6 @@
     }
   }
 
-  // Invoice sending
-  let sendingInvoice = false;
-  let toast: { kind: "success" | "error" | "info"; message: string } | null =
-    null;
-  let confirmOpen = false;
-
-  function showToast(kind: "success" | "error" | "info", message: string) {
-    toast = { kind, message };
-    setTimeout(() => (toast = null), 3500);
-  }
-
-  function openConfirm() {
-    confirmOpen = true;
-  }
-  function closeConfirm() {
-    confirmOpen = false;
-  }
-
-  async function sendInvoice() {
-    if (sendingInvoice) return;
-    sendingInvoice = true;
-    try {
-      const studentIds = (ticket as any).Student as string[] | undefined;
-      const ticketId = (ticket as any)._id as string;
-      if (!studentIds?.length || !ticketId) {
-        showToast("error", "Missing Student or Ticket link");
-        return;
-      }
-      await createInvoices([
-        { Student: [studentIds[0]], Ticket: [ticketId], "Send Email": true },
-      ] as any);
-      showToast("success", "Invoice queued to send.");
-      closeConfirm();
-    } catch (e) {
-      console.error("Failed to send invoice:", e);
-      showToast("error", "Failed to send invoice");
-    } finally {
-      sendingInvoice = false;
-    }
-  }
-
   async function markReadyForPickup() {
     if (saving) return;
     saving = true;
@@ -156,10 +139,7 @@
       // First save any pending changes (asset status / repair cost)
       await saveChanges();
 
-      // Then perform messaging placeholder (invoice only)
-      await sendInvoice();
-
-      // Finally update ticket status
+      // Update ticket status
       await updateTicket(
         { ...draft, "Ticket Status": "Ready for Pickup" as any },
         {
@@ -184,11 +164,6 @@
       saving = false;
     }
   }
-
-  let studentEmailText = "";
-  let assetTagText = "";
-  $: studentEmailText = (ticket as any)?._linked?.Student?.Email || "-";
-  $: assetTagText = (ticket as any)?._linked?.Device?.["Asset Tag"] || "-";
 
   // Local input binding for Repair Cost (draft-managed)
   let repairCostInput: string =
@@ -223,6 +198,9 @@
   <TicketDescription ticket={mergedTicket} onChange={handleChange} />
 
   <div class="w3-row-padding w3-section">
+    <div class="w3-col s12 m12">
+      <RepairPickList onSelect={handleRepairPick} disabled={saving} />
+    </div>
     <div class="w3-col s12 m6">
       <label for="device-status-select" class="w3-text-blue"
         ><b>Device Status (Inventory)</b></label
@@ -268,56 +246,51 @@
     </div>
   </div>
 
-  <RepairPickList onSelect={handleRepairPick} disabled={saving} />
+  <!-- Invoices Section -->
+  <TicketInvoice {ticket} />
 
-  <div class="w3-section">
+  <!-- Notifications Section -->
+  <TicketNotification
+    {ticket}
+    defaultMessage="TicketUpdate"
+    messages={[
+      "TicketUpdate",
+      "BringMachineForRepairNoLoan",
+      "BringMachineForRepairLoanReady",
+      "RepairComplete",
+    ]}
+  />
+
+  <!-- Resolution Section -->
+  <div class="w3-section w3-padding w3-border w3-round">
+    <h5 style="margin-top:0;">Resolution</h5>
+    <select
+      class="w3-select w3-border w3-small"
+      on:change={(e) => handleChange({ Resolution: e.target.value })}
+    >
+      <option value="" disabled selected={!mergedTicket.Resolution}
+        >Select resolution...</option
+      >
+      {#each resolutions as r}
+        <option value={r} selected={mergedTicket.Resolution === r}>{r}</option>
+      {/each}
+    </select>
+    <div class="w3-small w3-text-gray" style="margin-top:4px;">
+      Select a resolution for the repair work.
+    </div>
+  </div>
+
+  <!-- Sticky Action Bar -->
+  <StickyBottomActionBar className="w3-border-top">
     <button class="w3-button w3-blue" on:click={saveChanges} disabled={saving}>
       {saving ? "Saving..." : "Save"}
     </button>
     <button
-      class="w3-button w3-green w3-margin-left"
+      class="w3-button w3-green"
       on:click={markReadyForPickup}
       disabled={saving}
     >
       Mark Ready for Pickup
     </button>
-    <button
-      class="w3-button w3-amber w3-margin-left"
-      on:click={openConfirm}
-      disabled={sendingInvoice}
-    >
-      Send Invoice
-    </button>
-  </div>
-
-  {#if confirmOpen}
-    <div class="w3-modal" style="display:block">
-      <div class="w3-modal-content w3-animate-top w3-card-4">
-        <header class="w3-container w3-amber">
-          <h5>Send Invoice</h5>
-        </header>
-        <div class="w3-container">
-          <p>
-            We will ask the business office to invoice
-            <b>{studentEmailText}</b>
-            for <b>${ticket["Repair Cost"] || 0}</b> related to the repair of
-            asset
-            <b>{assetTagText}</b>.
-          </p>
-        </div>
-        <footer class="w3-container w3-padding">
-          <button class="w3-button w3-light-grey" on:click={closeConfirm}
-            >Cancel</button
-          >
-          <button class="w3-button w3-amber w3-right" on:click={sendInvoice}
-            >Confirm & Send</button
-          >
-        </footer>
-      </div>
-    </div>
-  {/if}
-
-  {#if toast}
-    <Toast kind={toast.kind} message={toast.message} show={true} />
-  {/if}
+  </StickyBottomActionBar>
 </div>
