@@ -407,7 +407,9 @@
               </td>
               <td>
                 {#if ticket.Resolution}
-                  <span class="w3-tag w3-small w3-teal">{ticket.Resolution}</span>
+                  <span class="w3-tag w3-small w3-teal"
+                    >{ticket.Resolution}</span
+                  >
                 {:else}
                   <span class="w3-text-gray">-</span>
                 {/if}
