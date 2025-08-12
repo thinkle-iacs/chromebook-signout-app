@@ -20,9 +20,11 @@ You asked to avoid an extra `features/` layer. Proposal keeps top-level feature 
 
 ## Phase 1.5
 
-[ ] Make an alias components/ to @components
-[ ] Change all references to ../components/ to be @components/
-[ ] Move @components to ui/components
+[x] Make an alias components/ to @components
+[x] Change all references to ../components/ to be @components/
+[x] Move @components to ui/components
+
+**✅ COMPLETED** - @components alias working, global components moved to ui/components/, build passes. Note: ticket-specific components remain in tickets/components/ as feature-local components.
 
 ## Phase Two:
 
