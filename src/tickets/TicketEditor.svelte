@@ -1,14 +1,14 @@
 <script lang="ts">
   import { user } from "./../data/user.ts";
-  import type { Ticket } from "../data/tickets";
-  import { updateTicket } from "../data/tickets";
+  import type { Ticket } from "@data/tickets";
+  import { updateTicket } from "@data/tickets";
   import StudentTag from "../StudentTag.svelte";
   import AssetDisplay from "../AssetDisplay.svelte";
   import EditableTextField from "./editorComponents/EditableTextField.svelte";
   import TicketStudentAssignment from "./editorComponents/TicketStudentAssignment.svelte";
   import TicketAssetAssignment from "./editorComponents/TicketAssetAssignment.svelte";
-  import { studentsStore } from "../data/students";
-  import { assetStore } from "../data/inventory";
+  import { studentsStore } from "@data/students";
+  import { assetStore } from "@data/inventory";
   import EditableNumberField from "./editorComponents/EditableNumberField.svelte";
 
   export let ticket: Ticket;

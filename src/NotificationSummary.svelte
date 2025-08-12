@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { NotificationFields } from "./data/notifications";
+  import type { NotificationFields } from "@data/notifications";
   import { parseMarkdown } from "./util";
   export let fields: NotificationFields;
 

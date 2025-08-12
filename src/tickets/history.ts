@@ -1,4 +1,4 @@
-import type { Ticket } from "../data/tickets";
+import type { Ticket } from "@data/tickets";
 
 // Generic history entry used by workflow steps and editor
 export type HistoryEntry<TChanges = Record<string, unknown>> = {

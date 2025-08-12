@@ -7,7 +7,7 @@
   import Message from "./BulkMessageSender.svelte";
   import router from "page";
   import LogIn from "./LogIn.svelte";
-  import { loggedIn, user } from "./data/user";
+  import { loggedIn, user } from "@data/user";
   import { l } from "./util";
   import { onMount, SvelteComponent } from "svelte";
   import { fade } from "svelte/transition";
@@ -18,8 +18,8 @@
   import TicketBrowser from "./tickets/TicketBrowser.svelte";
   import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
   import Invoices from "./Invoices.svelte";
-  import Toast from "./components/Toast.svelte";
-  import { toastStore } from "./components/toastStore";
+  import Toast from "@components/Toast.svelte";
+  import { toastStore } from "@components/toastStore";
   import TestMenu from "./TestMenu.svelte";
 
   let update = 0;

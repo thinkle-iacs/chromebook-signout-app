@@ -10,16 +10,16 @@
   import ListInput from "./ListInput.svelte";
   import FormField from "./FormField.svelte";
   import SimpleForm from "./SimpleForm.svelte";
-  import type { Student } from "./data/students";
-  import type { Staff } from "./data/staff";
-  import { getCurrentLoansForStudent } from "./data/inventory";
-  import type { Asset } from "./data/inventory";
+  import type { Student } from "@data/students";
+  import type { Staff } from "@data/staff";
+  import { getCurrentLoansForStudent } from "@data/inventory";
+  import type { Asset } from "@data/inventory";
   import { l } from "./util";
-  import type { CheckoutStatus } from "./data/signout";
-  import { signoutAsset } from "./data/signout";
-  import { addStudentNote, getStudent } from "./data/students";
-  import { assetStore } from "./data/inventory";
-  import { staffStore } from "./data/staff";
+  import type { CheckoutStatus } from "@data/signout";
+  import { signoutAsset } from "@data/signout";
+  import { addStudentNote, getStudent } from "@data/students";
+  import { assetStore } from "@data/inventory";
+  import { staffStore } from "@data/staff";
   import { writable, get } from "svelte/store";
 
   import {
@@ -33,7 +33,7 @@
     validateAsset,
   } from "./validators";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
-  import { contactStore, getContacts } from "./data/contacts";
+  import { contactStore, getContacts } from "@data/contacts";
   import { onMount } from "svelte";
   import { createEmail } from "./messageUtils";
   import StudentNote from "./StudentNote.svelte";

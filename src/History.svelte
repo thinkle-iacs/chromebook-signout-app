@@ -2,12 +2,12 @@
   import AssetDisplay from "./AssetDisplay.svelte";
   import { onMount } from "svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
-  import type { SignoutHistoryEntry } from "./data/signoutHistory";
+  import type { SignoutHistoryEntry } from "@data/signoutHistory";
   import {
     fetchFullHistory,
     fullHistory,
     fetching,
-  } from "./data/signoutHistory";
+  } from "@data/signoutHistory";
 
   let history: SignoutHistoryEntry[] = [];
 

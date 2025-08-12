@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Contact } from "./data/contacts";
-  import { getEmails } from "./data/contacts";
+  import type { Contact } from "@data/contacts";
+  import { getEmails } from "@data/contacts";
   export let contact: Contact;
   let emails = [];
   $: emails = (contact && getEmails(contact)) || [];

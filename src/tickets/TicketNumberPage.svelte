@@ -3,8 +3,8 @@
   import TicketEditor from "./TicketEditor.svelte";
 
   import { onMount } from "svelte";
-  import { getTicketByNumber } from "../data/tickets";
-  import type { Ticket } from "../data/tickets";
+  import { getTicketByNumber } from "@data/tickets";
+  import type { Ticket } from "@data/tickets";
 
   export let number: string;
   let ticket: Ticket | null = null;

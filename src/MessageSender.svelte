@@ -2,11 +2,11 @@
   import { fly, fade } from "svelte/transition";
   export let signoutItem: SignoutHistoryEntry;
 
-  import { getStudent, Student } from "./data/students";
-  import type { Staff } from "./data/staff";
-  import { Asset, assetStore } from "./data/inventory";
+  import { getStudent, Student } from "@data/students";
+  import type { Staff } from "@data/staff";
+  import { Asset, assetStore } from "@data/inventory";
 
-  import type { CheckoutStatus } from "./data/signout";
+  import type { CheckoutStatus } from "@data/signout";
 
   import {
     studentName,
@@ -19,19 +19,19 @@
     validateAsset,
   } from "./validators";
 
-  import { contactStore, getContacts, getEmails } from "./data/contacts";
+  import { contactStore, getContacts, getEmails } from "@data/contacts";
   import { onMount } from "svelte";
   import { createEmail } from "./messageUtils";
   import MessageSelector from "./MessageSelector.svelte";
   import {
     lookupSignoutHistory,
     SignoutHistoryEntry,
-  } from "./data/signoutHistory";
+  } from "@data/signoutHistory";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import AssetDisplay from "./AssetDisplay.svelte";
   import NotificationSender from "./NotificationSender.svelte";
   import NotificationNotice from "./NotificationNotice.svelte";
-  import { messagesStore } from "./data/messages";
+  import { messagesStore } from "@data/messages";
 
   onMount(async () => {
     console.log("Fetch contacts!");

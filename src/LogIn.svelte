@@ -1,7 +1,7 @@
 <script>
   import netlifyIdentity from "netlify-identity-widget";
   import { onMount } from "svelte";
-  import { user, loggedIn } from "./data/user";
+  import { user, loggedIn } from "@data/user";
   import { l } from "./util";
 
   onMount(() => {

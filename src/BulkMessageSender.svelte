@@ -5,24 +5,24 @@
 
   import Contacts from "./Contacts.svelte";
 
-  import { getContracts } from "./data/contracts";
-  import { getMessages, messagesStore } from "./data/messages";
-  import { getContacts, contactStore, getEmails } from "./data/contacts";
+  import { getContracts } from "@data/contracts";
+  import { getMessages, messagesStore } from "@data/messages";
+  import { getContacts, contactStore, getEmails } from "@data/contacts";
 
   import {
     fetchFullHistory,
     fullHistory,
     SignoutHistoryEntry,
-  } from "./data/signoutHistory";
+  } from "@data/signoutHistory";
   import { onMount } from "svelte";
   import AssetDisplay from "./AssetDisplay.svelte";
   import { parseMarkdown } from "./util";
   import NotificationSender from "./NotificationSender.svelte";
-  import { getNotifications } from "./data/notifications";
+  import { getNotifications } from "@data/notifications";
   import { buildMessageForExtras, createEmail } from "./messageUtils";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import NotificationSummary from "./NotificationSummary.svelte";
-  import { Asset } from "./data/inventory";
+  import { Asset } from "@data/inventory";
   let fetchedFull;
   let update;
 

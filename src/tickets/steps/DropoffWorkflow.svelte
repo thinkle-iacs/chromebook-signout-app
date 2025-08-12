@@ -12,7 +12,7 @@
   import { get } from "svelte/store";
   import ShowPendingChanges from "../components/ShowPendingChanges.svelte";
   import { mergeUpdates } from "./draftManager";
-  import Toast from "../../components/Toast.svelte";
+  import Toast from "@components/Toast.svelte";
   import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
 
   export let ticket: Ticket;

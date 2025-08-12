@@ -3,8 +3,13 @@
   "compilerOptions": {
     "types": ["jest", "node"],
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@data/*": ["src/data/*"],
+      "@components/*": ["ui/components/*"]
+    }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "ui/**/*"],
   "exclude": ["node_modules/*", "__sapper__/*", "public/*"]
 }

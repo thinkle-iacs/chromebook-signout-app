@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { Ticket } from "../data/tickets";
-  import { createInvoices } from "../data/invoices";
-  import Toast from "../components/Toast.svelte";
+  import type { Ticket } from "@data/tickets";
+  import { createInvoices } from "@data/invoices";
+  import Toast from "@components/Toast.svelte";
   import TicketInvoicesSummary from "./components/TicketInvoicesSummary.svelte";
 
   export let ticket: Ticket;

@@ -1,8 +1,8 @@
 <script lang="ts">
   // ---- imports identical style to your TicketEditor ----
   import { user } from "./../data/user.ts";
-  import type { Ticket } from "../data/tickets";
-  import { updateTicket as saveTicket } from "../data/tickets";
+  import type { Ticket } from "@data/tickets";
+  import { updateTicket as saveTicket } from "@data/tickets";
   import type { HistoryEntry } from "./history";
   // New step components
   import NewTicketWorkflow from "./steps/NewTicketWorkflow.svelte";

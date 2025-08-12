@@ -5,7 +5,7 @@
     ticketsStore,
     updateTicket as apiUpdateTicket,
     type Ticket,
-  } from "../data/tickets";
+  } from "@data/tickets";
   import AssetDisplay from "../AssetDisplay.svelte";
   import StudentTag from "../StudentTag.svelte";
   import TicketWorkflow from "./TicketWorkflow.svelte";

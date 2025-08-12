@@ -2,7 +2,7 @@
   import AssetDisplay from "../AssetDisplay.svelte";
   import DataExporter from "./DataExporter.svelte";
   import BulkMessageSender from "../BulkMessageSender.svelte";
-  import { signoutAsset } from "../data/signout";
+  import { signoutAsset } from "@data/signout";
 
   export let data;
   export let columns = [];

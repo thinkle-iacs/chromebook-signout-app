@@ -13,14 +13,14 @@
 
 <script lang="ts">
   import DataExporter from "./DataExporter.svelte";
-  import { checkMachineStatus } from "../data/google";
+  import { checkMachineStatus } from "@data/google";
 
   import {
     getStudentLoans,
     getStaffLoans,
     getNonLoanedChromebooks,
     assetStore,
-  } from "../data/inventory";
+  } from "@data/inventory";
   import AssetDisplay from "../AssetDisplay.svelte";
   import { get } from "svelte/store";
   import ReportTable from "./ReportTable.svelte";

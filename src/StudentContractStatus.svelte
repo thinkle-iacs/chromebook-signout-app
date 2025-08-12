@@ -1,13 +1,13 @@
 <script lang="ts">
-  import type { Student } from "./data/students";
+  import type { Student } from "@data/students";
   import {
     contractStore,
     getContracts,
     getContractForStudent,
     updateContractsIfNeeded,
     updateContracts,
-  } from "./data/contracts";
-  import type { Contract } from "./data/contracts";
+  } from "@data/contracts";
+  import type { Contract } from "@data/contracts";
   import { onMount } from "svelte";
   export let student: Student;
   onMount(() => updateContractsIfNeeded());

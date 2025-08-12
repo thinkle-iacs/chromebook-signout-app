@@ -1,8 +1,8 @@
 <script lang="ts">
   import AssetDisplay from "./AssetDisplay.svelte";
-  import type { ChromebookInfo } from "./data/google";
-  import { assetStore, searchForAsset } from "./data/inventory";
-  import type { Asset } from "./data/inventory";
+  import type { ChromebookInfo } from "@data/google";
+  import { assetStore, searchForAsset } from "@data/inventory";
+  import type { Asset } from "@data/inventory";
 
   export let info: ChromebookInfo;
   info.activeTimeRanges;

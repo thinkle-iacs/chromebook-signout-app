@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { NotificationResult } from "./data/notifications";
+  import type { NotificationResult } from "@data/notifications";
   export let notifications: NotificationResult[];
 
   let detailed = false;

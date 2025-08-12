@@ -1,5 +1,5 @@
 <script type="ts">
-  import type { Asset } from "./data/inventory";
+  import type { Asset } from "@data/inventory";
   import { l } from "./util";
   export let asset: Asset;
   export let showOwner: boolean = false;

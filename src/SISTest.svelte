@@ -5,7 +5,7 @@
     testStudentLookup,
     testScheduleLookup,
     isValidStudentEmail,
-  } from "./data/sisData";
+  } from "@data/sisData";
   import { buildStructuredSchedule } from "./scheduling/structuredSchedule";
 
   let studentEmail = "";

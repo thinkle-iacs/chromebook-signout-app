@@ -1,7 +1,7 @@
 import { get } from "svelte/store";
-import { contactStore, getEmails } from "./data/contacts";
+import { contactStore, getEmails } from "@data/contacts";
 
-import type { SignoutHistoryEntry } from "./data/signoutHistory";
+import type { SignoutHistoryEntry } from "@data/signoutHistory";
 
 export function buildMessageForExtras(extras: SignoutHistoryEntry[]) {
   let message = `\nStudent also has ${extras.length} additional computer out: `;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { InvoiceResult } from "./data/invoices";
-  import { getInvoices } from "./data/invoices";
+  import type { InvoiceResult } from "@data/invoices";
+  import { getInvoices } from "@data/invoices";
 
   let loading = true;
   let rows: InvoiceResult[] = [];

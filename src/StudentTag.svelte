@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { Student } from "./data/students";
-  import { contactStore } from "./data/contacts";
+  import type { Student } from "@data/students";
+  import { contactStore } from "@data/contacts";
   import Contacts from "./Contacts.svelte";
-  import StudentScheduleButton from "./components/StudentScheduleButton.svelte";
+  import StudentScheduleButton from "@components/StudentScheduleButton.svelte";
 
   export let student: Student;
 

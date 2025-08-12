@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { getMessages, messagesStore } from "./data/messages";
+  import { getMessages, messagesStore } from "@data/messages";
   import { onMount } from "svelte";
   import { parseMarkdown } from "./util";
 
-  import { getNotifications } from "./data/notifications";
+  import { getNotifications } from "@data/notifications";
 
   let update;
   onMount(() => {

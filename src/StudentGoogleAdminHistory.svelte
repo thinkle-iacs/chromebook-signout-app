@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { Staff } from "./data/staff.ts";
+  import type { Staff } from "@data/staff.ts";
   import ChromebookInfoDisplay from "./ChromebookInfoDisplay.svelte";
-  import type { Student } from "./data/students";
-  import type { ChromebookInfo } from "./data/google";
-  import { getDevicesForUser } from "./data/google";
+  import type { Student } from "@data/students";
+  import type { ChromebookInfo } from "@data/google";
+  import { getDevicesForUser } from "@data/google";
   export let student: Student | Staff;
   let lastLookedUp = null;
   let chromebooks: ChromebookInfo[] | void;

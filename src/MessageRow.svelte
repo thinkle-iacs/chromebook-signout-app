@@ -4,13 +4,13 @@
     createNotifications,
     getNotifications,
     updateNotifications,
-  } from "./data/notifications";
+  } from "@data/notifications";
   import type {
     Notification,
     NotificationResult,
     NotificationUpdates,
-  } from "./data/notifications";
-  import { messagesStore } from "./data/messages";
+  } from "@data/notifications";
+  import { messagesStore } from "@data/messages";
 
   export let notification: Notification;
 

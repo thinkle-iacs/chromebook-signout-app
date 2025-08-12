@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { buildStructuredSchedule } from "../scheduling/structuredSchedule";
+  import { buildStructuredSchedule } from "../../src/scheduling/structuredSchedule";
   import {
     testStudentLookup,
     testScheduleLookup,
     isValidStudentEmail,
-  } from "../data/sisData";
+  } from "@data/sisData";
 
   export let studentEmail: string = "";
   export let open: boolean = false;

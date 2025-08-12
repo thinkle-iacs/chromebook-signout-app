@@ -1,9 +1,9 @@
 <script lang="ts">
   import TicketNotificationsSummary from "./components/TicketNotificationsSummary.svelte";
   import TicketNotification from "./TicketNotification.svelte";
-  import type { Ticket } from "../data/tickets";
-  import { createNotifications } from "../data/notifications";
-  import { messagesStore, getMessages } from "../data/messages";
+  import type { Ticket } from "@data/tickets";
+  import { createNotifications } from "@data/notifications";
+  import { messagesStore, getMessages } from "@data/messages";
 
   export let ticket: Ticket;
   export let defaultMessage = "RepairComplete";
