@@ -32,6 +32,10 @@
     min-width: 240px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
-  .toast.bottom { bottom: 16px; }
-  .toast.top { top: 16px; }
+  .toast.bottom {
+    bottom: 16px;
+  }
+  .toast.top {
+    top: 16px;
+  }
 </style>

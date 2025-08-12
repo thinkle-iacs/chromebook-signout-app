@@ -297,7 +297,13 @@
 {/if}
 
 {#if toast}
-  <Toast kind={toast.kind} message={toast.message} show={true} position={toast.position || "bottom"} timeout={toast.timeout || 3500} />
+  <Toast
+    kind={toast.kind}
+    message={toast.message}
+    show={true}
+    position={toast.position || "bottom"}
+    timeout={toast.timeout || 3500}
+  />
 {/if}
 
 <style>
