@@ -67,6 +67,10 @@ async function getTickets(event: APIGatewayEvent) {
     // NEW optional filters
     assignee,
     resolution,
+    // Priority filters
+    priority,
+    minPriority,
+    maxPriority,
   } = event.queryStringParameters || {};
 
   let filterConditions: string[] = [];
@@ -116,6 +120,14 @@ async function getTickets(event: APIGatewayEvent) {
     filterConditions.push(`{Resolution} = "${resolution}"`);
   }
 
+  // Priority: exact or range
+  if (priority) {
+    filterConditions.push(`{Priority} = ${priority}`);
+  } else {
+    if (minPriority) filterConditions.push(`{Priority} >= ${minPriority}`);
+    if (maxPriority) filterConditions.push(`{Priority} <= ${maxPriority}`);
+  }
+
   let filterByFormula =
     filterConditions.length > 0 ? `AND(${filterConditions.join(", ")})` : "";
 
@@ -145,6 +157,7 @@ async function getTickets(event: APIGatewayEvent) {
       // NEW fields
       "Assignee",
       "Resolution",
+      "Priority",
       // Relations for summaries
       "Notifications",
       "Invoices",

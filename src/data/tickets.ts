@@ -27,6 +27,7 @@ export type Ticket = {
     | "No Issue Found"
     | "User Education";
   Assignee?: string; // email
+  Priority?: number; // 1 (lowest) - 5 (highest)
   "Device Status":
     | undefined
     | "New"
@@ -96,6 +97,9 @@ export async function getTickets(
     // NEW optional filters
     assignee?: string;
     resolution?: string;
+    priority?: number;
+    minPriority?: number;
+    maxPriority?: number;
   } = {}
 ) {
   const queryString = new URLSearchParams(
