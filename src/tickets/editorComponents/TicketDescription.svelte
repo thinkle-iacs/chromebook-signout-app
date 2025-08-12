@@ -47,7 +47,9 @@
         }}
       />
     {:else}
-      <div>{userDescription}</div>
+      <div class="multiline-user-text">
+        {ticket["User Description"] || "(no description)"}
+      </div>
     {/if}
   </div>
 
@@ -76,3 +78,10 @@
     />
   </div>
 </div>
+
+<style>
+  .multiline-user-text {
+    white-space: pre-wrap; /* preserve newlines, collapse other whitespace, allow wrapping */
+    word-wrap: break-word;
+  }
+</style>

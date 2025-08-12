@@ -364,6 +364,7 @@
                   : ""}
               </button>
             </th>
+            <th>Resolution</th>
             <th>Device Status</th>
             <th>Temp Status</th>
             <th>Student</th>
@@ -403,6 +404,13 @@
               </td>
               <td class="w3-small">
                 {formatDate(ticket.Created)}
+              </td>
+              <td>
+                {#if ticket.Resolution}
+                  <span class="w3-tag w3-small w3-teal">{ticket.Resolution}</span>
+                {:else}
+                  <span class="w3-text-gray">-</span>
+                {/if}
               </td>
               <td>
                 {#if ticket._linked?.Device?.Status}
