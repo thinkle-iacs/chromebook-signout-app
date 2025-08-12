@@ -29,7 +29,7 @@
     "Fixed",
     "Replaced Device",
     "Unable to Reproduce",
-    "Won't FIx",
+    "Won't Fix",
     "Duplicate",
     "Canceled",
     "No Issue Found",

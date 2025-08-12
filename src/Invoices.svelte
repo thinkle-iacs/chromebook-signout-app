@@ -9,7 +9,9 @@
 
   async function refresh() {
     loading = true;
-    rows = await getInvoices(ticketFilter ? { ticketNumber: ticketFilter } : {});
+    rows = await getInvoices(
+      ticketFilter ? { ticketNumber: ticketFilter } : {}
+    );
     loading = false;
   }
 
@@ -23,7 +25,10 @@
 
   function formatCurrency(val: number | undefined) {
     if (val == null || isNaN(val as any)) return "-";
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(val);
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "USD",
+    }).format(val);
   }
 
   const dateFmt = new Intl.DateTimeFormat(undefined, {
@@ -73,12 +78,24 @@
       <tbody>
         {#each rows as r}
           <tr>
-            <td>{(r.fields["Student Email (from Student)"] || []).join(", ")}</td>
-            <td>{(r.fields["Device Asset Tag (from Ticket)"] || []).join(", ")}</td>
-            <td class="date-created" title={r.fields["Date Created"]}>{formatDate(r.fields["Date Created"])}</td>
-            <td style="white-space: pre-wrap;">{fmtMultiline(r.fields["Ticket Block"])}</td>
+            <td
+              >{(r.fields["Student Email (from Student)"] || []).join(", ")}</td
+            >
+            <td
+              >{(r.fields["Device Asset Tag (from Ticket)"] || []).join(
+                ", "
+              )}</td
+            >
+            <td class="date-created" title={r.fields["Date Created"]}
+              >{formatDate(r.fields["Date Created"])}</td
+            >
+            <td style="white-space: pre-wrap;"
+              >{fmtMultiline(r.fields["Ticket Block"])}</td
+            >
             <td>{formatCurrency(r.fields["Repair Cost (from Ticket)"])}</td>
-            <td style="white-space: pre-wrap;">{fmtMultiline(r.fields["Contact Info"])}</td>
+            <td style="white-space: pre-wrap;"
+              >{fmtMultiline(r.fields["Contact Info"])}</td
+            >
             <td>{r.fields["Email Sent"] ? "✅" : "—"}</td>
           </tr>
         {/each}
@@ -88,5 +105,7 @@
 </div>
 
 <style>
-  .date-created { white-space: nowrap; }
+  .date-created {
+    white-space: nowrap;
+  }
 </style>
