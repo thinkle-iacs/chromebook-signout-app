@@ -207,16 +207,26 @@ export async function updateTicket(id: string, updates: Partial<Ticket>) {
   let ticket: Ticket;
   if (json.fields && json.id) {
     json = restructureLookupFields(json); // restructure linked fields
+    const existing = get(ticketsStore)[json.id] || {}; // merge with existing to prevent field loss
     ticket = {
+      ...(existing as any),
       ...json.fields,
       _id: json.id,
-      _linked: json.linkedFields || {},
-    };
+      _linked: json.linkedFields || (existing as any)._linked || {},
+    } as Ticket;
   } else if (json._id) {
-    ticket = json;
+    // Merge with existing if present
+    const existing = get(ticketsStore)[json._id] || {};
+    ticket = { ...(existing as any), ...json } as Ticket;
   } else {
-    // fallback, just return as-is
-    ticket = json;
+    // fallback, just return as-is, merged with existing if possible
+    const existing = get(ticketsStore)[id] || {};
+    ticket = { ...(existing as any), ...json, _id: id } as Ticket;
+  }
+
+  // Normalize unknown / falsy status to "New" to avoid undefined workflow issues
+  if (!ticket["Ticket Status"]) {
+    (ticket as any)["Ticket Status"] = "New";
   }
 
   // Update store with updated ticket
