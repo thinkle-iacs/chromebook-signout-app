@@ -74,7 +74,9 @@
                         <div class="w3-margin-top">
                           <b>Body:</b>
                           <div style="white-space: pre-wrap;">
-                            {(n.fields["Body (from Messages)"] || []).join("\n")}
+                            {(n.fields["Body (from Messages)"] || []).join(
+                              "\n"
+                            )}
                           </div>
                         </div>
                       {/if}
@@ -91,5 +93,7 @@
 {/if}
 
 <style>
-  .clickable { cursor: pointer; }
+  .clickable {
+    cursor: pointer;
+  }
 </style>

@@ -59,7 +59,9 @@
             {#each rows as inv}
               <tr>
                 <td>{inv.fields?.["Date Created"]}</td>
-                <td>{formatDollar(inv.fields?.["Repair Cost (from Ticket)"])}</td>
+                <td
+                  >{formatDollar(inv.fields?.["Repair Cost (from Ticket)"])}</td
+                >
                 <td>{statusText(inv)}</td>
               </tr>
             {/each}
