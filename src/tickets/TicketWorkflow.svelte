@@ -48,6 +48,8 @@
         return "In Progress";
       case "Closed":
         return "Closed";
+      default:
+        return "New"; // fallback for undefined / unknown statuses
     }
   }
 
