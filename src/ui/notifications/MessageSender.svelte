@@ -17,7 +17,7 @@
     validateStaff,
     validateAssets,
     validateAsset,
-  } from "./validators";
+  } from "@ui/validators";
 
   import { contactStore, getContacts, getEmails } from "@data/contacts";
   import { onMount } from "svelte";
@@ -27,10 +27,10 @@
     lookupSignoutHistory,
     SignoutHistoryEntry,
   } from "@data/signoutHistory";
-  import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
-  import AssetDisplay from "./AssetDisplay.svelte";
+  import SignoutHistoryTable from "@ui/SignoutHistoryTable.svelte";
+  import AssetDisplay from "@ui/AssetDisplay.svelte";
   import NotificationSender from "./NotificationSender.svelte";
-  import NotificationNotice from "./NotificationNotice.svelte";
+  import NotificationNotice from "./components/NotificationNotice.svelte";
   import { messagesStore } from "@data/messages";
 
   onMount(async () => {

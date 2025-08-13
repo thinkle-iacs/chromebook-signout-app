@@ -39,6 +39,7 @@ You asked to avoid an extra `features/` layer. Proposal keeps top-level feature 
 
 ## Phase Three: Move a Feature
 
+\*\* Note: use git mv to move files so we keep history, and first move files, then update imports rather than risking creating dups.
 [ ] Bundle all notification/messaging related ui code in a subdirectory ui/notifications
 [ ] Make an alias for it so we can reference ui/components without digging through ../ ../../ layers
 [ ] Search through code to understand components and move items, updating imports so they work.

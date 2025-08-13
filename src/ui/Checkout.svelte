@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MessageSender from "./MessageSender.svelte";
+  import MessageSender from "@notifications/MessageSender.svelte";
 
   import StudentContractStatus from "./StudentContractStatus.svelte";
 
@@ -8,7 +8,7 @@
   import NameDropdown from "./NameDropdown.svelte";
   import AssetDisplay from "./AssetDisplay.svelte";
   import ListInput from "./ListInput.svelte";
-  import FormField from "./FormField.svelte";
+  import FormField from "@components/SimpleForm.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
   import type { Student } from "@data/students";
   import type { Staff } from "@data/staff";
@@ -35,7 +35,7 @@
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import { contactStore, getContacts } from "@data/contacts";
   import { onMount } from "svelte";
-  import { createEmail } from "./messageUtils";
+  import { createEmail } from "@notifications/messageUtils";
   import StudentNote from "./StudentNote.svelte";
   import StudentTag from "./StudentTag.svelte";
 

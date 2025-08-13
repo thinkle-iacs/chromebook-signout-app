@@ -1,7 +1,7 @@
 <script>
   import AssetDisplay from "../AssetDisplay.svelte";
   import DataExporter from "./DataExporter.svelte";
-  import BulkMessageSender from "../BulkMessageSender.svelte";
+  import BulkMessageSender from "@notifications/BulkMessageSender.svelte";
   import { signoutAsset } from "@data/signout";
 
   export let data;

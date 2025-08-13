@@ -49,6 +49,7 @@ const svelteSetup = {
       entries: [
         { find: "@data", replacement: path.resolve("src/data") },
         { find: "@components", replacement: path.resolve("src/ui/components") },
+        { find: "@notifications", replacement: path.resolve("src/ui/notifications") },
         { find: "@ui", replacement: path.resolve("src/ui") }
       ]
     }),

@@ -1,9 +1,9 @@
 <script lang="ts">
   import MessageSelector from "./MessageSelector.svelte";
 
-  import NotificationNotice from "./NotificationNotice.svelte";
+  import NotificationNotice from "./components/NotificationNotice.svelte";
 
-  import Contacts from "./Contacts.svelte";
+  import Contacts from "@ui/Contacts.svelte";
 
   import { getContracts } from "@data/contracts";
   import { getMessages, messagesStore } from "@data/messages";
@@ -15,13 +15,13 @@
     SignoutHistoryEntry,
   } from "@data/signoutHistory";
   import { onMount } from "svelte";
-  import AssetDisplay from "./AssetDisplay.svelte";
-  import { parseMarkdown } from "./util";
+  import AssetDisplay from "@ui/AssetDisplay.svelte";
+  import { parseMarkdown } from "@ui/util";
   import NotificationSender from "./NotificationSender.svelte";
   import { getNotifications } from "@data/notifications";
   import { buildMessageForExtras, createEmail } from "./messageUtils";
-  import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
-  import NotificationSummary from "./NotificationSummary.svelte";
+  import SignoutHistoryTable from "@ui/SignoutHistoryTable.svelte";
+  import NotificationSummary from "./components/NotificationSummary.svelte";
   import { Asset } from "@data/inventory";
   let fetchedFull;
   let update;

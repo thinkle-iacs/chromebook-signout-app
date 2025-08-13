@@ -1,7 +1,7 @@
 <script lang="ts">
-  import MessageRow from "./MessageRow.svelte";
+  import MessageRow from "./components/MessageRow.svelte";
 
-  import NotificationSummary from "./NotificationSummary.svelte";
+  import NotificationSummary from "./components/NotificationSummary.svelte";
   import {
     createNotifications,
     getNotifications,

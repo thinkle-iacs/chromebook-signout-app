@@ -8,13 +8,13 @@
   import AssetDisplay from "./AssetDisplay.svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import { validateStudent, studentName } from "./validators";
-  import FormField from "./FormField.svelte";
+  import FormField from "@components/SimpleForm.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
   import NameDropdown from "./NameDropdown.svelte";
   import { getStudent, studentsStore } from "@data/students";
   import { getCurrentLoansForStudent } from "@data/inventory";
   import { lookupSignoutHistory } from "@data/signoutHistory";
-  import MessageSender from "./MessageSender.svelte";
+  import MessageSender from "@notifications/MessageSender.svelte";
   import StudentGoogleAdminHistory from "./StudentGoogleAdminHistory.svelte";
   export let name;
   if (name) {

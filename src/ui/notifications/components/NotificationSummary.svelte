@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { NotificationFields } from "@data/notifications";
-  import { parseMarkdown } from "./util";
+  import { parseMarkdown } from "@ui/util";
   export let fields: NotificationFields;
 
   let mode: "COMPACT" | "NORM" | "EXPANDED" = "COMPACT";

@@ -4,7 +4,7 @@
   import AssetDisplay from "./AssetDisplay.svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import type { SignoutHistoryEntry } from "@data/signoutHistory";
-  import FormField from "./FormField.svelte";
+  import FormField from "@components/SimpleForm.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
   import { assetStore, searchForAsset } from "@data/inventory";
   import { lookupSignoutHistory } from "@data/signoutHistory";

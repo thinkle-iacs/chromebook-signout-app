@@ -9,13 +9,13 @@
   import AssetDisplay from "./AssetDisplay.svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import { validateStaff, staffName } from "./validators"; // Use staff validators
-  import FormField from "./FormField.svelte";
+  import FormField from "@components/SimpleForm.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
   import NameDropdown from "./NameDropdown.svelte";
   import { searchForStaff, staffStore } from "@data/staff"; // Use staff data functions
   import { getCurrentLoansForStaff } from "@data/inventory"; // Replace student loans with staff loans
   import { lookupSignoutHistory } from "@data/signoutHistory";
-  import MessageSender from "./MessageSender.svelte";
+  import MessageSender from "@notifications/MessageSender.svelte";
   import StudentGoogleAdminHistory from "./StudentGoogleAdminHistory.svelte";
 
   export let name;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getMessages, messagesStore } from "@data/messages";
   import { onMount } from "svelte";
-  import { parseMarkdown } from "./util";
+  import { parseMarkdown } from "@ui/util";
 
   import { getNotifications } from "@data/notifications";
 

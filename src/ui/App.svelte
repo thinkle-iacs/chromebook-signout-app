@@ -4,7 +4,7 @@
   import Contracts from "@ui/Contracts.svelte";
   import LookupStudent from "@ui/LookupStudent.svelte";
   import History from "@ui/History.svelte";
-  import Message from "@ui/BulkMessageSender.svelte";
+  import Message from "@notifications/BulkMessageSender.svelte";
   import router from "page";
   import LogIn from "@ui/LogIn.svelte";
   import { loggedIn, user } from "@data/user";
