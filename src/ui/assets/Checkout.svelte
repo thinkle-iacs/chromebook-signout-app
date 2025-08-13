@@ -1,20 +1,20 @@
 <script lang="ts">
   import MessageSender from "@notifications/MessageSender.svelte";
 
-  import StudentContractStatus from "./StudentContractStatus.svelte";
+  import StudentContractStatus from "@contracts/StudentContractStatus.svelte";
 
   export let mode: "normal" | "it" = "normal";
   import { fly, fade } from "svelte/transition";
-  import NameDropdown from "./NameDropdown.svelte";
+  import NameDropdown from "@people/components/NameDropdown.svelte";
   import AssetDisplay from "./AssetDisplay.svelte";
-  import ListInput from "./ListInput.svelte";
-  import FormField from "@components/SimpleForm.svelte";
+  import ListInput from "@components/ListInput.svelte";
+  import FormField from "@components/FormField.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
   import type { Student } from "@data/students";
   import type { Staff } from "@data/staff";
   import { getCurrentLoansForStudent } from "@data/inventory";
   import type { Asset } from "@data/inventory";
-  import { l } from "./util";
+  import { l } from "@utils/util";
   import type { CheckoutStatus } from "@data/signout";
   import { signoutAsset } from "@data/signout";
   import { addStudentNote, getStudent } from "@data/students";
@@ -31,13 +31,13 @@
     validateStaff,
     validateAssets,
     validateAsset,
-  } from "./validators";
-  import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
+  } from "@utils/validators";
+  import SignoutHistoryTable from "@history/SignoutHistoryTable.svelte";
   import { contactStore, getContacts } from "@data/contacts";
   import { onMount } from "svelte";
   import { createEmail } from "@notifications/messageUtils";
-  import StudentNote from "./StudentNote.svelte";
-  import StudentTag from "./StudentTag.svelte";
+  import StudentNote from "@people/students/StudentNote.svelte";
+  import StudentTag from "@people/students/StudentTag.svelte";
 
   let status: CheckoutStatus = "Out";
   let notes = "";

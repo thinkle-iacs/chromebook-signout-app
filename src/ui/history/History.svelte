@@ -1,5 +1,5 @@
 <script type="ts">
-  import AssetDisplay from "./AssetDisplay.svelte";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
   import { onMount } from "svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import type { SignoutHistoryEntry } from "@data/signoutHistory";

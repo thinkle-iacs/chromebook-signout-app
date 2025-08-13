@@ -8,7 +8,7 @@
     studentName,
     staffDropdown,
     staffName,
-  } from "./validators";
+  } from "@utils/validators";
 
   function select(name) {
     if (mode == "staff") {

@@ -3,7 +3,7 @@
 
   import NotificationNotice from "./components/NotificationNotice.svelte";
 
-  import Contacts from "@ui/Contacts.svelte";
+  import Contacts from "@people/contacts/Contacts.svelte";
 
   import { getContracts } from "@data/contracts";
   import { getMessages, messagesStore } from "@data/messages";
@@ -15,12 +15,12 @@
     SignoutHistoryEntry,
   } from "@data/signoutHistory";
   import { onMount } from "svelte";
-  import AssetDisplay from "@ui/AssetDisplay.svelte";
-  import { parseMarkdown } from "@ui/util";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
+  import { parseMarkdown } from "@utils/util";
   import NotificationSender from "./NotificationSender.svelte";
   import { getNotifications } from "@data/notifications";
   import { buildMessageForExtras, createEmail } from "./messageUtils";
-  import SignoutHistoryTable from "@ui/SignoutHistoryTable.svelte";
+  import SignoutHistoryTable from "@history/SignoutHistoryTable.svelte";
   import NotificationSummary from "./components/NotificationSummary.svelte";
   import { Asset } from "@data/inventory";
   let fetchedFull;

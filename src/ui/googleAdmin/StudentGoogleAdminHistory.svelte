@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Staff } from "@data/staff.ts";
-  import ChromebookInfoDisplay from "./ChromebookInfoDisplay.svelte";
+  import type { Staff } from "@data/staff";
+  import ChromebookInfoDisplay from "@assets/ChromebookInfoDisplay.svelte";
   import type { Student } from "@data/students";
   import type { ChromebookInfo } from "@data/google";
   import { getDevicesForUser } from "@data/google";

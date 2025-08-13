@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Student } from "./students";
+  import type { Student } from "@data/students";
   export let student: Student;
 </script>
 

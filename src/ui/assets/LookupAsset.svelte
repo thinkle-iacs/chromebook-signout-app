@@ -2,13 +2,13 @@
   import router from "page";
   import type { Asset } from "@data/inventory";
   import AssetDisplay from "./AssetDisplay.svelte";
-  import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
+  import SignoutHistoryTable from "@history/SignoutHistoryTable.svelte";
   import type { SignoutHistoryEntry } from "@data/signoutHistory";
-  import FormField from "@components/SimpleForm.svelte";
+  import FormField from "@components/FormField.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
   import { assetStore, searchForAsset } from "@data/inventory";
   import { lookupSignoutHistory } from "@data/signoutHistory";
-  import { assetTag, validateAsset } from "./validators";
+  import { assetTag, validateAsset } from "@utils/validators";
   import { ChromebookInfo, getDeviceInfo } from "@data/google";
   import ChromebookInfoDisplay from "./ChromebookInfoDisplay.svelte";
   export let tag;

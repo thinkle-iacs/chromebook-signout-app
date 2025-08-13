@@ -6,8 +6,8 @@
     updateTicket as apiUpdateTicket,
     type Ticket,
   } from "@data/tickets";
-  import AssetDisplay from "../AssetDisplay.svelte";
-  import StudentTag from "../StudentTag.svelte";
+  import AssetDisplay from "@ui/assets/AssetDisplay.svelte";
+  import StudentTag from "@ui/people/students/StudentTag.svelte";
   import TicketWorkflow from "./TicketWorkflow.svelte";
   import type { HistoryEntry } from "./history";
 

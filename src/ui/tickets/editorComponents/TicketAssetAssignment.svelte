@@ -1,7 +1,7 @@
 <script lang="ts">
   import EditButton from "./EditButton.svelte";
-  import AssetDisplay from "../../AssetDisplay.svelte";
-  import { assetTag, validateAsset } from "@ui/validators";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
+  import { assetTag, validateAsset } from "@utils/validators";
   import { assetStore, searchForAsset } from "@data/inventory";
   import type { Ticket } from "@data/tickets";
   import { get } from "svelte/store";

@@ -40,10 +40,12 @@ You asked to avoid an extra `features/` layer. Proposal keeps top-level feature 
 ## Phase Three: Move a Feature
 
 \*\* Note: use git mv to move files so we keep history, and first move files, then update imports rather than risking creating dups.
-[ ] Bundle all notification/messaging related ui code in a subdirectory ui/notifications
-[ ] Make an alias for it so we can reference ui/components without digging through ../ ../../ layers
-[ ] Search through code to understand components and move items, updating imports so they work.
-[ ] Test that we have not broken anything.
+[x] Bundle all notification/messaging related ui code in a subdirectory ui/notifications
+[x] Make an alias for it so we can reference ui/components without digging through ../ ../../ layers
+[x] Search through code to understand components and move items, updating imports so they work.
+[x] Test that we have not broken anything.
+
+**✅ COMPLETED** - @notifications alias working, all notification/messaging components moved to ui/notifications/ with internal components in components/ subdirectory, build passes, dev server running.
 
 ## Phase Four: Keep on going...
 
@@ -54,40 +56,40 @@ You asked to avoid an extra `features/` layer. Proposal keeps top-level feature 
 
 More things to move to generic components...
 
-- [ ] ListInput
+- [x] [x] ListInput (moved to @components)
 
-- [ ] assets
-  - [ ] ChromebookInfoDisplay
-  - [ ] AssetDisplay
-  - [ ] LookupAsset
-- [ ] people
-  - [ ] components
-    - [ ] NameDropdown
-  - [ ] students
-    - [ ] LookupStudent
-    - [ ] StudentInfo
-    - [ ] StudentNote
-    - [ ] StudentTag
-  - [ ] staff
-    - [ ] LookupStaff
-  - [ ] contacts
-    - [ ] Contacts.svelte
-- [ ] googleAdmin
-  - [ ] StudentGoogleAdminHistory
-- [ ] contracts
-  - [ ] StudentContractStatus
-  - [ ] Contracts
-- [ ] history
-  - [ ] SignoutHistoryTable
-  - [ ] History
-- [ ] auth
-  - [ ] LogIn.svelte
-- [ ] util
-  - [ ] util
-  - [ ] validator
-- [ ] tickets
-  - [ ] invoices
-    - [ ] Invoices
-- [ ] Checkout
-- [ ] App
-- [ ] Test
+- [x] [x] assets
+  - [x] [x] ChromebookInfoDisplay
+  - [x] [x] AssetDisplay
+  - [x] [x] LookupAsset
+  - [x] [x] Checkout
+- [x] [x] people
+  - [x] [x] components
+    - [x] [x] NameDropdown
+  - [x] [x] students
+    - [x] [x] LookupStudent
+    - [x] [x] StudentInfo
+    - [x] [x] StudentNote
+    - [x] [x] StudentTag
+  - [x] [x] staff
+    - [x] [x] LookupStaff
+  - [x] [x] contacts
+    - [x] [x] Contacts.svelte
+- [x] [x] googleAdmin
+  - [x] [x] StudentGoogleAdminHistory
+- [x] [x] contracts
+  - [x] [x] StudentContractStatus
+  - [x] [x] Contracts
+  - [x] [x] Invoices
+- [x] [x] history
+  - [x] [x] SignoutHistoryTable
+  - [x] [x] History
+- [x] [x] auth
+  - [x] [x] LogIn.svelte
+- [x] [x] utils
+  - [x] [x] util.ts
+  - [x] [x] validators.ts
+
+**Remaining at top level:** App.svelte, TestMenu.svelte
+
+**✅ PHASE COMPLETE!** All components moved and imports updated. Build passes successfully!

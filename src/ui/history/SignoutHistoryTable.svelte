@@ -1,11 +1,11 @@
 <script type="ts">
   import { flip } from "svelte/animate";
   import { fade } from "svelte/transition";
-  import { l } from "./util";
-  import AssetDisplay from "./AssetDisplay.svelte";
+  import { l } from "@utils/util";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
   import { assetStore } from "@data/inventory";
   import type { SignoutHistoryEntry } from "@data/signoutHistory";
-  import type { Student } from "./students";
+  import type { Student } from "@data/students";
   export let signoutHistoryItems: SignoutHistoryEntry[];
   export let student: Student | null;
   export let currentOnlyMode = false;

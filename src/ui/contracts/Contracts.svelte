@@ -2,11 +2,11 @@
   import { onMount } from "svelte";
   import { getContracts, contractStore, mapContract } from "@data/contracts";
   import type { Contract } from "@data/contracts";
-  import FormField from "@components/SimpleForm.svelte";
+  import FormField from "@components/FormField.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
-  import NameDropdown from "./NameDropdown.svelte";
-  import StudentInfo from "./StudentInfo.svelte";
-  import { studentName, validateStudent } from "./validators";
+  import NameDropdown from "@people/components/NameDropdown.svelte";
+  import StudentInfo from "@people/students/StudentInfo.svelte";
+  import { studentName, validateStudent } from "@utils/validators";
   import { getStudent, studentsStore } from "@data/students";
 
   let contract: Contract;

@@ -1,22 +1,22 @@
 <script lang="ts">
-  import StudentInfo from "./StudentInfo.svelte";
+  import StudentInfo from "@people/students/StudentInfo.svelte";
   import router from "page";
   import { onMount } from "svelte";
 
   import type { Staff } from "@data/staff"; // Import Staff type
   import type { Asset } from "@data/inventory";
   import type { SignoutHistoryEntry } from "@data/signoutHistory";
-  import AssetDisplay from "./AssetDisplay.svelte";
-  import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
-  import { validateStaff, staffName } from "./validators"; // Use staff validators
-  import FormField from "@components/SimpleForm.svelte";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
+  import SignoutHistoryTable from "@history/SignoutHistoryTable.svelte";
+  import { validateStaff, staffName } from "@utils/validators"; // Use staff validators
+  import FormField from "@components/FormField.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
-  import NameDropdown from "./NameDropdown.svelte";
+  import NameDropdown from "@people/components/NameDropdown.svelte";
   import { searchForStaff, staffStore } from "@data/staff"; // Use staff data functions
   import { getCurrentLoansForStaff } from "@data/inventory"; // Replace student loans with staff loans
   import { lookupSignoutHistory } from "@data/signoutHistory";
   import MessageSender from "@notifications/MessageSender.svelte";
-  import StudentGoogleAdminHistory from "./StudentGoogleAdminHistory.svelte";
+  import StudentGoogleAdminHistory from "@googleAdmin/StudentGoogleAdminHistory.svelte";
 
   export let name;
   if (name) {

@@ -5,17 +5,17 @@
   import type { Student } from "@data/students";
   import type { Asset } from "@data/inventory";
   import type { SignoutHistoryEntry } from "@data/signoutHistory";
-  import AssetDisplay from "./AssetDisplay.svelte";
-  import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
-  import { validateStudent, studentName } from "./validators";
-  import FormField from "@components/SimpleForm.svelte";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
+  import SignoutHistoryTable from "@history/SignoutHistoryTable.svelte";
+  import { validateStudent, studentName } from "@utils/validators";
+  import FormField from "@components/FormField.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
-  import NameDropdown from "./NameDropdown.svelte";
+  import NameDropdown from "@people/components/NameDropdown.svelte";
   import { getStudent, studentsStore } from "@data/students";
   import { getCurrentLoansForStudent } from "@data/inventory";
   import { lookupSignoutHistory } from "@data/signoutHistory";
   import MessageSender from "@notifications/MessageSender.svelte";
-  import StudentGoogleAdminHistory from "./StudentGoogleAdminHistory.svelte";
+  import StudentGoogleAdminHistory from "@googleAdmin/StudentGoogleAdminHistory.svelte";
   export let name;
   if (name) {
     $studentName = name;
