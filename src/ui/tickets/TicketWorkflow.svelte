@@ -2,7 +2,10 @@
   // ---- imports identical style to your TicketEditor ----
   import { user } from "@data/user";
   import type { Ticket } from "@data/tickets";
-  import { updateTicket as saveTicket } from "@data/tickets";
+  import {
+    updateTicket as saveTicket,
+    createTicket as apiCreateTicket,
+  } from "@data/tickets";
   import type { HistoryEntry } from "./history";
   // New step components
   import NewTicketWorkflow from "./steps/NewTicketWorkflow.svelte";
@@ -12,6 +15,7 @@
   import PickupWorkflow from "./steps/PickupWorkflow.svelte";
   import InProgressWorkflow from "./steps/InProgressWorkflow.svelte";
   import ClosedWorkflow from "./steps/ClosedWorkflow.svelte";
+  import { showToast } from "@ui/components/toastStore";
 
   // ---- props ----
   export let ticket: Ticket;
@@ -182,7 +186,9 @@
 
     const composed: HistoryEntry<typeof changes> = {
       timestamp: now,
-      action: historyEntry?.action || "workflow_update",
+      action:
+        historyEntry?.action ||
+        (ticket._id.startsWith("TEMP-") ? "create_ticket" : "workflow_update"),
       status: (afterStatus as Ticket["Ticket Status"]) || beforeStatus,
       changes: { ...changes, ...(historyEntry?.changes as any) },
       note: historyEntry?.note,
@@ -191,19 +197,55 @@
     };
 
     const entries = parseHistoryEntries(ticket.History);
-    const merged = {
-      ...updates,
-      History: stringifyHistory([...entries, composed]),
-    };
+    const mergedHistory = stringifyHistory([...entries, composed]);
 
     saving = true;
     try {
-      const updated = await saveTicket(ticket._id, merged);
-      Object.assign(ticket, updated);
-      onUpdateTicket(updated, composed);
+      let updated: Ticket;
+      if (ticket._id.startsWith("TEMP-")) {
+        const creationPayload: any = {
+          ...ticket,
+          ...updates,
+          History: mergedHistory,
+        };
+        delete creationPayload._id;
+        delete creationPayload._linked;
+        // Remove computed / readonly fields Airtable rejects
+        delete creationPayload.Created;
+        if (creationPayload.Number === 0) delete creationPayload.Number;
+        Object.keys(creationPayload).forEach((k) => {
+          if (creationPayload[k] === undefined) delete creationPayload[k];
+        });
+        const record: any = await apiCreateTicket(creationPayload);
+        if (record?.id) {
+          updated = {
+            ...(ticket as any),
+            ...(record.fields || {}),
+            _id: record.id,
+            History: mergedHistory,
+          } as Ticket;
+          Object.assign(ticket, updated);
+          onUpdateTicket(updated, composed);
+          showToast("Ticket created", "success");
+        } else {
+          showToast("Create failed", "error");
+          return; // abort to avoid falling through
+        }
+      } else {
+        const merged = { ...updates, History: mergedHistory } as any;
+        // Remove non-field props that Airtable rejects
+        delete (merged as any)._id;
+        delete (merged as any)._linked;
+        delete (merged as any).Created; // readonly formula/computed
+        const updatedRaw = await saveTicket(ticket._id, merged);
+        const updated = updatedRaw as Ticket;
+        Object.assign(ticket, updated);
+        onUpdateTicket(updated, composed);
+        showToast("Ticket updated", "success");
+      }
     } catch (err) {
       console.error("TicketWorkflow updateTicket failed:", err);
-      alert("Failed to save ticket changes.");
+      showToast("Failed to save ticket", "error");
     } finally {
       saving = false;
     }
@@ -220,14 +262,13 @@
 
   async function jumpTo(step: FlowStep) {
     if (!canJumpTo(step)) return;
-    const ok = confirm(`Change status to "${step}"?`);
-    if (!ok) return;
     await updateTicket({ "Ticket Status": step as any }, {
       action: "timeline_jump",
       status: step,
       note: `Changed via timeline to ${step}`,
       changes: { "Ticket Status": { from: ticket["Ticket Status"], to: step } },
     } as any);
+    showToast(`Status changed to ${step}`, "info");
   }
 
   // Add keyboard support for accessibility

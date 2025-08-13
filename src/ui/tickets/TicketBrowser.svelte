@@ -1,15 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    getTickets,
-    ticketsStore,
-    updateTicket as apiUpdateTicket,
-    type Ticket,
-  } from "@data/tickets";
+  import { getTickets, ticketsStore, type Ticket } from "@data/tickets";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import StudentTag from "@people/students/StudentTag.svelte";
   import TicketWorkflow from "./TicketWorkflow.svelte";
   import type { HistoryEntry } from "./history";
+  import { showToast } from "@ui/components/toastStore";
 
   let loading = true;
   let error: string | null = null;
@@ -121,16 +117,39 @@
     selectedTicket = null;
   }
 
-  onMount(async () => {
-    try {
-      loading = true;
-      await getTickets();
-      loading = false;
-    } catch (err) {
-      error = err.message || "Failed to load tickets";
-      loading = false;
-    }
-  });
+  // Replace old handleUpdateTicket that re-called API with updated full ticket object
+  function handleUpdateTicket(
+    updatedTicket: Ticket,
+    _historyEntry: HistoryEntry<
+      Record<string, { from?: unknown; to?: unknown }>
+    >
+  ) {
+    // The workflow already persisted changes; just sync selection & let reactive store update table
+    selectedTicket = updatedTicket;
+    // Optionally refresh filters by triggering reactive assignments
+    tickets = Object.values($ticketsStore);
+  }
+
+  function createTempTicket() {
+    const tempId = `TEMP-${Date.now()}`;
+    const created = new Date().toISOString();
+    const temp: any = {
+      _id: tempId,
+      Number: 0,
+      Created: created,
+      "Ticket Status": "New",
+      Priority: 3,
+      History: JSON.stringify({ entries: [] }),
+    };
+
+    // push into local store for immediate visibility
+    ticketsStore.update(($s: any) => {
+      $s[tempId] = temp;
+      return $s;
+    });
+    showToast("Draft ticket created", "info");
+    showTicketDetail(temp);
+  }
 
   function getStatusColor(status: string): string {
     switch (status) {
@@ -202,29 +221,19 @@
       sortOrder = "desc";
     }
   }
-
-  async function handleUpdateTicket(
-    updates: Partial<Ticket>,
-    historyEntry: HistoryEntry<Record<string, { from?: unknown; to?: unknown }>>
-  ) {
-    if (!selectedTicket) return;
-    try {
-      await apiUpdateTicket(selectedTicket._id, updates, historyEntry);
-      // Refresh tickets and update selectedTicket reference
-      await getTickets();
-      const refreshed = (ticketsStore as any).subscribe(() => {});
-      // Simpler: pull from $ticketsStore reactive value
-      // (rely on existing $: tickets = Object.values($ticketsStore))
-      const updated = ($ticketsStore as any)[selectedTicket._id];
-      if (updated) selectedTicket = updated;
-    } catch (e) {
-      console.error("Failed to update ticket from browser modal", e);
-    }
-  }
 </script>
 
 <div class="w3-container">
-  <h2>Ticket Browser</h2>
+  <div
+    style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;"
+  >
+    <h2>Tickets</h2>
+    <div style="display:flex; gap:8px;">
+      <button class="w3-button w3-green" on:click={createTempTicket}>
+        New
+      </button>
+    </div>
+  </div>
 
   {#if loading}
     <div class="w3-panel w3-blue">
@@ -383,7 +392,8 @@
                   on:click={() => showTicketDetail(ticket)}
                   title="Click to view ticket details"
                 >
-                  #{ticket.Number}
+                  #{ticket.Number ||
+                    (ticket._id.startsWith("TEMP-") ? "Draft" : "")}
                 </button>
               </td>
               <td>

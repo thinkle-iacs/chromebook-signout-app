@@ -68,16 +68,18 @@
 
 {#if editing}
   <div class="w3-panel w3-border w3-light-blue">
-    <input
-      bind:this={inputElement}
-      type="text"
-      class="w3-input w3-border"
-      placeholder="Start typing student name..."
-      bind:value={$studentName}
-      autocomplete="off"
-      {disabled}
-    />
-    <NameDropdown mode="student" {inputElement} />
+    <div class="input-wrapper">
+      <input
+        bind:this={inputElement}
+        type="text"
+        class="w3-input w3-border"
+        placeholder="Start typing student name..."
+        bind:value={$studentName}
+        autocomplete="off"
+        {disabled}
+      />
+      <NameDropdown mode="student" {inputElement} />
+    </div>
 
     {#if currentStudent}
       <div class="w3-margin-top w3-light-gray w3-padding-small">
@@ -85,29 +87,33 @@
       </div>
     {/if}
 
-    <div class="w3-margin-top">
+    <div class="w3-margin-top action-buttons">
       <button
-        class="w3-btn w3-green w3-small"
-        on:click={saveStudentLink}
-        disabled={!hasChanges || disabled}
-      >
-        Save
-      </button>
-      <button
-        class="w3-btn w3-gray w3-small w3-margin-left"
+        class="w3-btn w3-gray w3-small icon-btn"
         on:click={cancelEditing}
         {disabled}
+        title="Cancel"
+        aria-label="Cancel"
       >
-        Cancel
+        ✕
+      </button>
+      <button
+        class="w3-btn w3-green w3-small icon-btn save-btn"
+        on:click={saveStudentLink}
+        disabled={!hasChanges || disabled}
+        title="Save"
+        aria-label="Save"
+      >
+        ✓
       </button>
       {#if existingStudent}
         <button
-          class="w3-btn w3-red w3-small w3-margin-left"
+          class="w3-btn w3-red w3-small icon-btn remove-btn"
           title="Remove student"
           on:click={removeStudent}
           {disabled}
         >
-          Remove
+          –
         </button>
       {/if}
     </div>
@@ -125,3 +131,23 @@
     Link Student
   </button>
 {/if}
+
+<style>
+  /* anchor for dropdown */
+  .input-wrapper {
+    position: relative;
+  }
+  .icon-btn {
+    padding: 2px 8px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .save-btn {
+    margin-left: auto;
+  }
+</style>

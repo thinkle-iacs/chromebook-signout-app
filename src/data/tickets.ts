@@ -174,21 +174,22 @@ export async function createTicket(ticketData: Partial<Ticket>) {
     body: JSON.stringify(ticketData),
   });
   let json = await response.json();
+  json = restructureLookupFields(json); // restructure linked fields
   console.log("Created ticket:", json);
-
-  // Update store with new ticket
+  if (json.error) {
+    return json; // caller will handle toast / error path
+  }
+  let ticket = {
+    ...json.fields,
+    _id: json.id,
+    _linked: json.linkedFields || {},
+  };
   ticketsStore.update(($ticketsStore) => {
-    $ticketsStore[json.id] = {
-      ...json.fields,
-      _id: json.id,
-    };
+    $ticketsStore[json.id] = ticket;
     return $ticketsStore;
   });
-
-  // Clear cache since we have new data
   cachedQueries = {};
-
-  return json;
+  return ticket;
 }
 
 export async function updateTicket(id: string, updates: Partial<Ticket>) {
