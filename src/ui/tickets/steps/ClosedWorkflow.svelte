@@ -25,7 +25,7 @@
   <div class="w3-small w3-text-gray">
     Ticket #{ticket.Number} · {ticket["Ticket Status"]}
   </div>
-  <TicketInfo ticket={mergedTicket} onChange={() => {}} disabled={true} />
+  <TicketInfo ticket={mergedTicket} onChange={() => {}} />
   <TicketDescription ticket={mergedTicket} onChange={() => {}} />
   <p class="w3-small">
     Ticket is closed. You can still send invoices or notifications if needed.
