@@ -3,7 +3,7 @@
   import { getContracts, contractStore, mapContract } from "@data/contracts";
   import type { Contract } from "@data/contracts";
   import FormField from "./FormField.svelte";
-  import SimpleForm from "./SimpleForm.svelte";
+  import SimpleForm from "@components/SimpleForm.svelte";
   import NameDropdown from "./NameDropdown.svelte";
   import StudentInfo from "./StudentInfo.svelte";
   import { studentName, validateStudent } from "./validators";

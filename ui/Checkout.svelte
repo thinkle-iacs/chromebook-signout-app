@@ -9,7 +9,7 @@
   import AssetDisplay from "./AssetDisplay.svelte";
   import ListInput from "./ListInput.svelte";
   import FormField from "./FormField.svelte";
-  import SimpleForm from "./SimpleForm.svelte";
+  import SimpleForm from "@components/SimpleForm.svelte";
   import type { Student } from "@data/students";
   import type { Staff } from "@data/staff";
   import { getCurrentLoansForStudent } from "@data/inventory";

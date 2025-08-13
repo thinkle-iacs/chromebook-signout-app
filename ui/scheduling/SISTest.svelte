@@ -6,7 +6,7 @@
     testScheduleLookup,
     isValidStudentEmail,
   } from "@data/sisData";
-  import { buildStructuredSchedule } from "./scheduling/structuredSchedule";
+  import { buildStructuredSchedule } from "./structuredSchedule";
 
   let studentEmail = "";
   let results: any[] = [];

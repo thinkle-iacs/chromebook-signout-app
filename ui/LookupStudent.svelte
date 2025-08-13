@@ -9,7 +9,7 @@
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import { validateStudent, studentName } from "./validators";
   import FormField from "./FormField.svelte";
-  import SimpleForm from "./SimpleForm.svelte";
+  import SimpleForm from "@components/SimpleForm.svelte";
   import NameDropdown from "./NameDropdown.svelte";
   import { getStudent, studentsStore } from "@data/students";
   import { getCurrentLoansForStudent } from "@data/inventory";

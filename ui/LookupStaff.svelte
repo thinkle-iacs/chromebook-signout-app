@@ -10,7 +10,7 @@
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
   import { validateStaff, staffName } from "./validators"; // Use staff validators
   import FormField from "./FormField.svelte";
-  import SimpleForm from "./SimpleForm.svelte";
+  import SimpleForm from "@components/SimpleForm.svelte";
   import NameDropdown from "./NameDropdown.svelte";
   import { searchForStaff, staffStore } from "@data/staff"; // Use staff data functions
   import { getCurrentLoansForStaff } from "@data/inventory"; // Replace student loans with staff loans
