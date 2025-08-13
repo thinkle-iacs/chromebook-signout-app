@@ -2,8 +2,8 @@
   import { user } from "@data/user";
   import type { Ticket } from "@data/tickets";
   import { updateTicket } from "@data/tickets";
-  import StudentTag from "@ui/people/students/StudentTag.svelte";
-  import AssetDisplay from "@ui/assets/AssetDisplay.svelte";
+  import StudentTag from "@people/students/StudentTag.svelte";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
   import EditableTextField from "./editorComponents/EditableTextField.svelte";
   import TicketStudentAssignment from "./editorComponents/TicketStudentAssignment.svelte";
   import TicketAssetAssignment from "./editorComponents/TicketAssetAssignment.svelte";

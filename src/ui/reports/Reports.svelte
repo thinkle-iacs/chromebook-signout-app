@@ -21,7 +21,7 @@
     getNonLoanedChromebooks,
     assetStore,
   } from "@data/inventory";
-  import AssetDisplay from "@ui/assets/AssetDisplay.svelte";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
   import { get } from "svelte/store";
   import ReportTable from "./ReportTable.svelte";
 

@@ -12,15 +12,15 @@
   import { onMount, SvelteComponent } from "svelte";
   import { fade } from "svelte/transition";
   import LookupStaff from "@people/staff/LookupStaff.svelte";
-  import Reports from "@ui/reports/Reports.svelte";
-  import SISTest from "@ui/scheduling/SISTest.svelte";
-  import ScheduleTester from "@ui/scheduling/ScheduleTester.svelte";
-  import TicketBrowser from "@ui/tickets/TicketBrowser.svelte";
-  import TicketNumberPage from "@ui/tickets/TicketNumberPage.svelte";
+  import Reports from "./reports/Reports.svelte";
+  import SISTest from "./scheduling/SISTest.svelte";
+  import ScheduleTester from "./scheduling/ScheduleTester.svelte";
+  import TicketBrowser from "./tickets/TicketBrowser.svelte";
+  import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
   import Invoices from "@contracts/Invoices.svelte";
   import Toast from "@components/Toast.svelte";
   import { toastStore } from "@components/toastStore";
-  import TestMenu from "@ui/TestMenu.svelte";
+  import TestMenu from "./TestMenu.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";

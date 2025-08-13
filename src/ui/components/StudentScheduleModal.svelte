@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { buildStructuredSchedule } from "@ui/scheduling/structuredSchedule";
+  import { buildStructuredSchedule } from "../scheduling/structuredSchedule";
   import {
     testStudentLookup,
     testScheduleLookup,

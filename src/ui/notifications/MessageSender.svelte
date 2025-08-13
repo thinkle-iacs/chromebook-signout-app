@@ -17,7 +17,7 @@
     validateStaff,
     validateAssets,
     validateAsset,
-  } from "@ui/utils/validators";
+  } from "@utils/validators";
 
   import { contactStore, getContacts, getEmails } from "@data/contacts";
   import { onMount } from "svelte";

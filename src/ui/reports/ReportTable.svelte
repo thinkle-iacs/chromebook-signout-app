@@ -1,5 +1,5 @@
 <script>
-  import AssetDisplay from "@ui/assets/AssetDisplay.svelte";
+  import AssetDisplay from "@assets/AssetDisplay.svelte";
   import DataExporter from "./DataExporter.svelte";
   import BulkMessageSender from "@notifications/BulkMessageSender.svelte";
   import { signoutAsset } from "@data/signout";
