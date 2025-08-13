@@ -13,7 +13,7 @@
   import { fade } from "svelte/transition";
   import LookupStaff from "@ui/LookupStaff.svelte";
   import Reports from "@ui/reports/Reports.svelte";
-  import SISTest from "@ui/SISTest.svelte";
+  import SISTest from "@ui/scheduling/SISTest.svelte";
   import ScheduleTester from "@ui/scheduling/ScheduleTester.svelte";
   import TicketBrowser from "@ui/tickets/TicketBrowser.svelte";
   import TicketNumberPage from "@ui/tickets/TicketNumberPage.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import SISTest from "./SISTest.svelte"; // only to ensure bundler keeps route components available
-  import ScheduleTester from "./scheduling/ScheduleTester.svelte";
+  import SISTest from "@ui/scheduling/SISTest.svelte"; // only to ensure bundler keeps route components available
+  import ScheduleTester from "@ui/scheduling/ScheduleTester.svelte";
   // No direct rendering of those components here, just links.
   // Optionally gate with a prop if needed later.
 </script>
