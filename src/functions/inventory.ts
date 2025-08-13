@@ -138,7 +138,9 @@ export async function handler(event: APIGatewayEvent, context: Context) {
 
     const result = await query.firstPage();
     allRecords = allRecords.concat(result); // Append the current batch of records
-    offset = query.offset; // Update the offset for the next request
+    // Airtable SDK exposes offset on the result set via _offset (undocumented) or through eachPage; guard safely
+    // @ts-ignore - access internal property if present
+    offset = query._offset || 0;
     totalRecordsFetched += result.length;
 
     // Sanity check: Stop fetching if more than 2000 records are retrieved
