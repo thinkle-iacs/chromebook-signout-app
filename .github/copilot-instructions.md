@@ -8,6 +8,22 @@ Avoid using `window.alert` for notifications; instead, use a custom `<Toast>` co
 
 DO NOT ADD TYPE HINTING INSIDE OF SVELTE MARKUP. It will trigger a syntax error. Typescript is allowed only inside the `<script lang="ts">` block at the top of the file but NOT in the markup below. Also, avoid superfluous `as any` type assertions.
 
+# Project Structure / Overview
+
+## Backend
+
+We use serverless functions to handle API requests, mostly to AirTable, but also to other APIs. Those functions live in `src/functions/` One slightly unusual feature is that we have all the functions imported into `src/functions/index.ts` and from there we make API calls with a mode parameter which allows that single index function to call a wide variety of requests.
+
+## Data Requests
+
+`src/data/` contains the code that handles data requests, including fetching data from Airtable and other APIs. This is where we define how to query for students, tickets, assets, etc. We often create an object that represents the data we want to work with, such as `Student`, `Ticket`, or `Asset`, and then we can use these objects in our UI components. Those objects are typed with TypeScript interfaces in that data layer, so updates to data structures are usually reflected both in the backend and in the data layer.
+
+One nuissance is that while the backend returned pure airtable API structures, the data layer usually transforms these into objects. So, for example, we have the convention that we use \_id on a data layer object to refer to the Airtable record ID, which is returned separately from `fields` in the Airtable API response. This means that when we fetch data, we often have to transform it into our expected format.
+
+## UI Components
+
+Our UI uses svelte (old school) and w3.css and is organized by feature in `src/ui/`. Each feature has its own directory, such as `tickets`, `assets`, or `students`. Inside each feature directory, we have components that are specific to that feature, as well as any shared components that are used across multiple features. `src/ui/utils/` and `src/components/` contain many general purpose components.
+
 # Working style
 
 When working in agent mode, please follow these guidelines:

@@ -100,6 +100,8 @@ export async function getTickets(
     priority?: number;
     minPriority?: number;
     maxPriority?: number;
+    // explicit set of Airtable record IDs
+    ticketIds?: string;
   } = {}
 ) {
   const queryString = new URLSearchParams(

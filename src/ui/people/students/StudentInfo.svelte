@@ -44,6 +44,14 @@
       {student.Status}
     </td>
   </tr>
+  {#if student.Tickets}
+    <tr>
+      <th> Tickets: </th>
+      <td>
+        {student.Tickets.length}
+      </td>
+    </tr>
+  {/if}
 </table>
 
 <style>
