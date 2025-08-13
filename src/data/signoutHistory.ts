@@ -1,8 +1,8 @@
 import type { Asset } from "./inventory";
-import type { Student } from "../students";
+import type { Student } from "./students";
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
-import { Staff } from "./staff";
+import type { Staff } from "./staff";
 export type SignoutHistoryEntry = {
   Status: string;
   "Asset Tag (from Asset)": string[];
@@ -41,26 +41,19 @@ export async function lookupSignoutHistory({
   staff?: Staff;
   isLatest?: boolean;
   onlyOut?: boolean;
-} = {}): SignoutHistoryEntry[] {
-  let params: {
-    mode: string;
-    assetTag?: string;
-    lasid?: number;
-    isLatest?: boolean;
-    staffId?: string;
-    onlyOut?: boolean;
-  } = { mode: "signoutHistory" };
+} = {}): Promise<SignoutHistoryEntry[]> {
+  let params: Record<string, string> = { mode: "signoutHistory" };
   if (asset) {
     params.assetTag = asset["Asset Tag"];
   }
   if (student) {
-    params.lasid = student.LASID;
+    params.lasid = String(student.LASID);
   }
   if (onlyOut) {
-    params.onlyOut = true;
+    params.onlyOut = "true";
   }
   if (isLatest) {
-    params.isLatest = true;
+    params.isLatest = "true";
   }
   if (staff) {
     params.staffId = staff._id;

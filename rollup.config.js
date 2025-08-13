@@ -6,6 +6,8 @@ import { terser } from "rollup-plugin-terser";
 import sveltePreprocess from "svelte-preprocess";
 import typescript from "@rollup/plugin-typescript";
 import css from "rollup-plugin-css-only";
+import alias from "@rollup/plugin-alias";
+import path from "path";
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -43,6 +45,21 @@ const svelteSetup = {
     file: "public/build/bundle.js",
   },
   plugins: [
+    alias({
+      entries: [
+        { find: "@data", replacement: path.resolve("src/data") },
+        { find: "@components", replacement: path.resolve("src/ui/components") },
+        { find: "@notifications", replacement: path.resolve("src/ui/notifications") },
+        { find: "@assets", replacement: path.resolve("src/ui/assets") },
+        { find: "@people", replacement: path.resolve("src/ui/people") },
+        { find: "@googleAdmin", replacement: path.resolve("src/ui/googleAdmin") },
+        { find: "@contracts", replacement: path.resolve("src/ui/contracts") },
+        { find: "@history", replacement: path.resolve("src/ui/history") },
+        { find: "@auth", replacement: path.resolve("src/ui/auth") },
+        { find: "@utils", replacement: path.resolve("src/ui/utils") },
+        { find: "@ui", replacement: path.resolve("src/ui") }
+      ]
+    }),
     svelte({
       preprocess: sveltePreprocess({ sourceMap: !production }),
       compilerOptions: {

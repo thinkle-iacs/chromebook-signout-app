@@ -22,6 +22,8 @@ export type Contract = {
   Student: string[];
   "LASID (from Student)": string[];
   ID: string;
+  _id: string; // Airtable record id
+  [key: string]: any; // permit additional Airtable-mapped fields
 };
 
 let lastFetch = null;

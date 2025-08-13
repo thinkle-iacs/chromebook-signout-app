@@ -22,7 +22,14 @@ export async function handler(event: APIGatewayEvent, context: Context) {
       DailyLoan,
     })
   );
-  let fields = {
+  let fields: {
+    [key: string]: any;
+    Asset: string[];
+    Status: string;
+    Notes: string;
+    FormUser: string;
+    DailyLoan: boolean;
+  } = {
     Asset: [assetRecordId],
     Status,
     Notes,
@@ -30,10 +37,10 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     DailyLoan: (DailyLoan == "true" && true) || false,
   };
   if (studentRecordId) {
-    fields.Student = [studentRecordId];
+    (fields as any).Student = [studentRecordId];
   }
   if (staffRecordId) {
-    fields.Staff = [staffRecordId];
+    (fields as any).Staff = [staffRecordId];
   }
 
   let result = await signoutHistoryBase.create([

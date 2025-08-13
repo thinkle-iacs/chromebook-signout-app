@@ -19,13 +19,23 @@ export async function signoutAsset(
   Status: CheckoutStatus = "Out",
   daily: boolean = false
 ) {
-  let params = {
+  type SignoutParams = {
+    mode: string;
+    Notes: string;
+    Status: string;
+    assetRecordId: string;
+    FormUser: string;
+    DailyLoan: string; // must be string for URLSearchParams
+    studentRecordId?: string;
+    staffRecordId?: string;
+  };
+  let params: SignoutParams = {
     mode: "signout",
     Notes,
     Status,
     assetRecordId: asset._id,
     FormUser: "",
-    DailyLoan: daily,
+    DailyLoan: String(daily),
   };
   let $user = get(user);
   if (student) {
@@ -36,7 +46,7 @@ export async function signoutAsset(
   }
   params.FormUser = $user.email;
   let response = await fetch(
-    "/.netlify/functions/index?" + new URLSearchParams(params)
+    "/.netlify/functions/index?" + new URLSearchParams(params as Record<string, string>)
   );
   let json = await response.json();
   if (json && json.length == 1) {
