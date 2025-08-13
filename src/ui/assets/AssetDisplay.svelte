@@ -1,70 +1,63 @@
-<script type="ts">
+<script lang="ts">
   import type { Asset } from "@data/inventory";
   import { l } from "@utils/util";
-  export let asset: Asset;
+  export let asset: Asset | null = null;
   export let showOwner: boolean = false;
+  $: assetTag = (asset && asset["Asset Tag"]) || "";
 </script>
 
-<div class="w3-container row">
-  <div
-    class="tag w3-round-xlarge"
-    class:w3-indigo={asset["Asset Tag"].match(/^[0-9][0-9][0-9][0-9]$/)}
-    class:w3-red={asset["Asset Tag"].match(/A[0-9][0-9][0-9][0-9]/)}
-    class:w3-black={asset["Asset Tag"].match(/^[0-9][0-9][0-9]$/)}
-  >
-    <a
-      href={`/asset/${asset["Asset Tag"]}`}
-      on:click={l(`/asset/${asset["Asset Tag"]}`)}
+{#if !asset || !assetTag}
+  <div class="w3-small w3-text-gray">(Unknown Asset)</div>
+{:else}
+  <div class="w3-container row">
+    <div
+      class="tag w3-round-xlarge"
+      class:w3-indigo={/^[0-9][0-9][0-9][0-9]$/.test(assetTag)}
+      class:w3-red={/^A[0-9][0-9][0-9][0-9]/.test(assetTag)}
+      class:w3-black={/^[0-9][0-9][0-9]$/.test(assetTag)}
     >
-      {asset["Asset Tag"]}
-    </a>
-  </div>
-  <div class="column">
-    <div class="model limit w3-small">
-      <b
-        >{asset.Make || ""}
-        {asset.Model || ""}</b
+      <a href={`/asset/${assetTag}`} on:click={l(`/asset/${assetTag}`)}
+        >{assetTag}</a
       >
-      {#if asset["Year of Purchase"]}
-        ({asset["Year of Purchase"]})
-      {/if}
     </div>
-    <div class="limit w3-tiny">
-      {#if asset["Charger Type"]}
-        <span class="charger">
-          {asset["Charger Type"]}
-        </span>
-      {/if}
-      {#if asset.Serial}
-        <div class="w3-monospace">
-          s/n: {asset.Serial}
-        </div>
-      {/if}
-      {#if asset["MAC-Wireless"]}
-        <span class="w3-monospace">
-          mac: {asset["MAC-Wireless"]}
-        </span>
-      {/if}
-    </div>
-    {#if showOwner}
-      <div class="w3-small">
-        {#if asset["Email (from Student (Current))"]}
-          Currently signed out to
-          <b class:inactive={asset["Student Status"]?.[0] === "Inactive"}
-            >{asset["Email (from Student (Current))"]}</b
-          >
-          {#if asset["YOG (from Student (Current))"]}
-            ({asset["YOG (from Student (Current))"]})
-          {/if}
-        {/if}
-        {#if asset["Full Name (from User)"]}
-          Currently signed out to staff
-          <b>{asset["Full Name (from User)"]}</b>
+    <div class="column">
+      <div class="model limit w3-small">
+        <b>{asset.Make || ""} {asset.Model || ""}</b>
+        {#if asset["Year of Purchase"]}
+          ({asset["Year of Purchase"]})
         {/if}
       </div>
-    {/if}
+      <div class="limit w3-tiny">
+        {#if asset["Charger Type"]}
+          <span class="charger">{asset["Charger Type"]}</span>
+        {/if}
+        {#if asset.Serial}
+          <div class="w3-monospace">s/n: {asset.Serial}</div>
+        {/if}
+        {#if asset["MAC-Wireless"]}
+          <span class="w3-monospace">mac: {asset["MAC-Wireless"]}</span>
+        {/if}
+      </div>
+      {#if showOwner}
+        <div class="w3-small">
+          {#if asset["Email (from Student (Current))"]}
+            Currently signed out to
+            <b class:inactive={asset["Student Status"]?.[0] === "Inactive"}
+              >{asset["Email (from Student (Current))"]}</b
+            >
+            {#if asset["YOG (from Student (Current))"]}
+              ({asset["YOG (from Student (Current))"]})
+            {/if}
+          {/if}
+          {#if asset["Full Name (from User)"]}
+            Currently signed out to staff
+            <b>{asset["Full Name (from User)"]}</b>
+          {/if}
+        </div>
+      {/if}
+    </div>
   </div>
-</div>
+{/if}
 
 <style>
   a {

@@ -132,6 +132,9 @@ export async function handler(event: APIGatewayEvent, context: Context) {
         "Staff Email",
         "LASID",
         "Student Status",
+        // NEW lookup fields for ticket integration
+        "Ticket Numbers",
+        "Temp Ticket Numbers",
       ],
       offset, // Pass the offset for pagination
     });
