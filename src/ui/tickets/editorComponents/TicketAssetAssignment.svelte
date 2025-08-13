@@ -135,29 +135,33 @@
       </div>
     {/if}
 
-    <div class="w3-margin-top">
+    <div class="w3-margin-top action-buttons">
       <button
-        class="w3-btn w3-green w3-small"
-        on:click={saveAssetLink}
-        disabled={!hasChanges || disabled}
-      >
-        Save
-      </button>
-      <button
-        class="w3-btn w3-gray w3-small w3-margin-left"
+        class="w3-btn w3-gray w3-small icon-btn"
         on:click={cancelEditing}
         {disabled}
+        title="Cancel"
+        aria-label="Cancel"
       >
-        Cancel
+        ✕
+      </button>
+      <button
+        class="w3-btn w3-green w3-small icon-btn save-btn"
+        on:click={saveAssetLink}
+        disabled={!hasChanges || disabled}
+        title="Save"
+        aria-label="Save"
+      >
+        ✓
       </button>
       {#if displayAsset}
         <button
-          class="w3-btn w3-red w3-small w3-margin-left"
+          class="w3-btn w3-red w3-small icon-btn remove-btn"
           title="Remove asset"
           on:click={removeAsset}
           {disabled}
         >
-          Remove
+          –
         </button>
       {/if}
     </div>
@@ -179,3 +183,9 @@
     {field === "Device" ? "Link Device" : "Link Temp Device"}
   </button>
 {/if}
+
+<style>
+  .icon-btn { padding:2px 8px; font-weight:600; line-height:1.2; }
+  .action-buttons { display:flex; align-items:center; gap:6px; }
+  .save-btn { margin-left:auto; }
+</style>

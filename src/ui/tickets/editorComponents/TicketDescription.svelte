@@ -16,13 +16,19 @@
   let privateNotes = "";
 
   let editUserDescription = false;
-
   // Sync local state with ticket; allow external updates (e.g. draft merge) to flow in
   $: if (ticket) {
     if (ticket._id !== currentId) {
       editUserDescription = false; // reset edit mode on ID change
     }
     currentId = ticket._id;
+    // Auto-enable edit if no description
+    if (
+      !ticket["User Description"] ||
+      ticket["User Description"].trim() === ""
+    ) {
+      editUserDescription = true;
+    }
   }
 </script>
 

@@ -210,23 +210,35 @@
         };
         delete creationPayload._id;
         delete creationPayload._linked;
+        // Remove computed / readonly fields Airtable rejects
+        delete creationPayload.Created;
         if (creationPayload.Number === 0) delete creationPayload.Number;
         Object.keys(creationPayload).forEach((k) => {
           if (creationPayload[k] === undefined) delete creationPayload[k];
         });
         const record: any = await apiCreateTicket(creationPayload);
-        updated = {
-          ...(ticket as any),
-          ...(record.fields || {}),
-          _id: record.id,
-          History: mergedHistory,
-        } as Ticket;
-        Object.assign(ticket, updated);
-        onUpdateTicket(updated, composed);
-        showToast("Ticket created", "success");
+        if (record?.id) {
+          updated = {
+            ...(ticket as any),
+            ...(record.fields || {}),
+            _id: record.id,
+            History: mergedHistory,
+          } as Ticket;
+          Object.assign(ticket, updated);
+          onUpdateTicket(updated, composed);
+          showToast("Ticket created", "success");
+        } else {
+          showToast("Create failed", "error");
+          return; // abort to avoid falling through
+        }
       } else {
-        const merged = { ...updates, History: mergedHistory };
-        updated = await saveTicket(ticket._id, merged);
+        const merged = { ...updates, History: mergedHistory } as any;
+        // Remove non-field props that Airtable rejects
+        delete (merged as any)._id;
+        delete (merged as any)._linked;
+        delete (merged as any).Created; // readonly formula/computed
+        const updatedRaw = await saveTicket(ticket._id, merged);
+        const updated = updatedRaw as Ticket;
         Object.assign(ticket, updated);
         onUpdateTicket(updated, composed);
         showToast("Ticket updated", "success");

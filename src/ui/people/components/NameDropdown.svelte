@@ -28,18 +28,35 @@
   }
   let show = true;
 
+  // Track positioning relative to input wrapper
+  let coords = { top: 0, left: 0, width: 0 };
+  function updatePosition() {
+    if (inputElement) {
+      const rect = inputElement.getBoundingClientRect();
+      // Use offset within containing block instead of viewport
+      // We'll rely on closest positioned ancestor (.input-wrapper) so just align left:0, top:100%
+      coords = { top: inputElement.offsetHeight, left: 0, width: rect.width };
+    }
+  }
+  // Recompute when dropdown content changes or input ref established
+  $: updatePosition();
+  function handleResize() {
+    updatePosition();
+  }
+  window.addEventListener("resize", handleResize);
+  // Clean up (Svelte automatically on destroy by returning function)
+  import { onDestroy } from "svelte";
+  onDestroy(() => window.removeEventListener("resize", handleResize));
+
   function trackFocus(element) {
     document.body.addEventListener("click", (mouseEvent) => {
-      console.log("Body click", mouseEvent, mouseEvent.target);
-      console.log("We check", dropdownElement, "and", inputElement);
       if (
         (dropdownElement && dropdownElement.contains(mouseEvent.target)) ||
         (inputElement && inputElement.contains(mouseEvent.target))
       ) {
-        console.log("Our event, do nothing");
         show = true;
+        updatePosition();
       } else {
-        console.log("Not our event");
         show = false;
       }
     });
@@ -52,6 +69,7 @@
     class="w3-white dropdown w3-ul w3-border"
     use:trackFocus
     bind:this={dropdownElement}
+    style="top:{coords.top}px;left:{coords.left}px;min-width:{coords.width}px;"
   >
     {#each dropdown as person}
       <li
@@ -84,9 +102,7 @@
 
   .dropdown {
     position: absolute;
-    top: 0px;
-    left: 0px;
-    z-index: 2;
+    z-index: 5;
   }
   .inactive button.w3-button {
     text-decoration: line-through;

@@ -1,11 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    getTickets,
-    ticketsStore,
-    updateTicket as apiUpdateTicket,
-    type Ticket,
-  } from "@data/tickets";
+  import { getTickets, ticketsStore, type Ticket } from "@data/tickets";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import StudentTag from "@people/students/StudentTag.svelte";
   import TicketWorkflow from "./TicketWorkflow.svelte";
@@ -122,23 +117,17 @@
     selectedTicket = null;
   }
 
-  async function handleUpdateTicket(
-    updates: Partial<Ticket>,
-    historyEntry: HistoryEntry<Record<string, { from?: unknown; to?: unknown }>>
+  // Replace old handleUpdateTicket that re-called API with updated full ticket object
+  function handleUpdateTicket(
+    updatedTicket: Ticket,
+    _historyEntry: HistoryEntry<
+      Record<string, { from?: unknown; to?: unknown }>
+    >
   ) {
-    if (!selectedTicket) return;
-    try {
-      await apiUpdateTicket(selectedTicket._id, updates, historyEntry);
-      // Refresh tickets and update selectedTicket reference
-      await getTickets();
-      const refreshed = (ticketsStore as any).subscribe(() => {});
-      // Simpler: pull from $ticketsStore reactive value
-      // (rely on existing $: tickets = Object.values($ticketsStore))
-      const updated = ($ticketsStore as any)[selectedTicket._id];
-      if (updated) selectedTicket = updated;
-    } catch (e) {
-      console.error("Failed to update ticket from browser modal", e);
-    }
+    // The workflow already persisted changes; just sync selection & let reactive store update table
+    selectedTicket = updatedTicket;
+    // Optionally refresh filters by triggering reactive assignments
+    tickets = Object.values($ticketsStore);
   }
 
   function createTempTicket() {
