@@ -3,8 +3,10 @@
   import TicketWorkflow from "./TicketWorkflow.svelte";
   import StudentTag from "@people/students/StudentTag.svelte";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
+  import { ticketsStore } from "@data/tickets";
+
   // Accept tickets array from parent; keep minimal local state
-  export let tickets: Ticket[] = [];
+  export let ticketIDs: string[] = [];
   export let showFilters: boolean = false;
   export let showStudentColumn: boolean = true;
   export let showAssetColumn: boolean = true;
@@ -12,6 +14,10 @@
   export let compact: boolean = true;
   // NEW: control initial visibility of closed tickets from parent
   export let hideClosedInitially: boolean = false;
+
+  let tickets = ticketIDs
+    .map((id) => $ticketsStore[id] || null)
+    .filter(Boolean);
 
   let selectedTicket: Ticket = null;
   let showDetailModal = false;
@@ -120,7 +126,7 @@
     ...new Set(tickets.map((t) => t["Ticket Status"]).filter(Boolean)),
   ].sort();
   function openTicket(t: Ticket) {
-    selectedTicket = t;
+    selectedTicket = structuredClone(t); // avoid direct reference
     showDetailModal = true;
   }
   function closeDetail() {
@@ -130,6 +136,7 @@
   function handleUpdateTicket(updatedTicket: Ticket) {
     const idx = tickets.findIndex((t) => t._id === updatedTicket._id);
     if (idx >= 0) tickets[idx] = updatedTicket as any;
+    selectedTicket = structuredClone(updatedTicket); // avoid direct reference
   }
 </script>
 

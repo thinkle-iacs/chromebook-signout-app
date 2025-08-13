@@ -193,7 +193,7 @@
         <p class="w3-small w3-opacity">No tickets for this asset.</p>
       {:else}
         <TicketTable
-          {tickets}
+          ticketIDs={tickets.map((t) => t._id)}
           showStudentColumn={true}
           showAssetColumn={true}
           showTempColumn={true}

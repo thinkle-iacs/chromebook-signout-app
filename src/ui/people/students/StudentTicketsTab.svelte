@@ -72,7 +72,7 @@
     <p class="w3-small w3-opacity">No tickets for this student.</p>
   {:else}
     <TicketTable
-      {tickets}
+      ticketIDs={tickets.map((t) => t._id)}
       showStudentColumn={false}
       showAssetColumn={true}
       showFilters={false}
