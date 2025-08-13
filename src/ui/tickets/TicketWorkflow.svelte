@@ -168,6 +168,11 @@
       Record<string, { from?: unknown; to?: unknown }>
     >
   ) {
+    console.log(
+      "TicketWorkflow updateTicket called with:",
+      updates,
+      historyEntry
+    );
     if (readOnly) return;
 
     const now = new Date().toISOString();

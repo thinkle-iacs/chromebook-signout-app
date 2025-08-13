@@ -1,10 +1,12 @@
 <script lang="ts">
   import EditButton from "./EditButton.svelte";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
-  import { assetTag, validateAsset } from "@utils/validators";
+  import { validateAsset } from "@utils/validators";
   import { assetStore, searchForAsset } from "@data/inventory";
   import type { Ticket } from "@data/tickets";
-  import { get } from "svelte/store";
+  import { get, writable } from "svelte/store";
+
+  let myAssetTag = writable("");
 
   export let ticket: Ticket;
   export let field: "Device" | "Temporary Device" = "Device";
@@ -63,11 +65,11 @@
   }
 
   // When assetTag changes, update currentAsset and trigger validation
-  $: if ($assetTag) {
-    currentAsset = get(assetStore)[$assetTag.toUpperCase()];
+  $: if ($myAssetTag) {
+    currentAsset = get(assetStore)[$myAssetTag.toUpperCase()];
     // Trigger validation to show any validation messages
-    if (editing && $assetTag.length >= 2) {
-      validateAsset($assetTag);
+    if (editing && $myAssetTag.length >= 2) {
+      validateAsset($myAssetTag, myAssetTag);
     }
   } else {
     currentAsset = null;
@@ -79,20 +81,20 @@
   function startEditing() {
     editing = true;
     // Set the global store to the currently displayed asset's tag
-    $assetTag = displayAsset?.["Asset Tag"] || "";
+    $myAssetTag = displayAsset?.["Asset Tag"] || "";
   }
 
   function cancelEditing() {
     editing = false;
-    $assetTag = "";
+    $myAssetTag = "";
     currentAsset = null;
   }
 
   async function saveAssetLink() {
     if (!currentAsset) {
       // Try to search for the asset if not found locally
-      await searchForAsset($assetTag);
-      currentAsset = get(assetStore)[$assetTag.toUpperCase()];
+      await searchForAsset($myAssetTag);
+      currentAsset = get(assetStore)[$myAssetTag.toUpperCase()];
 
       if (!currentAsset) {
         alert("Asset not found");
@@ -103,7 +105,7 @@
     // Optimistically show the selection until parent persists
     localAsset = currentAsset;
     editing = false;
-    $assetTag = "";
+    $myAssetTag = "";
     currentAsset = null;
   }
 
@@ -112,7 +114,7 @@
     // Clear local override immediately
     localAsset = null;
     editing = false;
-    $assetTag = "";
+    $myAssetTag = "";
     currentAsset = null;
   }
 </script>
@@ -124,7 +126,7 @@
       type="text"
       class="w3-input w3-border"
       placeholder="Enter asset tag..."
-      bind:value={$assetTag}
+      bind:value={$myAssetTag}
       autocomplete="off"
       {disabled}
     />
@@ -185,7 +187,17 @@
 {/if}
 
 <style>
-  .icon-btn { padding:2px 8px; font-weight:600; line-height:1.2; }
-  .action-buttons { display:flex; align-items:center; gap:6px; }
-  .save-btn { margin-left:auto; }
+  .icon-btn {
+    padding: 2px 8px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .save-btn {
+    margin-left: auto;
+  }
 </style>

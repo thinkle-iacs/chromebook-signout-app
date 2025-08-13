@@ -26,7 +26,7 @@
     studentName,
     staffName,
     assetTags,
-    chargerTag,
+    /* chargerTag, */
     validateStudent,
     validateStaff,
     validateAssets,
@@ -48,7 +48,7 @@
   let student: Student | null = null;
   let staff: Staff | null = null;
   let assets: Asset[] | null = null;
-  let charger: null = null;
+  /* let charger: null = null; */
 
   onMount(async () => {
     console.log("Fetch contacts!");
@@ -61,7 +61,7 @@
       value: $assetTags,
       validators: [validateAssets],
     },
-    charger: {
+    /* charger: {
       value: $chargerTag,
 
       validators: [
@@ -72,7 +72,7 @@
         }),
         (s) => validateAsset(s, true),
       ],
-    },
+    }, */
     staffName: {
       value: $staffName,
       validators: [
@@ -118,7 +118,7 @@
     $staffName,
     staff,
     $assetTags,
-    $chargerTag,
+    /* $chargerTag, */
     $studentName,
     student,
     assets,
@@ -127,7 +127,7 @@
   $: student = studentMode && getStudent($studentName);
   $: staff = !studentMode && $staffStore[$staffName];
   $: assets = $assetTags.map((assetTag) => $assetStore[assetTag.toUpperCase()]);
-  $: charger = $assetStore[$chargerTag];
+  /* $: charger = $assetStore[$chargerTag]; */
 
   let checkedOut: {
     _id: string;
@@ -174,9 +174,9 @@
         success = await doCheckout(asset, notes, daily);
       }
     }
-    if (charger) {
+    /* if (charger) {
       success = await doCheckout(charger, (!assets && notes) || "", daily);
-    }
+    } */
     if (studentNotes) {
       success = await addStudentNote(student, studentNotes);
       console.log("student note success?", success);
@@ -188,7 +188,7 @@
       $screenNote = null;
       $keyboardNote = null;
       $powerNote = null;
-      $chargerTag = "";
+      /* $chargerTag = ""; */
     }
   }
 
@@ -201,7 +201,7 @@
   };
   let valid;
   $: valid =
-    (!!assets || !!charger) &&
+    !!assets &&
     (status != "Out" ||
       (studentMode && !!student) ||
       (!studentMode && !!staff));
@@ -419,7 +419,7 @@ Hinge bolts:New screws needed for display hinges*/
         />
       </FormField>
       {#if mode != "it"}
-        <FormField
+        <!-- <FormField
           fullWidth={false}
           name="Charger"
           errors={$chargerTag && $signoutForm?.fields?.chargerTag?.errors}
@@ -432,7 +432,7 @@ Hinge bolts:New screws needed for display hinges*/
             placeholder="Charger (3 digit number)"
             autocomplete="off"
           />
-        </FormField>
+        </FormField> -->
       {/if}
       <FormField name="Action" fullWidth={false}>
         {#if mode == "it"}
@@ -456,7 +456,7 @@ Hinge bolts:New screws needed for display hinges*/
         >
       </FormField>
     </div>
-    {#if assets || charger}
+    {#if assets.length}
       <div in:fly|local={{ y: -30 }} out:fade class="rowDetail row">
         {#each assets as asset}
           {#if asset}
@@ -465,22 +465,6 @@ Hinge bolts:New screws needed for display hinges*/
             </div>
           {/if}
         {/each}
-        {#if charger}
-          <div in:fade|local out:fade|local>
-            <AssetDisplay asset={charger} showOwner={true} />
-          </div>
-        {/if}
-        {#if charger && assets && assets[0] && assets[0]["Charger Type"]}
-          {#if charger["Model"] == assets[0]["Charger Type"]}
-            <span class="w3-text-blue">Correct charger!</span>
-          {:else}
-            <span class="w3-text-orange">
-              Machine requires
-              {assets[0]["Charger Type"]}
-              but you have {charger["Model"] || "Unknown"}?
-            </span>
-          {/if}
-        {/if}
       </div>
     {/if}
     {#if status == "Returned"}
