@@ -238,10 +238,10 @@
   <div
     style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;"
   >
-    <h2>Ticket Browser</h2>
+    <h2>Tickets</h2>
     <div style="display:flex; gap:8px;">
       <button class="w3-button w3-green" on:click={createTempTicket}>
-        + New Ticket
+        New
       </button>
     </div>
   </div>
