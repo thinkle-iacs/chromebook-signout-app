@@ -51,3 +51,43 @@ You asked to avoid an extra `features/` layer. Proposal keeps top-level feature 
 - Create subdirectory after confirming name is good
 - Move/Update
 - Rinse Repeat until ui/ directory is free of clutter.
+
+More things to move to generic components...
+
+- [ ] ListInput
+
+- [ ] assets
+  - [ ] ChromebookInfoDisplay
+  - [ ] AssetDisplay
+  - [ ] LookupAsset
+- [ ] people
+  - [ ] components
+    - [ ] NameDropdown
+  - [ ] students
+    - [ ] LookupStudent
+    - [ ] StudentInfo
+    - [ ] StudentNote
+    - [ ] StudentTag
+  - [ ] staff
+    - [ ] LookupStaff
+  - [ ] contacts
+    - [ ] Contacts.svelte
+- [ ] googleAdmin
+  - [ ] StudentGoogleAdminHistory
+- [ ] contracts
+  - [ ] StudentContractStatus
+  - [ ] Contracts
+- [ ] history
+  - [ ] SignoutHistoryTable
+  - [ ] History
+- [ ] auth
+  - [ ] LogIn.svelte
+- [ ] util
+  - [ ] util
+  - [ ] validator
+- [ ] tickets
+  - [ ] invoices
+    - [ ] Invoices
+- [ ] Checkout
+- [ ] App
+- [ ] Test
