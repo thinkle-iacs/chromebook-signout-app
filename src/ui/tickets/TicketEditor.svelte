@@ -31,10 +31,13 @@
   const deviceStatusOptions = [
     undefined,
     "New",
+    "Active",
+    "Needs Diagnosis",
     "Waiting on Part",
     "Waiting on Repair",
     "Repaired",
-    "Discarded",
+    "Retired",
+    "Lost",
   ];
 
   const tempStatusOptions = [

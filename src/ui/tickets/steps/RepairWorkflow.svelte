@@ -36,10 +36,13 @@
   // Device status (on Inventory asset, not on ticket)
   const deviceStatusOptions = [
     "New",
+    "Active",
+    "Needs Diagnosis",
     "Waiting on Part",
     "Waiting on Repair",
     "Repaired",
-    "Discarded",
+    "Retired",
+    "Lost",
   ];
 
   const resolutions: Ticket["Resolution"][] = [
