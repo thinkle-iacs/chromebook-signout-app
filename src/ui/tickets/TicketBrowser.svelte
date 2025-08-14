@@ -375,7 +375,7 @@
             </th>
             <th>Resolution</th>
             <th>Device Status</th>
-            <th>Temp Status</th>
+            <th>Temp</th>
             <th>Student</th>
             <th>Device</th>
             <th>Description</th>
@@ -434,13 +434,24 @@
                 {/if}
               </td>
               <td>
-                {#if ticket["Temp Status"]}
-                  <span class="w3-tag w3-small w3-light-blue">
-                    {ticket["Temp Status"]}
-                  </span>
-                {:else}
-                  <span class="w3-text-gray">-</span>
-                {/if}
+                <div
+                  class="w3-center"
+                  style="display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;"
+                >
+                  {#if ticket["Temp Status"]}
+                    <span class="w3-tag w3-small w3-light-blue">
+                      {ticket["Temp Status"]}
+                    </span>
+                  {:else}
+                    <span class="w3-text-gray">-</span>
+                  {/if}
+                  {#if ticket["Temporary Device"]}
+                    {@const tempDeviceObject = ticket?._linked?.[
+                      "Temporary Device"
+                    ] || { "Asset Tag": ticket["Temporary Device"] }}
+                    <AssetDisplay asset={tempDeviceObject} showStatus={false} />
+                  {/if}
+                </div>
               </td>
               <td class="w3-text-blue">
                 {#if ticket._linked?.Student}
@@ -619,5 +630,9 @@
     white-space: normal;
     line-height: 1.2em;
     max-height: calc(1.2em * 3); /* fallback for non-webkit browsers */
+  }
+  .w3-table thead th {
+    text-align: center;
+    vertical-align: middle;
   }
 </style>
