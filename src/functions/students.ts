@@ -16,6 +16,8 @@ export async function handler(event: APIGatewayEvent, context: Context) {
       "Status",
       // Include linked Ticket record IDs for integration (list of Airtable record IDs)
       "Tickets",
+      // Include open ticket numbers for quick lookup
+      "Ticket Numbers",
     ],
   });
   let result = await query.firstPage();

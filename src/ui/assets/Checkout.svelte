@@ -38,6 +38,7 @@
   import { createEmail } from "@notifications/messageUtils";
   import StudentNote from "@people/students/StudentNote.svelte";
   import StudentTag from "@people/students/StudentTag.svelte";
+  import CheckoutTicketLink from "@ui/tickets/components/CheckoutTicketLink.svelte";
 
   let status: CheckoutStatus = "Out";
   let notes = "";
@@ -589,6 +590,7 @@ Hinge bolts:New screws needed for display hinges*/
         />
       {/if}
     {/if}
+    <CheckoutTicketLink {student} asset={assets && assets[0]} />
     <input
       class:w3-red={valid}
       disabled={!valid}

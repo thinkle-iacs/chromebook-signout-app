@@ -12,6 +12,7 @@ export type Student = {
   _id: string;
   Status: "Active" | "Inactive";
   Tickets?: string[]; // list of Ticket record IDs (lookup from Airtable)
+  "Ticket Numbers"?: number[]; // list of open ticket numbers associated with this student
 };
 let cachedSearch = {};
 
