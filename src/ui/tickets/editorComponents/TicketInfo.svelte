@@ -89,7 +89,6 @@
       <h5>Device</h5>
       <TicketAssetAssignment
         {ticket}
-        {disabled}
         onSave={async (deviceId, device) => {
           onChange({
             Device: deviceId ? [deviceId] : [],
