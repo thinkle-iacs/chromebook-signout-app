@@ -425,7 +425,7 @@
                 {/if}
               </td>
               <td>
-                {#if ticket._linked?.Device?.Status}
+                {#if ticket.Device?.length && ticket._linked?.Device?.Status}
                   <span class="w3-tag w3-small w3-gray">
                     {ticket._linked.Device.Status}
                   </span>
@@ -454,7 +454,7 @@
                 </div>
               </td>
               <td class="w3-text-blue">
-                {#if ticket._linked?.Student}
+                {#if ticket?.Student?.length && ticket._linked?.Student}
                   <StudentTag student={ticket._linked.Student} />
                 {:else}
                   <span class="w3-text-gray">-</span>
@@ -485,7 +485,7 @@
                 {/if}
               </td>
               <td>
-                {#if ticket._linked?.Staff}
+                {#if ticket.Staff?.length && ticket._linked?.Staff}
                   <div class="w3-small">
                     <strong>{ticket._linked?.Staff["Full Name"]}</strong><br />
                     <span class="w3-text-gray">{ticket._linked.Staff.Role}</span
