@@ -124,9 +124,7 @@
       Record<string, { from?: unknown; to?: unknown }>
     >
   ) {
-    // The workflow already persisted changes; just sync selection & let reactive store update table
     selectedTicket = updatedTicket;
-    // Optionally refresh filters by triggering reactive assignments
     tickets = Object.values($ticketsStore);
   }
 
@@ -385,12 +383,19 @@
         </thead>
         <tbody>
           {#each filteredTickets as ticket (ticket._id)}
-            <tr class="w3-hover-light-gray">
+            <tr
+              class="w3-hover-light-gray clickable-row"
+              on:click={() => showTicketDetail(ticket)}
+              title="Click row or number to open details"
+            >
               <td class="w3-text-blue">
                 <button
                   class="ticket-number-btn w3-btn w3-small w3-blue w3-hover-dark-blue"
-                  on:click={() => showTicketDetail(ticket)}
-                  title="Click to view ticket details"
+                  on:click={(e) => {
+                    e.stopPropagation();
+                    showTicketDetail(ticket);
+                  }}
+                  title="Open ticket details"
                 >
                   #{ticket.Number ||
                     (ticket._id.startsWith("TEMP-") ? "Draft" : "")}
@@ -437,6 +442,7 @@
                 <div
                   class="w3-center"
                   style="display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;"
+                  
                 >
                   {#if ticket["Temp Status"]}
                     <span class="w3-tag w3-small w3-light-blue">
@@ -453,14 +459,14 @@
                   {/if}
                 </div>
               </td>
-              <td class="w3-text-blue">
+              <td class="w3-text-blue" on:click|stopPropagation>
                 {#if ticket?.Student?.length && ticket._linked?.Student}
                   <StudentTag student={ticket._linked.Student} />
                 {:else}
                   <span class="w3-text-gray">-</span>
                 {/if}
               </td>
-              <td>
+              <td 
                 {#if ticket.Device && ticket._linked?.Device}
                   <AssetDisplay
                     asset={ticket._linked.Device}
@@ -484,7 +490,7 @@
                   <span class="w3-text-gray">-</span>
                 {/if}
               </td>
-              <td>
+              <td 
                 {#if ticket.Staff?.length && ticket._linked?.Staff}
                   <div class="w3-small">
                     <strong>{ticket._linked?.Staff["Full Name"]}</strong><br />
@@ -493,6 +499,7 @@
                     <a
                       href="mailto:{ticket._linked.Staff.Email}"
                       class="w3-text-blue w3-small"
+                      on:click|stopPropagation
                     >
                       {ticket._linked.Staff.Email}
                     </a>
@@ -501,7 +508,7 @@
                   <span class="w3-text-gray">-</span>
                 {/if}
               </td>
-              <td class="w3-small">
+              <td class="w3-small" on:click|stopPropagation>
                 {ticket.SubmittedBy || "-"}
               </td>
             </tr>
@@ -553,7 +560,9 @@
   td {
     vertical-align: top;
   }
-
+  .clickable-row {
+    cursor: pointer;
+  }
   .ticket-number-btn {
     padding: 4px 8px;
     font-weight: bold;
