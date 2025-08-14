@@ -6,7 +6,19 @@ export async function handler(event: APIGatewayEvent, context: Context) {
   let query = studentsBase.select({
     maxRecords: 100,
     filterByFormula: `Search("${name.toLowerCase()}",LOWER({Name}))`,
-    fields: ["LASID", "Name", "Email", "YOG", "Advisor", "Notes", "Status"],
+    fields: [
+      "LASID",
+      "Name",
+      "Email",
+      "YOG",
+      "Advisor",
+      "Notes",
+      "Status",
+      // Include linked Ticket record IDs for integration (list of Airtable record IDs)
+      "Tickets",
+      // Include open ticket numbers for quick lookup
+      "Ticket Numbers",
+    ],
   });
   let result = await query.firstPage();
   return {

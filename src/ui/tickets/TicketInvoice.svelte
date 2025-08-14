@@ -53,8 +53,8 @@
   }
 
   // Helper data for display
-  $: studentEmailText = (ticket as any)?._linked?.Student?.Email || "-";
-  $: assetTagText = (ticket as any)?._linked?.Device?.["Asset Tag"] || "-";
+  $: studentEmailText = ticket?._linked?.Student?.Email || "-";
+  $: assetTagText = ticket?._linked?.Device?.["Asset Tag"] || "-";
   $: repairCost = ticket["Repair Cost"] || 0;
 </script>
 

@@ -1,6 +1,5 @@
 <script lang="ts">
   import StudentInfo from "./StudentInfo.svelte";
-
   import router from "page";
   import type { Student } from "@data/students";
   import type { Asset } from "@data/inventory";
@@ -16,12 +15,12 @@
   import { lookupSignoutHistory } from "@data/signoutHistory";
   import MessageSender from "@notifications/MessageSender.svelte";
   import StudentGoogleAdminHistory from "@googleAdmin/StudentGoogleAdminHistory.svelte";
+  import StudentTicketsTab from "./StudentTicketsTab.svelte";
   export let name;
   if (name) {
     $studentName = name;
     console.log("Got student", $studentName, name);
   }
-
   let lookupForm;
   let validators = () => ({
     student: {
@@ -29,34 +28,37 @@
       validators: [validateStudent],
     },
   });
-
   function doValidation(...args) {
     if (lookupForm) {
-      console.log("Validate!");
       lookupForm.validate();
     }
   }
   $: doValidation(lookupForm, $studentName);
-
   let student: Student | null;
   $: student = getStudent($studentName, $studentsStore);
-
   $: if (student) {
     router(`/student/${student.Name}`);
   } else {
     router(`/student/`);
   }
-
   let loans: SignoutHistoryEntry[] | null;
   let current: Asset[] | null;
-
-  async function getCurrentLoans() {
-    current = await getCurrentLoansForStudent(student);
+  let loansLoaded = false;
+  let loadingLoans = false;
+  let lastLoansStudentId: string | null = null;
+  async function ensureLoansLoaded() {
+    if (!student || loansLoaded || loadingLoans) return;
+    loadingLoans = true;
+    try {
+      current = await getCurrentLoansForStudent(student);
+      await loadSignoutHistory();
+      loansLoaded = true;
+    } finally {
+      loadingLoans = false;
+    }
   }
-
-  async function getSignoutHistory() {
+  async function loadSignoutHistory() {
     let studentResults = await lookupSignoutHistory({ student });
-    console.log("Got student results", studentResults);
     studentResults.reverse();
     loans = studentResults;
     let recordNumbers = new Set();
@@ -65,48 +67,43 @@
       assetTags.add(r["Asset Tag (from Asset)"][0]);
       recordNumbers.add(r.Num);
     });
-    console.log("We have tags:", assetTags);
     for (let tag of Array.from(assetTags)) {
-      console.log("Now look up other results for ", tag);
       let assetResults = await lookupSignoutHistory({
         asset: { "Asset Tag": tag },
       });
       for (let result of assetResults) {
         if (!recordNumbers.has(result.Num)) {
-          console.log("Adding", result);
           loans = [...loans, result];
           recordNumbers.add(result.Num);
         }
       }
     }
-    console.log("Now sort", loans);
     loans.sort((a, b) => b.Num - a.Num);
     loans = loans;
   }
-
-  $: if (student) {
-    getCurrentLoans();
-    getSignoutHistory();
+  // Remove previous reactive blocks that reset state each render and replace with guarded logic
+  $: if (student && student._id !== lastLoansStudentId) {
+    // student changed
+    lastLoansStudentId = student._id;
+    loans = null;
+    current = null;
+    loansLoaded = false;
+    loadingLoans = false;
+    if (activeTab === "loans") ensureLoansLoaded();
   }
-
+  $: if (activeTab === "loans" && student && !loansLoaded && !loadingLoans) {
+    ensureLoansLoaded();
+  }
   let nameInput: HTMLInputElement | null;
   let latestLoan;
-
   function getLatestLoan(loans: SignoutHistoryEntry[]) {
-    if (!loans) {
-      return;
-    }
-    latestLoan = loans.find((l) => {
-      if (l.LASID == student.LASID) {
-        if (l.Status == "Out") {
-          return true;
-        }
-      }
-    });
+    if (!loans) return;
+    latestLoan = loans.find(
+      (l) => l.LASID == student.LASID && l.Status == "Out"
+    );
   }
-
   $: getLatestLoan(loans);
-  let activeTab: "loans" | "google" = "loans";
+  let activeTab: "loans" | "google" | "tickets" = "loans";
 </script>
 
 <div class="search w3-xlarge w3-container">
@@ -146,16 +143,23 @@
           class:w3-blue={activeTab == "google"}
           on:click={() => (activeTab = "google")}>Google Admin Data</button
         >
+        <button
+          class="w3-bar-item w3-button"
+          class:w3-blue={activeTab == "tickets"}
+          on:click={() => (activeTab = "tickets")}
+          >Tickets{#if student?.Tickets}&nbsp;({student.Tickets
+              .length}){/if}</button
+        >
       </nav>
-
       <div class="w3-container">
-        {#if activeTab == "google"}
-          <StudentGoogleAdminHistory {student} />
-        {/if}
+        <StudentGoogleAdminHistory {student} active={activeTab === "google"} />
+        <StudentTicketsTab {student} active={activeTab === "tickets"} />
         {#if activeTab == "loans"}
           <h3>Current Loans:</h3>
           {#if !current}
-            <p class="w3-opacity w3-ital">Fetching...</p>
+            <p class="w3-opacity w3-ital">
+              {loansLoaded ? "No current loans" : "Fetching..."}
+            </p>
           {:else}
             {#each current as asset}
               <AssetDisplay {asset} />
@@ -165,7 +169,9 @@
           {/if}
           <h3>Signout History:</h3>
           {#if !loans}
-            <p class="w3-opacity w3-ital">Fetching...</p>
+            <p class="w3-opacity w3-ital">
+              {loansLoaded ? "No history" : "Fetching..."}
+            </p>
           {:else if loans.length}
             {#if latestLoan}
               <MessageSender signoutItem={latestLoan} />
@@ -192,11 +198,9 @@
     margin-bottom: 32px;
     margin-top: 16px;
   }
-
   article {
     padding-bottom: 32px;
   }
-
   input {
     width: min(100vh - 32px, 800px);
   }

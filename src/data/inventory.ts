@@ -21,6 +21,9 @@ export type Asset = {
   Location: string;
   "Charger Type": string | null;
   "Student Status": string[] | null;
+  // NEW lookup arrays for ticket integration
+  "Ticket Numbers"?: number[]; // primary device on these ticket numbers
+  "Temp Ticket Numbers"?: number[]; // temp/loaner device on these ticket numbers
 };
 
 export async function searchForAsset(

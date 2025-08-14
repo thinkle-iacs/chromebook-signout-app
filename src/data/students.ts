@@ -11,6 +11,8 @@ export type Student = {
   Notes: string;
   _id: string;
   Status: "Active" | "Inactive";
+  Tickets?: string[]; // list of Ticket record IDs (lookup from Airtable)
+  "Ticket Numbers"?: number[]; // list of open ticket numbers associated with this student
 };
 let cachedSearch = {};
 
@@ -27,6 +29,7 @@ export async function searchForStudent(name) {
     for (let result of json) {
       $studentsStore[result.fields.LASID] = {
         ...result.fields,
+        Tickets: result.fields.Tickets || [],
         _id: result.id,
       };
     }

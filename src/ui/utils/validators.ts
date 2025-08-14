@@ -16,37 +16,7 @@ export let staffName = writable("");
 export let studentName = writable("");
 export let assetTag = writable("");
 export let assetTags = writable([]);
-export let chargerTag = writable("");
 
-function toTitleCase(s: string) {
-  if (s) {
-    s = s[0].toUpperCase() + s.substring(1);
-    let commaAt = s.indexOf(", ");
-    if (commaAt > -1 && commaAt < s.length - 2) {
-      console.log("Got comma", commaAt, s);
-      s =
-        s.substring(0, commaAt + 2) +
-        s[commaAt + 2].toUpperCase() +
-        s.substring(commaAt + 3);
-    }
-    return s;
-  } else {
-    return "";
-  }
-}
-
-/* studentName.subscribe((s) => {
-  if (s) {
-    studentName.update((s) => toTitleCase(s));
-  }
-});
-
-staffName.subscribe((s) => {
-  if (s) {
-    staffName.update((s) => toTitleCase(s));
-  }
-});
- */
 assetTag.subscribe((s) => {
   console.log("Asset Tag change!", s);
   if (s.toUpperCase) {
@@ -64,9 +34,13 @@ assetTags.subscribe((ss) =>
 );
 
 let studentUpdateCount = 0;
-export const validateStudent = async (s) => {
+export const validateStudent = async (
+  s,
+  studentNameStore = studentName,
+  studentDropdownStore = studentDropdown
+) => {
   console.log("Validate student", s);
-  studentDropdown.set([]);
+  studentDropdownStore.set([]);
   studentUpdateCount += 1;
   let myUpdateNumber = studentUpdateCount;
   if (cachedValidations.students[s]) {
@@ -91,14 +65,14 @@ export const validateStudent = async (s) => {
       valid = true;
       let name = results[0].fields.Name;
       if (name != s) {
-        studentName.set(name);
+        studentNameStore.set(name);
       }
       return {
         valid: true,
         name: "Matching student",
       };
     } else if (results.length < 20) {
-      studentDropdown.set(
+      studentDropdownStore.set(
         results
           .slice()
           .sort((a, b) => {
@@ -130,9 +104,13 @@ export const validateStudent = async (s) => {
   }
 };
 let staffUpdateCount = 0;
-export const validateStaff = async (s) => {
+export const validateStaff = async (
+  s,
+  staffNameStore = staffName,
+  staffDropdownStore = staffDropdown
+) => {
   console.log("Validate staff", s);
-  staffDropdown.set([]);
+  staffDropdownStore.set([]);
   staffUpdateCount += 1;
   let myUpdateNumber = staffUpdateCount;
   if (cachedValidations.staff[s]) {
@@ -164,7 +142,7 @@ export const validateStaff = async (s) => {
         name: "Matching staff member",
       };
     } else if (results.length < 20) {
-      staffDropdown.set(
+      staffDropdownStore.set(
         results.map((r) => ({
           name: r["Full Name"],
           ...r,
@@ -183,14 +161,18 @@ export const validateStaff = async (s) => {
   }
 };
 
-export const validateAssets = async (assets: string[], isCharger = false) => {
+export const validateAssets = async (
+  assets: string[],
+  assetTagStore = assetTag,
+  assetTagsStore = assetTags
+) => {
   let aggregateResult = { name: "Asset found", valid: true };
   let errors = [];
   for (let asset of assets) {
     if (asset.toUpperCase) {
       asset = asset.toUpperCase();
     }
-    let result = await validateAsset(asset, isCharger);
+    let result = await validateAsset(asset);
     if (!result.valid) {
       errors.push(result);
     }
@@ -209,8 +191,7 @@ export const validateAssets = async (assets: string[], isCharger = false) => {
 };
 
 export const validateAsset = async (
-  s,
-  isCharger = false
+  s
 ): Promise<{ name: string; valid: boolean }> => {
   console.log("Validate asset", s);
   if (s && s.length >= 3) {
@@ -230,11 +211,7 @@ export const validateAsset = async (
       valid = true;
     }
     if (results.length == 1) {
-      if (isCharger) {
-        chargerTag.set(results[0].fields["Asset Tag"]);
-      } else {
-        assetTag.set(results[0].fields["Asset Tag"]);
-      }
+      assetTag.set(results[0].fields["Asset Tag"]);
     }
     return {
       name: "Asset not found",

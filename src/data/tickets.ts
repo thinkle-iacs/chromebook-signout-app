@@ -1,6 +1,8 @@
 import { writable, get } from "svelte/store";
 import { restructureLookupFields } from "./restructureLookups";
-
+import type { Asset } from "./inventory";
+import type { Student } from "./students";
+import { Staff } from "./staff";
 export let ticketsStore = writable({});
 
 export type Ticket = {
@@ -56,27 +58,10 @@ export type Ticket = {
   "Repair Cost": number;
   _id: string;
   _linked: {
-    Device: {
-      AssetTag: string;
-      Model: string;
-      "Serial Number": string;
-      Status: string;
-    };
-    Student: {
-      Name: string;
-      "Year of Graduation": string;
-      LASID: string;
-      Email: string[];
-      Contact1Email: string[];
-      Contact2Email: string[];
-      Advisor: string;
-    };
-    Staff: {
-      Email: string[];
-      "Full Name": string;
-      Role: string;
-      Department: string;
-    };
+    Device?: Partial<Asset> | null; // linked asset for primary device
+    "Temporary Device"?: Partial<Asset> | null; // linked asset for temporary device
+    Student?: Partial<Student> | null; // linked student
+    Staff?: Partial<Staff> | null; // linked staff{
   };
 };
 
@@ -100,6 +85,8 @@ export async function getTickets(
     priority?: number;
     minPriority?: number;
     maxPriority?: number;
+    // explicit set of Airtable record IDs
+    ticketIds?: string;
   } = {}
 ) {
   const queryString = new URLSearchParams(

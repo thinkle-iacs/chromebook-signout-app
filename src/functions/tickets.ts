@@ -71,9 +71,25 @@ async function getTickets(event: APIGatewayEvent) {
     priority,
     minPriority,
     maxPriority,
+    // Explicit list of Airtable record IDs to fetch
+    ticketIds,
   } = event.queryStringParameters || {};
 
   let filterConditions: string[] = [];
+
+  if (ticketIds) {
+    const ids = ticketIds
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    if (ids.length === 1) {
+      filterConditions.push(`RECORD_ID() = '${ids[0]}'`);
+    } else if (ids.length > 1) {
+      filterConditions.push(
+        `OR(${ids.map((id) => `RECORD_ID() = '${id}'`).join(",")})`
+      );
+    }
+  }
 
   if (ticketNumber) {
     filterConditions.push(`{Number} = ${ticketNumber}`);
@@ -94,7 +110,7 @@ async function getTickets(event: APIGatewayEvent) {
   }
 
   if (asset) {
-    // Match Asset Tag (from Device) or Asset Tag (from Temporary Device)
+    // Match Asset Tag (from Device) OR Asset Tag (from Temporary Device) so asset lookup shows tickets where this device is primary or temp loaner
     filterConditions.push(
       `OR({Asset Tag (from Device)} = '${asset}', {Asset Tag (from Temporary Device)} = '${asset}')`
     );

@@ -2,14 +2,16 @@
   import EditButton from "./EditButton.svelte";
   import StudentTag from "@people/students/StudentTag.svelte";
   import NameDropdown from "@people/components/NameDropdown.svelte";
-  import { getStudent, studentsStore } from "@data/students";
+  import { getStudent, type Student, studentsStore } from "@data/students";
   import { studentName, validateStudent } from "@utils/validators";
   import type { Ticket } from "@data/tickets";
+  import { showToast } from "@ui/components/toastStore";
 
   export let ticket: Ticket;
   export let disabled: boolean = false;
   export let onSave: (
-    studentId: string | null
+    studentId: string | null,
+    student: Student | null
   ) => Promise<void> = async () => {};
 
   let editing = false;
@@ -47,7 +49,7 @@
 
   async function saveStudentLink() {
     if (!currentStudent) {
-      alert("Please select a student");
+      showToast("Please select a student", "error");
       return;
     }
     await onSave(currentStudent._id);
@@ -67,8 +69,21 @@
 </script>
 
 {#if editing}
-  <div class="w3-panel w3-border w3-light-blue">
-    <div class="input-wrapper">
+  <div class="w3-card w3-white w3-padding w3-leftbar w3-border">
+    <div class="w3-right w3-margin-bottom">
+      <button
+        class="w3-btn w3-transparent w3-small icon-btn"
+        on:click={cancelEditing}
+        {disabled}
+        title="Cancel editing"
+        aria-label="Cancel editing"
+      >
+        ✕
+      </button>
+    </div>
+    <div class="w3-clear"></div>
+
+    <div class="input-wrapper w3-margin-bottom">
       <input
         bind:this={inputElement}
         type="text"
@@ -82,33 +97,17 @@
     </div>
 
     {#if currentStudent}
-      <div class="w3-margin-top w3-light-gray w3-padding-small">
+      <div class="w3-light-gray w3-padding-small w3-round-small">
         <StudentTag student={currentStudent} />
       </div>
     {/if}
 
-    <div class="w3-margin-top action-buttons">
-      <button
-        class="w3-btn w3-gray w3-small icon-btn"
-        on:click={cancelEditing}
-        {disabled}
-        title="Cancel"
-        aria-label="Cancel"
-      >
-        ✕
-      </button>
-      <button
-        class="w3-btn w3-green w3-small icon-btn save-btn"
-        on:click={saveStudentLink}
-        disabled={!hasChanges || disabled}
-        title="Save"
-        aria-label="Save"
-      >
-        ✓
-      </button>
+    <div
+      class="w3-margin-top w3-border-top w3-padding-small w3-right-align action-bar"
+    >
       {#if existingStudent}
         <button
-          class="w3-btn w3-red w3-small icon-btn remove-btn"
+          class="w3-btn w3-red w3-small w3-round icon-btn remove-btn"
           title="Remove student"
           on:click={removeStudent}
           {disabled}
@@ -116,6 +115,15 @@
           –
         </button>
       {/if}
+      <button
+        class="w3-btn w3-green w3-small w3-round icon-btn"
+        on:click={saveStudentLink}
+        disabled={!hasChanges || disabled}
+        title="Save"
+        aria-label="Save"
+      >
+        ✓
+      </button>
     </div>
   </div>
 {:else if existingStudent}
@@ -138,16 +146,11 @@
     position: relative;
   }
   .icon-btn {
-    padding: 2px 8px;
+    padding: 4px 10px;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.3;
   }
-  .action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .save-btn {
-    margin-left: auto;
+  .action-bar .w3-btn + .w3-btn {
+    margin-left: 6px;
   }
 </style>
