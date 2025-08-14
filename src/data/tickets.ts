@@ -58,10 +58,10 @@ export type Ticket = {
   "Repair Cost": number;
   _id: string;
   _linked: {
-    Device: Partial<Asset> | null; // linked asset for primary device
-    "Temporary Device": Partial<Asset> | null; // linked asset for temporary device
-    Student: Partial<Student> | null; // linked student
-    Staff: Partial<Staff> | null; // linked staff{
+    Device?: Partial<Asset> | null; // linked asset for primary device
+    "Temporary Device"?: Partial<Asset> | null; // linked asset for temporary device
+    Student?: Partial<Student> | null; // linked student
+    Staff?: Partial<Staff> | null; // linked staff{
   };
 };
 

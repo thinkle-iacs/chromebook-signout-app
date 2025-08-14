@@ -77,8 +77,11 @@
       <TicketStudentAssignment
         {ticket}
         {disabled}
-        onSave={async (studentId) => {
-          onChange({ Student: studentId ? [studentId] : [] });
+        onSave={async (studentId, student) => {
+          onChange({
+            Student: studentId ? [studentId] : [],
+            _linked: { Student: student },
+          });
         }}
       />
     </div>

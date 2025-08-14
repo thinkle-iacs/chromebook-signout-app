@@ -2,14 +2,15 @@
   import EditButton from "./EditButton.svelte";
   import StudentTag from "@people/students/StudentTag.svelte";
   import NameDropdown from "@people/components/NameDropdown.svelte";
-  import { getStudent, studentsStore } from "@data/students";
+  import { getStudent, type Student, studentsStore } from "@data/students";
   import { studentName, validateStudent } from "@utils/validators";
   import type { Ticket } from "@data/tickets";
 
   export let ticket: Ticket;
   export let disabled: boolean = false;
   export let onSave: (
-    studentId: string | null
+    studentId: string | null,
+    student: Student | null
   ) => Promise<void> = async () => {};
 
   let editing = false;
