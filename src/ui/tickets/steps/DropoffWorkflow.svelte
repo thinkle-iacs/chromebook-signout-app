@@ -15,6 +15,7 @@
   import { mergeUpdates } from "./draftManager";
   import Toast from "@components/Toast.svelte";
   import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
+  import AssetDisplay from "@ui/assets/AssetDisplay.svelte";
 
   export let ticket: Ticket;
   export let updateTicket: (
@@ -38,6 +39,15 @@
   // Drop-off specifics
   let checkInDevice = true;
   let provideTemp = true;
+
+  $: if (provideTemp && !["Needed", "Loaned"].includes(draft["Temp Status"])) {
+    handleChange({ "Temp Status": "Needed" });
+  } else if (!provideTemp) {
+    handleChange({
+      "Temp Status": "Not Needed",
+      "Temporary Device": [] as any,
+    });
+  }
 
   // Track processing state
   let processing = false;
@@ -68,15 +78,17 @@
   }
 
   // Derived values for UI and notes
-  $: mainTag = ticket._linked?.Device?.["Asset Tag"] || "";
-  $: draftTemp = (draft as any)["Temporary Device"] as string[] | undefined;
-  $: selectedTempId = draftTemp
-    ? draftTemp[0]
-    : (ticket["Temporary Device"] || [])[0];
-  $: hasTemp = provideTemp && Boolean(selectedTempId);
-  $: buttonLabel = hasTemp
-    ? "Check in device for repair and check out temp"
-    : "Check in device for repair";
+  $: mainTag = mergedTicket._linked?.Device?.["Asset Tag"] || "";
+
+  $: hasTemp = provideTemp && mergedTicket["Temporary Device"]?.length > 0;
+  $: checkInLabel = checkInDevice
+    ? `<b>Check in</b> device for repair`
+    : "Leave device as is";
+  $: checkOutLabel = provideTemp
+    ? `<b>Sign out</b> temp, `
+    : "Mark <b>temp-not-needed</b>";
+  $: buttonLabel = `<span>${checkInLabel}, ${checkOutLabel} and update Status to Have Device</span>`;
+
   // Summary text for action bar
   $: actionSummary = hasTemp
     ? `Will check in ${mainTag || "device"} and loan temp, then set status to Have Device.`
@@ -85,10 +97,6 @@
     "Updated mainTag",
     mainTag,
     "draftTemp",
-    draftTemp,
-    "selectedTempId",
-    selectedTempId,
-    "draft",
     draft,
     " ticket",
     ticket
@@ -107,22 +115,6 @@
     }
     try {
       const updates: Partial<Ticket> = { ...draft };
-
-      // Enforce Temp Status semantics on save (pre-processing)
-      if (provideTemp) {
-        const tempAssigned = selectedTempId;
-        // If temp requested but not yet processed, status should be Needed (unless already Loaned)
-        if (ticket["Temp Status"] !== "Loaned") {
-          (updates as any)["Temp Status"] = tempAssigned ? "Needed" : "Needed";
-        }
-      } else {
-        // No temp needed
-        (updates as any)["Temp Status"] = "Not Needed";
-        // Clear any temp device reference if present
-        if ((ticket as any)["Temporary Device"]?.length) {
-          (updates as any)["Temporary Device"] = [] as any;
-        }
-      }
 
       // Build history changes AFTER applying enforced fields
       const changes = Object.fromEntries(
@@ -153,8 +145,8 @@
     const historyChanges: Record<string, { from?: unknown; to?: unknown }> = {};
 
     // Determine IDs we need from ticket
-    const studentIds = (ticket as any).Student as string[] | undefined;
-    const deviceIds = (ticket as any).Device as string[] | undefined;
+    const studentIds = (mergedTicket as any).Student as string[] | undefined;
+    const deviceIds = (mergedTicket as any).Device as string[] | undefined;
     const studentId = studentIds && studentIds[0];
     const deviceId = deviceIds && deviceIds[0];
 
@@ -183,7 +175,7 @@
           processing = false;
           return;
         }
-        const tempId = selectedTempId;
+        const tempId = mergedTicket["Temporary Device"]?.[0];
         if (!tempId) {
           showToast("error", "Select a temporary device first");
           processing = false;
@@ -197,8 +189,8 @@
 
         const studentObj: any = { _id: studentId };
         const tempNote = mainTag
-          ? `Temp device while repairing ${mainTag} (Ticket #${ticket.Number})`
-          : `Temporary device for Ticket #${ticket.Number}`;
+          ? `Temp device while repairing ${mainTag} (Ticket #${mergedTicket.Number})`
+          : `Temporary device for Ticket #${mergedTicket.Number}`;
         await signoutAsset(
           studentObj,
           null as any,
@@ -283,40 +275,7 @@
     defaultMessage="BringMachineForRepairLoanReady"
   />
 
-  <div class="w3-section">
-    <label class="w3-small">
-      <input
-        type="checkbox"
-        bind:checked={checkInDevice}
-        disabled={processing}
-      />
-      Check in {ticket._linked?.Device?.["Asset Tag"] || "dropped device"} now
-    </label>
-  </div>
-
-  {#if provideTemp}
-    <div class="w3-section w3-padding w3-border w3-round">
-      <h5>Temporary Device</h5>
-      <div class="w3-section">
-        <TicketAssetAssignment
-          {mergedTicket}
-          field="Temporary Device"
-          onSave={setTemporaryDevice}
-          disabled={processing}
-        />
-      </div>
-      <div class="w3-small w3-text-gray">
-        <div>This will:</div>
-        <ul class="w3-ul" style="margin-top:4px;">
-          <li>Check in device {mainTag || "(linked device)"} for repair</li>
-          {#if hasTemp}
-            <li>Check out temporary device to the student</li>
-          {/if}
-          <li>Update ticket status to "Have Device"</li>
-        </ul>
-      </div>
-    </div>
-  {/if}
+  <div class="w3-section"></div>
 
   {#if toast}
     <Toast kind={toast.kind} message={toast.message} show={true} />
@@ -324,26 +283,64 @@
 </div>
 
 <StickyBottomActionBar className="dropoff-action-bar-container">
-  <div class="w3-small action-bar-left">
-    <label
-      class="w3-small"
-      style="margin-right:12px; display:inline-flex; align-items:center; gap:4px;"
-    >
-      <input type="checkbox" bind:checked={provideTemp} disabled={processing} />
-      Temp device needed
-    </label>
+  <div class="action-bar-left">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <div>
+        <label>
+          <input
+            type="checkbox"
+            bind:checked={provideTemp}
+            disabled={processing}
+          />
+          Sign <b>out</b>
+        </label>
+        {#if provideTemp}
+          <TicketAssetAssignment
+            ticket={mergedTicket}
+            field="Temporary Device"
+            onSave={setTemporaryDevice}
+          />
+        {/if}
+      </div>
+      <div>
+        <label>
+          <input
+            type="checkbox"
+            bind:checked={checkInDevice}
+            disabled={processing}
+          />
+          Check <b>in</b>
+          {#if mergedTicket?._linked?.Device}
+            <AssetDisplay asset={mergedTicket._linked?.Device} />
+          {/if}
+        </label>
+      </div>
+    </div>
+    <!-- <div class="w3-small w3-text-gray">
+          <div>This will:</div>
+          <ul class="w3-ul" style="margin-top:4px;">
+            <li>Check in device {mainTag || "(linked device)"} for repair</li>
+            {#if hasTemp}
+              <li>Check out temporary device to the student</li>
+            {/if}
+            <li>Update ticket status to "Have Device"</li>
+          </ul>
+        </div> -->
+
     <span>{actionSummary}</span>
   </div>
+
   <button
     class="w3-button w3-brown"
     on:click={processDropoff}
-    disabled={processing || (provideTemp && !selectedTempId)}
+    disabled={processing ||
+      (provideTemp && !mergedTicket["Temporary Device"]?.length)}
     aria-label={buttonLabel}
   >
     {#if processing}
       <i class="fa fa-spinner fa-spin"></i> Processing…
     {:else}
-      {buttonLabel}
+      {@html buttonLabel}
     {/if}
   </button>
 </StickyBottomActionBar>
