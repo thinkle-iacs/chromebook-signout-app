@@ -125,8 +125,13 @@
     >
   ) {
     selectedTicket = updatedTicket;
+    if (updatedTicket._id && updatedTicket._id !== currentTempTicketId) {
+      delete $ticketsStore[currentTempTicketId]; // remove temp from store
+    }
     tickets = Object.values($ticketsStore);
   }
+
+  let currentTempTicketId: string | null = null;
 
   function createTempTicket() {
     const tempId = `TEMP-${Date.now()}`;
@@ -145,6 +150,7 @@
       $s[tempId] = temp;
       return $s;
     });
+    currentTempTicketId = tempId;
     showToast("Draft ticket created", "info");
     showTicketDetail(temp);
   }
@@ -442,7 +448,6 @@
                 <div
                   class="w3-center"
                   style="display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;"
-                  
                 >
                   {#if ticket["Temp Status"]}
                     <span class="w3-tag w3-small w3-light-blue">
@@ -466,7 +471,7 @@
                   <span class="w3-text-gray">-</span>
                 {/if}
               </td>
-              <td 
+              <td>
                 {#if ticket.Device && ticket._linked?.Device}
                   <AssetDisplay
                     asset={ticket._linked.Device}
@@ -490,7 +495,7 @@
                   <span class="w3-text-gray">-</span>
                 {/if}
               </td>
-              <td 
+              <td>
                 {#if ticket.Staff?.length && ticket._linked?.Staff}
                   <div class="w3-small">
                     <strong>{ticket._linked?.Staff["Full Name"]}</strong><br />
@@ -546,7 +551,7 @@
     </button>
     <div class="opaque">
       <TicketWorkflow
-        ticket={selectedTicket}
+        ticket={structuredClone(selectedTicket)}
         onUpdateTicket={handleUpdateTicket}
       />
     </div>
