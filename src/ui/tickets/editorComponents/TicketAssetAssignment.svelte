@@ -5,12 +5,12 @@
   import { type Asset, assetStore, searchForAsset } from "@data/inventory";
   import type { Ticket } from "@data/tickets";
   import { get, writable } from "svelte/store";
+  import { showToast } from "@ui/components/toastStore";
 
   let myAssetTag = writable("");
 
   export let ticket: Ticket;
   export let field: "Device" | "Temporary Device" = "Device";
-  export let disabled: boolean = false;
   export let onSave: (
     assetId: string | null,
     asset: Asset
@@ -89,7 +89,7 @@
       currentAsset = get(assetStore)[$myAssetTag.toUpperCase()];
 
       if (!currentAsset) {
-        alert("Asset not found");
+        showToast("Asset not found", "error");
         return;
       }
     }
@@ -113,58 +113,70 @@
 
 {#if ticket}
   {#if editing}
-    <div class="w3-panel w3-border w3-light-orange">
-      <input
-        bind:this={inputElement}
-        type="text"
-        class="w3-input w3-border"
-        placeholder="Enter asset tag..."
-        bind:value={$myAssetTag}
-        autocomplete="off"
-        {disabled}
-      />
-
-      {#if currentAsset}
-        <div class="w3-margin-top w3-light-gray w3-padding-small">
-          <AssetDisplay asset={currentAsset} />
-        </div>
-      {/if}
-
-      <div class="w3-margin-top action-buttons">
+    <div class="w3-card w3-white w3-padding w3-leftbar w3-border">
+      <div class="w3-right w3-margin-bottom">
         <button
-          class="w3-btn w3-gray w3-small icon-btn"
+          class="w3-btn w3-transparent w3-small icon-btn"
           on:click={cancelEditing}
-          {disabled}
-          title="Cancel"
-          aria-label="Cancel"
+          title="Cancel editing"
+          aria-label="Cancel editing"
         >
           ✕
         </button>
+      </div>
+      <div class="w3-clear"></div>
+
+      <div class="input-wrapper w3-margin-bottom">
+        <label for="assetTagInput"><b>Asset Tag:</b></label>
+        <input
+          id="assetTagInput"
+          bind:this={inputElement}
+          type="text"
+          class="w3-input w3-border"
+          placeholder="Enter asset tag..."
+          bind:value={$myAssetTag}
+          autocomplete="off"
+        />
+      </div>
+
+      {#if currentAsset}
+        <div class="w3-light-gray w3-padding-small w3-round-small">
+          <AssetDisplay asset={currentAsset} />
+        </div>
+      {:else if displayAsset && $myAssetTag === displayAsset?.["Asset Tag"]}
+        <div class="w3-light-gray w3-padding-small w3-round-small">
+          <AssetDisplay asset={displayAsset} />
+        </div>
+      {/if}
+
+      <div
+        class="w3-margin-top w3-border-top w3-padding-small w3-right-align action-bar"
+      >
+        {#if displayAsset}
+          <button
+            class="w3-btn w3-red w3-small w3-round icon-btn remove-btn"
+            title="Remove asset"
+            on:click={removeAsset}
+            disabled={!currentAsset}
+          >
+            –
+          </button>
+        {/if}
         <button
-          class="w3-btn w3-green w3-small icon-btn save-btn"
+          class="w3-btn w3-green w3-small w3-round icon-btn"
           on:click={saveAssetLink}
-          disabled={!hasChanges || disabled}
+          disabled={!hasChanges}
           title="Save"
           aria-label="Save"
         >
           ✓
         </button>
-        {#if displayAsset}
-          <button
-            class="w3-btn w3-red w3-small icon-btn remove-btn"
-            title="Remove asset"
-            on:click={removeAsset}
-            {disabled}
-          >
-            –
-          </button>
-        {/if}
       </div>
     </div>
   {:else if displayAsset}
     <div style="display: flex; align-items: start;">
       <AssetDisplay asset={displayAsset} />
-      <EditButton on:click={startEditing} {disabled} />
+      <EditButton on:click={startEditing} />
     </div>
   {:else}
     <span class="w3-text-gray"
@@ -173,7 +185,6 @@
     <button
       class="w3-btn w3-blue w3-small w3-margin-top"
       on:click={startEditing}
-      {disabled}
     >
       {field === "Device" ? "Link Device" : "Link Temp Device"}
     </button>
@@ -181,17 +192,15 @@
 {/if}
 
 <style>
+  .input-wrapper {
+    position: relative;
+  }
   .icon-btn {
-    padding: 2px 8px;
+    padding: 4px 10px;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.3;
   }
-  .action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .save-btn {
-    margin-left: auto;
+  .action-bar .w3-btn + .w3-btn {
+    margin-left: 6px;
   }
 </style>
