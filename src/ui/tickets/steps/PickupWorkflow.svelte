@@ -135,10 +135,7 @@
   }
 </script>
 
-<div
-  class="w3-panel w3-pale-green w3-border pickup-content"
-  style="padding-bottom:90px;"
->
+<div class="w3-panel w3-border pickup-content" style="padding-bottom:90px;">
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
     <h4 style="margin:0;">In Repair → Ready for Pickup</h4>
     <ShowPendingChanges {draft} onSave={closeTicket} saving={processing} />
@@ -186,7 +183,7 @@
   </div>
 </div>
 
-<StickyBottomActionBar colorClass="w3-amber">
+<StickyBottomActionBar>
   <div
     class="w3-small"
     style="flex:1 1 auto; display:flex; flex-direction:column; gap:4px;"
@@ -201,7 +198,7 @@
     >
   </div>
   <button
-    class="w3-button w3-brown"
+    class="w3-button w3-green"
     on:click={closeTicket}
     disabled={processing || !mergedTicket.Resolution}
   >

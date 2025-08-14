@@ -244,15 +244,10 @@
   }
 </script>
 
-<div class="w3-panel w3-pale-yellow w3-border dropoff-content">
+<div class="w3-panel w3-border dropoff-content">
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <h4 style="margin:0;">Awaiting Drop-Off</h4>
     <ShowPendingChanges {draft} onSave={saveDraft} saving={processing} />
   </div>
-  <div class="w3-small w3-text-gray">
-    Ticket #{ticket.Number} · {ticket["Ticket Status"]}
-  </div>
-
   {#if processing}
     <div class="w3-panel w3-yellow w3-small">
       <i class="fa fa-spinner fa-spin"></i> Processing…

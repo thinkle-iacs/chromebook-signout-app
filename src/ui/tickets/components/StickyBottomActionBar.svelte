@@ -1,7 +1,7 @@
 <script lang="ts">
   // Minimal CSS-only style wrapper for a sticky bottom action bar inside a scrolling panel.
   // Customization via optional class props; logic kept minimal on purpose.
-  export let colorClass: string = "w3-amber"; // background color class
+  export let colorClass: string = "w3-yellow"; // background color class
   export let paddingClass: string = "w3-padding"; // spacing class
   export let className: string = ""; // any extra classes
 </script>

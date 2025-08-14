@@ -50,9 +50,8 @@
 <div class="w3-section">
   <div class="w3-row-padding w3-section">
     <div class="w3-col l2 m4 s6">
-      <h4>Ticket Info</h4>
+      <h4>Ticket #{ticket.Number}</h4>
       <div class="w3-small">
-        <div><b>Number:</b> #{ticket.Number}</div>
         <div><b>Status:</b> {ticket["Ticket Status"] || "-"}</div>
         <div class="priority-row">
           <b>Priority:</b>

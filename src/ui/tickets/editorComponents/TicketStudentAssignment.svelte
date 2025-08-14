@@ -130,7 +130,6 @@
   <StudentTag student={existingStudent} />
   <EditButton on:click={startEditing} {disabled} />
 {:else}
-  <span class="w3-text-gray">No student linked</span>
   <button
     class="w3-btn w3-blue w3-small w3-margin-top"
     on:click={startEditing}

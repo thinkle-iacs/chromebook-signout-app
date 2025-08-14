@@ -92,9 +92,7 @@
 
       <div class="modal-body">
         {#if !valid}
-          <div class="w3-panel w3-pale-yellow w3-border">
-            Enter a valid student email.
-          </div>
+          <div class="w3-panel w3-border">Enter a valid student email.</div>
         {:else if loading}
           <div class="w3-panel w3-blue w3-border">
             <i class="fa fa-spinner fa-spin"></i> Loading…

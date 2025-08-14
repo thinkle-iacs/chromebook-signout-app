@@ -185,13 +185,9 @@
   }
 </script>
 
-<div class="w3-panel w3-pale-blue w3-border">
+<div class="w3-panel w3-border">
   <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-    <h4 style="margin:0;">In Repair</h4>
     <ShowPendingChanges {draft} onSave={saveChanges} {saving} />
-  </div>
-  <div class="w3-small w3-text-gray" style="margin-top:4px;">
-    Ticket #{ticket.Number} · {ticket["Ticket Status"]}
   </div>
 
   <TicketInfo ticket={mergedTicket} onChange={handleChange} disabled={saving} />

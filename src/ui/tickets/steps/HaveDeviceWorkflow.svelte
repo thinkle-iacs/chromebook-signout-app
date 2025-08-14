@@ -38,11 +38,10 @@
 </script>
 
 <div
-  class="w3-panel w3-pale-green w3-border have-device-content"
+  class="w3-panel w3-border have-device-content"
   style="padding-bottom:90px;"
 >
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <h4 style="margin:0;">Have Device</h4>
     <ShowPendingChanges {draft} onSave={saveAndMoveToRepair} saving={false} />
   </div>
 
@@ -55,7 +54,7 @@
   <div class="w3-small" style="flex:1 1 auto;">
     Device is in possession. Ready to enter repair workflow.
   </div>
-  <button class="w3-button w3-brown" on:click={saveAndMoveToRepair}>
+  <button class="w3-button w3-red" on:click={saveAndMoveToRepair}>
     Move to In Repair
   </button>
 </StickyBottomActionBar>

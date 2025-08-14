@@ -63,13 +63,9 @@
   }
 </script>
 
-<div class="w3-panel w3-pale-yellow w3-border inprogress-content">
+<div class="w3-panelx w3-border inprogress-content w3-padding">
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <h4 style="margin:0;">In Progress</h4>
     <ShowPendingChanges {draft} onSave={saveDraft} saving={false} />
-  </div>
-  <div class="w3-small w3-text-gray">
-    Ticket #{ticket.Number} · {ticket["Ticket Status"]}
   </div>
 
   <TicketInfo ticket={mergedTicket} onChange={handleChange} />

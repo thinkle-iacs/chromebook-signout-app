@@ -49,22 +49,15 @@
   }
 </script>
 
-<div class="w3-panel w3-pale-blue w3-border new-ticket-content">
+<div class="w3-panel w3-border new-ticket-content">
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <h4 style="margin:0;">New Ticket</h4>
     <ShowPendingChanges {draft} onSave={saveDraft} saving={false} />
-  </div>
-  <div class="w3-small w3-text-gray">
-    Ticket #{ticket.Number} · {ticket["Ticket Status"] || "New"}
   </div>
   <TicketInfo ticket={mergedTicket} onChange={handleChange} />
   <TicketDescription ticket={mergedTicket} onChange={handleChange} />
 </div>
 
-<StickyBottomActionBar
-  colorClass="w3-light-grey"
-  className="new-ticket-action-bar"
->
+<StickyBottomActionBar className="new-ticket-action-bar">
   <div
     class="w3-small"
     style="flex:1 1 auto; display:flex; flex-direction:column; gap:4px;"

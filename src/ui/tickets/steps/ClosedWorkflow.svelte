@@ -21,10 +21,6 @@
 </script>
 
 <div class="w3-panel w3-light-gray w3-border">
-  <h4>Closed</h4>
-  <div class="w3-small w3-text-gray">
-    Ticket #{ticket.Number} · {ticket["Ticket Status"]}
-  </div>
   <TicketInfo ticket={mergedTicket} onChange={() => {}} />
   <TicketDescription ticket={mergedTicket} onChange={() => {}} />
   <p class="w3-small">

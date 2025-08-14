@@ -134,7 +134,7 @@
     </header>
 
     <div class="w3-container w3-padding">
-      <div class="w3-panel w3-pale-yellow w3-border">
+      <div class="w3-panel w3-border">
         <p><strong>Test Order:</strong> A → B → C → D → E</p>
         <p>
           <strong>Goal:</strong> Test SIS integration and schedule analysis with
