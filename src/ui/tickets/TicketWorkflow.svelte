@@ -221,20 +221,15 @@
         Object.keys(creationPayload).forEach((k) => {
           if (creationPayload[k] === undefined) delete creationPayload[k];
         });
-        const record: any = await apiCreateTicket(creationPayload);
-        if (record?.id) {
-          updated = {
-            ...(ticket as any),
-            ...(record.fields || {}),
-            _id: record.id,
-            History: mergedHistory,
-          } as Ticket;
+        try {
+          const updated: Ticket = await apiCreateTicket(creationPayload); // API returns ticket object you fool...
           Object.assign(ticket, updated);
+          console.log("Created new ticket, calling onUpdateTicket");
           onUpdateTicket(updated, composed);
           showToast("Ticket created", "success");
-        } else {
-          showToast("Create failed", "error");
-          return; // abort to avoid falling through
+        } catch (err) {
+          console.error("Failed to create ticket:", err);
+          showToast("Failed to create ticket", "error");
         }
       } else {
         const merged = { ...updates, History: mergedHistory } as any;
