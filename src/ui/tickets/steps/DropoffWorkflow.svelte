@@ -89,10 +89,6 @@
     : "Mark <b>temp-not-needed</b>";
   $: buttonLabel = `<span>${checkInLabel}, ${checkOutLabel} and update Status to Have Device</span>`;
 
-  // Summary text for action bar
-  $: actionSummary = hasTemp
-    ? `Will check in ${mainTag || "device"} and loan temp, then set status to Have Device.`
-    : `Will check in ${mainTag || "device"} and set status to Have Device.`;
   $: console.log(
     "Updated mainTag",
     mainTag,
@@ -299,6 +295,8 @@
             ticket={mergedTicket}
             field="Temporary Device"
             onSave={setTemporaryDevice}
+            forceEditOn={provideTemp &&
+              !mergedTicket["Temporary Device"]?.length}
           />
         {/if}
       </div>
@@ -326,12 +324,10 @@
             <li>Update ticket status to "Have Device"</li>
           </ul>
         </div> -->
-
-    <span>{actionSummary}</span>
   </div>
 
   <button
-    class="w3-button w3-brown"
+    class="w3-button w3-green long-button"
     on:click={processDropoff}
     disabled={processing ||
       (provideTemp && !mergedTicket["Temporary Device"]?.length)}
@@ -361,5 +357,8 @@
       flex-direction: column;
       align-items: flex-start;
     }
+  }
+  .long-button {
+    text-overflow: ellipsis;
   }
 </style>

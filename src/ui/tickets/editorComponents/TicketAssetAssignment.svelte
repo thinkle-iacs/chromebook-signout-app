@@ -11,12 +11,15 @@
 
   export let ticket: Ticket;
   export let field: "Device" | "Temporary Device" = "Device";
+  export let forceEditOn: boolean = false; // New prop to force edit mode
+
   export let onSave: (
     assetId: string | null,
     asset: Asset
   ) => Promise<void> = async () => {};
 
-  let editing = false;
+  let editing = forceEditOn;
+  $: if (forceEditOn) editing = forceEditOn; // Reactive to forceEditOn changes
   let inputElement: HTMLInputElement | null = null;
 
   // Track existing vs current asset
