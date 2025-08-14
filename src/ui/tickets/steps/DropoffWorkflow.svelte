@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Asset } from "@data/inventory";
   import { Notification } from "@data/notifications";
   import TicketNotificationsSummary from "./../components/TicketNotificationsSummary.svelte";
   import type { Ticket } from "@data/tickets";
@@ -26,11 +27,12 @@
   function handleChange(updates: Partial<Ticket>) {
     draft = { ...draft, ...updates };
   }
-  let mergedTicket: Ticket;
+  let mergedTicket: Ticket = { ...ticket, ...draft } as Ticket;
   $: {
     const { merged, updates } = mergeUpdates(ticket, draft);
     mergedTicket = merged;
     draft = updates;
+    console.log("Merged ticket", mergedTicket, "Draft", draft);
   }
 
   // Drop-off specifics
@@ -41,16 +43,20 @@
   let processing = false;
 
   // helper to set/unset the Temporary Device from the assignment component
-  function setTemporaryDevice(assetId?: string) {
+  function setTemporaryDevice(assetId?: string, asset?: Asset) {
     if (assetId) {
       handleChange({
         "Temporary Device": [assetId] as any,
         // Do not mark Loaned yet; only mark Needed until processing
         "Temp Status": "Needed" as any,
+        // Ensure linked asset is set for display
+        _linked: { "Temporary Device": asset },
       });
     } else {
       handleChange({
         "Temporary Device": [] as any,
+        // Clear out _linked...
+        _linked: { "Temporary Device": null },
         // Clearing device resets status unless already processed
         "Temp Status": provideTemp
           ? ticket["Temp Status"] === "Loaned"
@@ -64,9 +70,9 @@
   // Derived values for UI and notes
   $: mainTag = ticket._linked?.Device?.["Asset Tag"] || "";
   $: draftTemp = (draft as any)["Temporary Device"] as string[] | undefined;
-  $: selectedTempId =
-    (draftTemp && draftTemp[0]) ||
-    ((ticket as any)["Temporary Device"] || [])[0];
+  $: selectedTempId = draftTemp
+    ? draftTemp[0]
+    : (ticket["Temporary Device"] || [])[0];
   $: hasTemp = provideTemp && Boolean(selectedTempId);
   $: buttonLabel = hasTemp
     ? "Check in device for repair and check out temp"
@@ -75,6 +81,18 @@
   $: actionSummary = hasTemp
     ? `Will check in ${mainTag || "device"} and loan temp, then set status to Have Device.`
     : `Will check in ${mainTag || "device"} and set status to Have Device.`;
+  $: console.log(
+    "Updated mainTag",
+    mainTag,
+    "draftTemp",
+    draftTemp,
+    "selectedTempId",
+    selectedTempId,
+    "draft",
+    draft,
+    " ticket",
+    ticket
+  );
 
   let toast: { kind: "success" | "error" | "info"; message: string } | null =
     null;
@@ -281,7 +299,7 @@
       <h5>Temporary Device</h5>
       <div class="w3-section">
         <TicketAssetAssignment
-          {ticket}
+          {mergedTicket}
           field="Temporary Device"
           onSave={setTemporaryDevice}
           disabled={processing}

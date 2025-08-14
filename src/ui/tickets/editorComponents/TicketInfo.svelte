@@ -9,7 +9,7 @@
   export let ticket: Ticket;
   export let onChange: (updates: Partial<Ticket>) => void = () => {};
   export let disabled: boolean = false;
-
+  $: console.log("TicketInfo got new ticket: ", ticket);
   let device = getTicketDevice(ticket);
 
   function getTicketDevice(ticket, assetStoreForForceUpdate) {
@@ -29,7 +29,6 @@
 
   $: device = getTicketDevice(ticket, $assetStore);
 
-  // Remove hardcoded color map; use W3.CSS color classes instead
   const priorityClass: Record<number, string> = {
     1: "w3-green",
     2: "w3-light-green",
@@ -41,18 +40,11 @@
     return priorityClass[p] || "w3-gray";
   }
 
-  // Local (pending) priority state for immediate UI feedback
-  let localPriority: number | undefined = ticket.Priority;
-  $: if (ticket.Priority !== undefined && localPriority === undefined) {
-    localPriority = ticket.Priority; // sync if ticket loads later
-  }
-
+  // Removed local priority state; update directly via onChange
   function setPriority(p: number) {
     if (disabled) return;
-    localPriority = p; // immediate visual feedback
-    onChange({ Priority: p }); // parent will persist later
+    onChange({ Priority: p });
   }
-  $: isPriorityDirty = localPriority !== ticket.Priority;
 </script>
 
 <div class="w3-section">
@@ -69,23 +61,14 @@
               <button
                 class="priority-pill w3-button w3-round-small w3-border {getPriorityClass(
                   p
-                )} {localPriority === p ? 'active' : ''} {isPriorityDirty &&
-                localPriority === p
-                  ? 'dirty'
-                  : ''}"
+                )} {ticket.Priority === p ? 'active' : ''}"
                 on:click={() => setPriority(p)}
                 {disabled}
                 title={`Priority ${p}`}
-                aria-pressed={localPriority === p}>{p}</button
+                aria-pressed={ticket.Priority === p}>{p}</button
               >
             {/each}
           </span>
-          {#if isPriorityDirty}
-            <span
-              class="dirty-indicator"
-              title="Pending change (save in workflow step)">unsaved</span
-            >
-          {/if}
         </div>
       </div>
     </div>
@@ -104,8 +87,11 @@
       <TicketAssetAssignment
         {ticket}
         {disabled}
-        onSave={async (deviceId) => {
-          onChange({ Device: deviceId ? [deviceId] : [] });
+        onSave={async (deviceId, device) => {
+          onChange({
+            Device: deviceId ? [deviceId] : [],
+            _linked: { Device: device },
+          });
         }}
       />
       {#if device && device.Status}
@@ -118,8 +104,11 @@
         {ticket}
         field="Temporary Device"
         {disabled}
-        onSave={async (tempId) => {
-          onChange({ ["Temporary Device"]: tempId ? [tempId] : [] });
+        onSave={async (tempId, tempDevice) => {
+          onChange({
+            ["Temporary Device"]: tempId ? [tempId] : [],
+            _linked: { ["Temporary Device"]: tempDevice },
+          });
         }}
       />
     </div>
@@ -169,11 +158,6 @@
     opacity: 1;
     filter: brightness(1.02);
   }
-  .priority-pill.dirty.active {
-    box-shadow:
-      0 0 0 2px #fff inset,
-      0 0 0 2px rgba(255, 193, 7, 0.8);
-  }
   .priority-pill:focus-visible {
     outline: 2px solid #000;
     outline-offset: 2px;
@@ -182,17 +166,5 @@
     cursor: not-allowed;
     opacity: 0.35;
     filter: grayscale(0.2);
-  }
-  .dirty-indicator {
-    font-size: 10px;
-    background: #ffeb3b;
-    padding: 1px 4px;
-    border-radius: 3px;
-    color: #444;
-    margin-left: 2px;
-  }
-  /* Remove pulse animation to reduce visual noise */
-  .priority-pill.dirty {
-    animation: none;
   }
 </style>

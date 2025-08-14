@@ -13,6 +13,8 @@ export function restructureLookupFields(record) {
         value = value[0]; // Unwrap single-item arrays
       }
       linkedFields[parentTable][fieldName] = value;
+      // Remove the original field
+      delete record.fields[key];
     }
   });
 

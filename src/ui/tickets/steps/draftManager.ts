@@ -1,3 +1,5 @@
+import type { Ticket } from "@data/tickets";
+
 function isEmpty(v: any) {
   return v === undefined || v === null || v === "";
 }
@@ -13,18 +15,29 @@ function valuesEqual(a: any, b: any): boolean {
   return false; // shallow
 }
 
-export function mergeUpdates<T extends Record<string, any>>(
-  ticket: T,
-  draftUpdates: Partial<T>
-) {
-  const updates: Partial<T> = {};
-  const merged = { ...ticket, ...draftUpdates } as T;
+export function mergeUpdates(ticket: Ticket, draftUpdates: Partial<Ticket>) {
+  const updates: Partial<Ticket> = {};
+  const merged = { ...ticket, ...draftUpdates } as Ticket;
 
-  for (const key of Object.keys(draftUpdates) as (keyof T)[]) {
+  // If there are linked fields, we want to merge the whole _linked object...
+  const linkDraftUpdates = draftUpdates._linked;
+  if (linkDraftUpdates) {
+    let mergedLinked = { ...ticket._linked };
+    for (const key of Object.keys(
+      linkDraftUpdates
+    ) as (keyof Ticket["_linked"])[]) {
+      mergedLinked[key] = linkDraftUpdates[key];
+    }
+    merged._linked = mergedLinked;
+  }
+
+  for (const key of Object.keys(draftUpdates) as (keyof Ticket)[]) {
+    // _linked are derived and not part of updates...
+    if (key[0] === "_") continue;
     const newVal = draftUpdates[key];
     const oldVal = ticket[key];
     if (!valuesEqual(oldVal, newVal)) {
-      updates[key] = newVal as any;
+      updates[key] = newVal;
     }
   }
 
