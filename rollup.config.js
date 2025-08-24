@@ -59,6 +59,7 @@ const svelteSetup = {
         { find: "@utils", replacement: path.resolve("src/ui/utils") },
         { find: "@ui", replacement: path.resolve("src/ui") },
         { find: "@tickets", replacement: path.resolve("src/ui/tickets") },
+        { find: "@scheduling", replacement: path.resolve("src/ui/scheduling") },
       ]
     }),
     svelte({

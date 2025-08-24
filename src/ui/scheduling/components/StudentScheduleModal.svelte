@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { buildStructuredSchedule } from "../scheduling/structuredSchedule";
+  import { buildStructuredSchedule } from "../structuredSchedule";
   import {
     testStudentLookup,
     testScheduleLookup,
@@ -158,8 +158,8 @@
         {/if}
       </div>
 
-      <footer class="modal-footer">
-        <button class="w3-button w3-gray" on:click={close}>Close</button>
+      <footer class="modal-footer w3-right-align w3-padding">
+        <button class="w3-button" on:click={close}>Close</button>
       </footer>
     </div>
   </div>
