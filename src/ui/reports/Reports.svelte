@@ -276,34 +276,14 @@
 </div>
 
 <style>
-  h1 {
-    margin-bottom: 16px;
-  }
-  nav {
-    margin-bottom: 16px;
-  }
   .w3-bar-item.w3-blue {
     font-weight: bold;
   }
   .w3-button.w3-green {
     font-weight: bold;
   }
-  table {
-    margin-top: 16px;
-    width: 100%;
-  }
   .w3-margin-top {
     margin-top: 16px;
-  }
-  .stale {
-    background-color: #ffdddd; /* Light red background */
-  }
-  .bold {
-    font-weight: bold; /* Bold text for stale dates */
-  }
-  .mismatch {
-    font-weight: bold; /* Bold text for mismatched users */
-    color: #ff0000; /* Red text for mismatched users */
   }
 
   .progress-bar-container {

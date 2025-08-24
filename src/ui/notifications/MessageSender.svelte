@@ -97,7 +97,7 @@
     {#if asset}<AssetDisplay {asset} />{/if}
     <MessageSelector bind:selectedMessage />
 
-    <table class="w3-table w3-margin-bottom">
+    <table class="w3-table w3-striped w3-margin-bottom">
       <tbody>
         {#if contacts}
           <tr>
