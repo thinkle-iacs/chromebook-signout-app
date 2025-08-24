@@ -570,7 +570,7 @@ Hinge bolts:New screws needed for display hinges*/
     </FormField>
 
     {#if student}
-      <div class="w3-right-align">
+      <div class="w3-right-align w3-margin-bottom">
         <button
           class="w3-button"
           class:w3-light-grey={!showStudentNoteMode}
@@ -593,7 +593,7 @@ Hinge bolts:New screws needed for display hinges*/
         />
       {/if}
     {/if}
-    <div class="w3-right-align">
+    <div class="w3-right-align w3-margin-bottom">
       <CheckoutTicketLink {student} asset={assets && assets[0]} />
     </div>
     <input
