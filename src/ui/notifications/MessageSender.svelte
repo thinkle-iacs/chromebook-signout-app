@@ -130,7 +130,7 @@
       </tbody>
     </table>
     {#if selectedMessage}
-      <button class="w3-btn w3-green" on:click={prepareMessage}>
+      <button class="w3-btn w3-green w3-block" on:click={prepareMessage}>
         Queue Up Message
       </button>
     {/if}

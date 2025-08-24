@@ -75,10 +75,10 @@
 
 {#each ticketLinks as link}
   <a
-    class="ticket-link w3-red w3-button w3-round"
+    class="ticket-link w3-red w3-button w3-round w3-margin-bottom"
     href={`/ticket/number/${link.number}`}
     aria-label={`Go to ticket ${link.number}`}
-    style="text-decoration: none; cursor: pointer;"
+    style="text-decoration: none; cursor: pointer; width: auto; display: inline-block;"
     role="button"
   >
     <span class="ticket-comment">{link.comment}</span> #{link.number}

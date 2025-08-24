@@ -565,15 +565,16 @@ Hinge bolts:New screws needed for display hinges*/
         id="notes"
         class="w3-input w3-border"
         placeholder={notePlaceholder}
-        style:height={`${textHeight}px`}
+        style="height: 80px;"
       />
     </FormField>
 
     {#if student}
       <button
-        class="w3-button"
+        class="w3-button w3-margin-bottom"
         class:w3-light-grey={!showStudentNoteMode}
         class:w3-blue={showStudentNoteMode}
+        style="width: auto; display: inline-block;"
         on:click={() => {
           showStudentNoteMode = !showStudentNoteMode;
           if (showStudentNoteMode && !studentNotes && student?.Notes) {
@@ -586,7 +587,7 @@ Hinge bolts:New screws needed for display hinges*/
           bind:value={studentNotes}
           class="w3-input w3-border"
           placeholder="Notes to add for this student"
-          style:height={`${textHeight}px`}
+          style="height: 60px;"
         />
       {/if}
     {/if}
