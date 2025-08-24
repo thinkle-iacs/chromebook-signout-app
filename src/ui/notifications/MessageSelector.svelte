@@ -17,9 +17,9 @@
   let showMessage;
 </script>
 
-<label>Message</label>
+<label for="message-select">Message</label>
 <div style="display:flex;gap:8px;">
-  <select class="w3-input w3-cell w3-border" bind:value={selectedMessage}>
+  <select id="message-select" class="w3-input w3-cell w3-border" bind:value={selectedMessage}>
     {#each messages as message}
       <option value={message}>
         {message.Subject} ({message.ID})

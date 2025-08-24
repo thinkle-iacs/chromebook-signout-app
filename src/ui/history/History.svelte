@@ -176,7 +176,7 @@
       chargers
       <input bind:checked={excludeStaffMode} type="checkbox" /> Excude staff
     </div>
-    <table class="w3-table">
+    <table class="w3-table w3-striped w3-bordered">
       <tr>
         <th>#</th>
         <th>User</th>

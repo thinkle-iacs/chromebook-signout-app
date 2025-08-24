@@ -466,8 +466,9 @@
           type="button">&times;</button
         >
         <h3>Mark {selectedAssetTags.size} asset(s) as Lost?</h3>
-        <label>Optional Note:</label>
+        <label for="lost-note">Optional Note:</label>
         <textarea
+          id="lost-note"
           class="w3-input w3-border"
           rows="3"
           bind:value={lostNote}
@@ -559,18 +560,6 @@
     border-radius: 0;
     box-shadow: none;
     padding: 0;
-  }
-  .modal-bulk-message_content {
-    width: 100vw;
-    height: 100vh;
-    max-width: 100vw;
-    max-height: 100vh;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 0;
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
   }
   .data-exporter-wrap :global(button.w3-button) {
     margin-top: 0;
