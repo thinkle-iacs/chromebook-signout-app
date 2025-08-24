@@ -4,23 +4,23 @@ import {
   getBellScheduleForStudentDay,
 } from "./bellSchedules";
 import { test56schedule } from "./scheduleSampleData";
-
+import { logger } from "@utils/log";
 const { student, schedule } = test56schedule;
 
-console.log("=== DEBUGGING SCHEDULE PARSING ===\n");
+logger.logPriority("=== DEBUGGING SCHEDULE PARSING ===\n");
 
 // Step 1: Parse schedule map
-console.log("1. Parsing SIS data...");
+logger.logPriority("1. Parsing SIS data...");
 const scheduleMap = parseProjectScheduleFromSIS(schedule);
-console.log("Schedule Map:");
+logger.logPriority("Schedule Map:");
 for (const [day, classes] of Object.entries(scheduleMap)) {
-  console.log(`  ${day}:`);
+  logger.logPriority(`  ${day}:`);
   for (const [block, className] of Object.entries(classes)) {
-    console.log(`    ${block} -> ${className}`);
+    logger.logPriority(`    ${block} -> ${className}`);
   }
 }
 
-console.log("\n2. Getting bell schedules...");
+logger.logPriority("\n2. Getting bell schedules...");
 const dayNames = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 for (let weekday = 1; weekday <= 5; weekday++) {
   const dayName = dayNames[weekday - 1];
@@ -29,27 +29,27 @@ for (let weekday = 1; weekday <= 5; weekday++) {
     weekday,
     scheduleMap
   );
-  console.log(`  ${dayName}: ${bellSchedule?.name || "NO SCHEDULE"}`);
+  logger.logPriority(`  ${dayName}: ${bellSchedule?.name || "NO SCHEDULE"}`);
 
   if (bellSchedule) {
-    console.log("    Bell periods:");
+    logger.logPriority("    Bell periods:");
     for (const period of bellSchedule.schedules[0].periods) {
-      console.log(`      ${period.id} (${period.displayName})`);
+      logger.logPriority(`      ${period.id} (${period.displayName})`);
     }
 
-    console.log("    Mapped classes:");
+    logger.logPriority("    Mapped classes:");
     const daySchedule = scheduleMap[dayName] || {};
     for (const [blockId, className] of Object.entries(daySchedule)) {
-      console.log(`      ${blockId} -> ${className}`);
+      logger.logPriority(`      ${blockId} -> ${className}`);
     }
 
-    console.log("    Matches:");
+    logger.logPriority("    Matches:");
     for (const period of bellSchedule.schedules[0].periods) {
       const className = daySchedule[period.id];
-      console.log(`      ${period.id} -> ${className || "NO CLASS"}`);
+      logger.logPriority(`      ${period.id} -> ${className || "NO CLASS"}`);
     }
   }
-  console.log("");
+  logger.logPriority("");
 }
 
 export {};

@@ -36,9 +36,9 @@
     // Call in on('login') handler to ensure token refreshed after it expires (1hr)
     // Note: this method returns a promise.
     /* try {
-      netlifyIdentity.refresh().then((jwt) => console.log(jwt));
+      netlifyIdentity.refresh().then((jwt) => Logger.logVerbose(jwt));
     } catch (err) {
-      console.log("Error refreshing?", err);
+      Logger.logError("Error refreshing?", err);
     } */
 
     // Change language

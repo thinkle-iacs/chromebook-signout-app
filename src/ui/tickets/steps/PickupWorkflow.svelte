@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import TicketNotificationsSummary from "./../components/TicketNotificationsSummary.svelte";
   import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
@@ -127,7 +128,7 @@
 
       draft = {};
     } catch (e) {
-      console.error("Failed to close ticket:", e);
+      logger.logError("Failed to close ticket:", e);
       alert("Failed to close ticket.");
     } finally {
       processing = false;

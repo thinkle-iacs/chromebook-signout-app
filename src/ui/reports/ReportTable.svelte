@@ -1,4 +1,5 @@
 <script>
+  import { logger } from "@utils/log";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import DataExporter from "./DataExporter.svelte";
   import BulkMessageSender from "@notifications/BulkMessageSender.svelte";
@@ -20,7 +21,6 @@
     return new Date(lastUsed) < thirtyDaysAgo;
   }
   function resortData(data, direction, prop) {
-    console.log("RT: Resorting data", direction, prop);
     sortedData = [...data]; // Create a copy...
     sortedData.sort((a, b) => {
       let sortProp = prop;
@@ -42,16 +42,15 @@
   }
 
   $: resortData(data, sortDirection, sortColumn);
-  $: console.log("RT: Data changed: ", sortedData[0], "-", sortedData.at(-1));
 
   let haveGoogleData = false;
   $: {
-    console.log("RT: Check for google data...");
+    logger.logVerbose("RT: Check for google data...");
     if (data && data.length > 0 && data[0].hasOwnProperty("googleData")) {
-      console.log("RT: We have Google data!");
+      logger.logVerbose("RT: We have Google data!");
       haveGoogleData = true;
     } else {
-      console.log("RT: No Google data found.");
+      logger.logVerbose("RT: No Google data found.");
       haveGoogleData = false;
     }
   }

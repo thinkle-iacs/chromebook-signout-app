@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import TicketNotificationsSummary from "./components/TicketNotificationsSummary.svelte";
   import TicketNotification from "./TicketNotification.svelte";
   import type { Ticket } from "@data/tickets";
@@ -26,7 +27,7 @@
 
   // Lazy-load messages when empty
   $: if (allTemplates.length === 0) {
-    getMessages().catch((e) => console.error("Failed to load messages", e));
+    getMessages().catch((e) => logger.logError("Failed to load messages", e));
   }
 
   // After templates are available, set/validate selection by mapping ID -> _id
@@ -85,7 +86,7 @@
       selectedMessageId = "";
       showSendInterface = false;
     } catch (e) {
-      console.error("Failed to send notification:", e);
+      logger.logError("Failed to send notification:", e);
       alert("Failed to send notification");
     } finally {
       sending = false;

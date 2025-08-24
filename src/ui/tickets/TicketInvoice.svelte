@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import type { Ticket } from "@data/tickets";
   import { createInvoices } from "@data/invoices";
   import Toast from "@components/Toast.svelte";
@@ -45,7 +46,7 @@
       closeConfirm();
       showSendInterface = false;
     } catch (e) {
-      console.error("Failed to send invoice:", e);
+      logger.logError("Failed to send invoice:", e);
       showToast("error", "Failed to send invoice");
     } finally {
       sendingInvoice = false;

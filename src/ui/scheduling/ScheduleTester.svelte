@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import {
     test78schedule as testMSschedule,
     test56schedule as testMS56schedule,
@@ -24,14 +25,14 @@
 
     try {
       const sampleData = getSampleData();
-      console.log("Testing with sample:", selectedSample, sampleData);
+      logger.logPriority("Testing with sample:", selectedSample, sampleData);
 
       // Extract student and schedule from sample data
       const { student, schedule } = sampleData;
 
       // STEP 1: Parse SIS data into day mappings
       scheduleMap = parseProjectScheduleFromSIS(schedule);
-      console.log("Schedule map:", scheduleMap);
+      logger.logPriority("Schedule map:", scheduleMap);
 
       // STEP 2: Get bell schedules for each day
       const dayNames = ["monday", "tuesday", "wednesday", "thursday", "friday"];
@@ -53,11 +54,11 @@
           classMap: scheduleMap[dayName] || {},
         };
       }
-      console.log("Day schedules:", daySchedules);
+      logger.logPriority("Day schedules:", daySchedules);
 
       // STEP 3: Build final structured schedule
       structuredResult = buildStructuredSchedule(student, schedule);
-      console.log("Structured result:", structuredResult);
+      logger.logPriority("Structured result:", structuredResult);
     } catch (err) {
       error =
         err instanceof Error
@@ -65,7 +66,7 @@
           : typeof err === "string"
             ? err
             : JSON.stringify(err);
-      console.error("Test error:", err);
+      logger.logError("Test error:", err);
     }
   }
 

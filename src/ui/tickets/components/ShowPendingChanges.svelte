@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   export let draft: Record<string, any> | null = null;
   export let onSave: () => Promise<void> | void = () => {};
   export let saving: boolean = false;
@@ -12,7 +13,7 @@
     // allow promise but do not await here (parent controls saving flag)
     if (r && typeof (r as any).catch === "function") {
       (r as Promise<any>).catch((e) =>
-        console.error("Save failed in ShowPendingChanges:", e)
+        logger.logError("Save failed in ShowPendingChanges:", e)
       );
     }
   }

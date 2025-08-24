@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
   import TicketInfo from "../editorComponents/TicketInfo.svelte";
@@ -128,7 +129,7 @@
         draft = {};
       }
     } catch (e) {
-      console.error("Failed to save repair changes:", e);
+      logger.logError("Failed to save repair changes:", e);
       alert("Failed to save repair changes.");
     } finally {
       saving = false;
@@ -161,7 +162,7 @@
       // reset draft
       draft = {};
     } catch (e) {
-      console.error("Failed to mark ready for pickup:", e);
+      logger.logError("Failed to mark ready for pickup:", e);
       alert("Failed to mark ready for pickup.");
     } finally {
       saving = false;

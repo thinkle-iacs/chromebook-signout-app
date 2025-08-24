@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import {
     testSISConnection,
     testSISAuth,
@@ -21,7 +22,7 @@
     const startTime = Date.now();
 
     try {
-      console.log(`[Test] Starting ${testName}...`);
+      logger.logPriority(`[Test] Starting ${testName}...`);
       const result = await testFunction();
       const duration = Date.now() - startTime;
 
@@ -36,7 +37,9 @@
         },
       ];
 
-      console.log(`[Test] ${testName} completed successfully in ${duration}ms`);
+      logger.logPriority(
+        `[Test] ${testName} completed successfully in ${duration}ms`
+      );
     } catch (error: any) {
       const duration = Date.now() - startTime;
 
@@ -52,7 +55,7 @@
         },
       ];
 
-      console.error(`[Test] ${testName} failed after ${duration}ms:`, error);
+      logger.logError(`[Test] ${testName} failed after ${duration}ms:`, error);
     } finally {
       loading = false;
     }
@@ -94,7 +97,7 @@
 
       structured = buildStructuredSchedule(student, sisSchedule);
     } catch (err: any) {
-      console.error("Step E failed:", err);
+      logger.logError("Step E failed:", err);
       eError = err?.message || "Unknown error";
     } finally {
       loading = false;

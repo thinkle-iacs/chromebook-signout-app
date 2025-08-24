@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import StudentInfo from "./StudentInfo.svelte";
   import router from "page";
   import type { Student } from "@data/students";
@@ -19,7 +20,7 @@
   export let name = "";
   if (name) {
     $studentName = name;
-    console.log("Got student", $studentName, name);
+    logger.logVerbose("LookupStudent got student", $studentName, name);
   }
   let lookupForm;
   let validators = () => ({

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import { user } from "@data/user";
   import type { Ticket } from "@data/tickets";
   import { updateTicket } from "@data/tickets";
@@ -93,7 +94,7 @@
       onTicketChange(ticket);
       return updated;
     } catch (error) {
-      console.error("Error updating ticket:", error);
+      logger.logError("Error updating ticket:", error);
       alert("Failed to update ticket");
     } finally {
       saving = false;

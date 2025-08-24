@@ -1,5 +1,6 @@
 <script lang="ts">
   // ---- imports identical style to your TicketEditor ----
+  import { logger } from "@utils/log";
   import { user } from "@data/user";
   import type { Ticket } from "@data/tickets";
   import {
@@ -168,7 +169,7 @@
       Record<string, { from?: unknown; to?: unknown }>
     >
   ) {
-    console.log(
+    logger.logRegular(
       "TicketWorkflow updateTicket called with:",
       updates,
       historyEntry
@@ -224,11 +225,11 @@
         try {
           const updated: Ticket = await apiCreateTicket(creationPayload); // API returns ticket object you fool...
           Object.assign(ticket, updated);
-          console.log("Created new ticket, calling onUpdateTicket");
+          logger.logRegular("Created new ticket, calling onUpdateTicket");
           onUpdateTicket(updated, composed);
           showToast("Ticket created", "success");
         } catch (err) {
-          console.error("Failed to create ticket:", err);
+          logger.logError("Failed to create ticket:", err);
           showToast("Failed to create ticket", "error");
         }
       } else {
@@ -244,7 +245,7 @@
         showToast("Ticket updated", "success");
       }
     } catch (err) {
-      console.error("TicketWorkflow updateTicket failed:", err);
+      logger.logError("TicketWorkflow updateTicket failed:", err);
       showToast("Failed to save ticket", "error");
     } finally {
       saving = false;
