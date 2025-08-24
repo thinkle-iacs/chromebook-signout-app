@@ -9,4 +9,4 @@
   }
 </script>
 
-<input class="w3-input" on:input={updateValue} value={textValue} />
+<input class="w3-input w3-border" on:input={updateValue} value={textValue} />
