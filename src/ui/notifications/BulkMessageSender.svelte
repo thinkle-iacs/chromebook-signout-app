@@ -23,6 +23,7 @@
   import SignoutHistoryTable from "@history/SignoutHistoryTable.svelte";
   import NotificationSummary from "./components/NotificationSummary.svelte";
   import { Asset } from "@data/inventory";
+  import { logger } from "@utils/log";
   let fetchedFull;
   let update;
 
@@ -45,8 +46,8 @@
     fetchFullHistory(true);
     fetchNotifications();
   });
-  $: console.log("contactStore", $contactStore);
-  $: console.log("messageStore", $messagesStore);
+  $: logger.logVerbose("contactStore", $contactStore);
+  $: logger.logVerbose("messageStore", $messagesStore);
   let messages = [];
   $: messages = Object.values($messagesStore);
   let showBody = {};
@@ -107,7 +108,7 @@
     let aname = (anames && anames[0].toUpperCase()) || "ZZZZZZZZ";
     let bname = (bnames && bnames[0].toUpperCase()) || "ZZZZZZZZ";
     if (aname && aname.indexOf("Yana") > -1) {
-      console.log("Comparing", aname, "and", bname, aname > bname);
+      logger.logVerbose("Comparing", aname, "and", bname, aname > bname);
     }
     return (aname > bname && 1) || (aname < bname && -1) || 0;
   };
@@ -178,7 +179,7 @@
         );
       }
     }
-    console.log(emails);
+    logger.logVerbose("emails", emails);
   }
 
   let notificationsByEntry = {};
@@ -232,7 +233,7 @@
         ) {
           let entryToCheck = sortedEntries[indexToCheck];
           sendEmails[entryToCheck.Num] = true;
-          console.log("checking off", indexToCheck, entryToCheck);
+          logger.logVerbose("checking off", indexToCheck, entryToCheck);
         }
         return;
       }
@@ -244,13 +245,13 @@
   let sorters = [];
 
   function applyFilters(force1, force2, force3, statusFilter) {
-    console.log("Re-apply filters!");
+    logger.logVerbose("Re-apply filters!");
     sortedEntries = [...historyWeCareAbout];
-    console.log("Begin with", sortedEntries.length);
+    logger.logVerbose("Begin with", sortedEntries.length);
     for (let f of filters) {
-      console.log("Apply filter", f);
+      logger.logVerbose("Apply filter", f);
       sortedEntries = sortedEntries.filter(f);
-      console.log("Now we have", sortedEntries.length);
+      logger.logVerbose("Now we have", sortedEntries.length);
     }
     for (let sorter of sorters) {
       sortedEntries.sort(sorter);

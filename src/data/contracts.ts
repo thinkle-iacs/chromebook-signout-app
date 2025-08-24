@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 import type { Student } from "./students";
 //import type { Writable } from "svelte/store";
 
@@ -68,7 +69,7 @@ export async function getContracts(
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
-  console.log("Got asset data:", json);
+  logger.logVerbose("Got asset data:", json);
   contractStore.update(($contractStore) => {
     //$contractStore = {};
     for (let result of json) {
@@ -77,7 +78,7 @@ export async function getContracts(
         _id: result.id,
       };
     }
-    console.log("contractStore:", JSON.stringify($contractStore));
+    logger.logVerbose("contractStore:", JSON.stringify($contractStore));
     return $contractStore;
   });
   if (mapped || all) {

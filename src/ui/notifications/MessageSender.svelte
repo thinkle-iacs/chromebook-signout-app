@@ -32,11 +32,12 @@
   import NotificationSender from "./NotificationSender.svelte";
   import NotificationNotice from "./components/NotificationNotice.svelte";
   import { messagesStore } from "@data/messages";
+  import { logger } from "@utils/log";
 
   onMount(async () => {
-    console.log("Fetch contacts!");
+    logger.logVerbose("Fetch contacts!");
     await getContacts();
-    console.log($contactStore);
+    logger.logVerbose("contactStore", $contactStore);
   });
   let selectedMessage;
   let contacts = null;
@@ -68,14 +69,19 @@
   async function autoselectMessage(force, force2) {
     let messages = Object.values($messagesStore);
     if (signoutItem && messages.length) {
-      console.log("Try autoselecting!", $messagesStore, "item=>", signoutItem);
+      logger.logVerbose(
+        "Try autoselecting!",
+        $messagesStore,
+        "item=>",
+        signoutItem
+      );
       if (signoutItem.DailyLoan) {
         selectedMessage = $messagesStore["ReturnYourDaily"];
       } else {
         selectedMessage = $messagesStore["NewLoan"];
       }
     } else {
-      console.log(
+      logger.logVerbose(
         "Not autoselecting message",
         selectedMessage,
         signoutItem,
@@ -91,13 +97,19 @@
   <div class="modal-content w3-container w3-white w3-card-4 w3-round-large">
     <div class="modal-header">
       <h2>Send Message</h2>
-      <button class="close-btn" on:click={() => (notification = null)} aria-label="Close">×</button>
+      <button
+        class="close-btn"
+        on:click={() => (notification = null)}
+        aria-label="Close">×</button
+      >
     </div>
     <div class="modal-body">
       {#if notification}
         <NotificationSender notifications={[notification]} />
         <div class="w3-margin-top">
-          <button class="w3-btn w3-gray" on:click={() => (notification = null)}>Cancel</button>
+          <button class="w3-btn w3-gray" on:click={() => (notification = null)}
+            >Cancel</button
+          >
         </div>
       {:else}
         <h3>Send Message about:</h3>
@@ -108,7 +120,9 @@
           <tbody>
             {#if contacts}
               <tr>
-                <td><input bind:checked={sendToContacts} type="checkbox" /> </td>
+                <td
+                  ><input bind:checked={sendToContacts} type="checkbox" />
+                </td>
                 <td>
                   Contacts: {JSON.stringify(getEmails(contacts).join(","))}
                 </td>
@@ -161,7 +175,7 @@
     padding: 16px;
     box-sizing: border-box;
   }
-  
+
   .modal-content {
     max-width: min(1200px, 90vw);
     max-height: 90vh;
@@ -169,7 +183,7 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
   }
-  
+
   .modal-header {
     display: flex;
     align-items: center;
@@ -177,13 +191,13 @@
     padding: 16px 24px;
     border-bottom: 1px solid #eee;
   }
-  
+
   .modal-header h2 {
     margin: 0;
     font-size: 1.2em;
     font-weight: bold;
   }
-  
+
   .close-btn {
     background: transparent;
     border: none;
@@ -194,15 +208,15 @@
     padding: 0;
     line-height: 1;
   }
-  
+
   .close-btn:hover {
     color: #c6093b;
   }
-  
+
   .modal-body {
     padding: 24px;
   }
-  
+
   h3 {
     font-size: 1.1em;
     margin-top: 0;

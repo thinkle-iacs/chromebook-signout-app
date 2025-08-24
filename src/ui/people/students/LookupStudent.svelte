@@ -16,7 +16,7 @@
   import MessageSender from "@notifications/MessageSender.svelte";
   import StudentGoogleAdminHistory from "@googleAdmin/StudentGoogleAdminHistory.svelte";
   import StudentTicketsTab from "./StudentTicketsTab.svelte";
-  export let name;
+  export let name = "";
   if (name) {
     $studentName = name;
     console.log("Got student", $studentName, name);

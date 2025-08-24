@@ -6,12 +6,13 @@
   import { assetStore } from "@data/inventory";
   import type { SignoutHistoryEntry } from "@data/signoutHistory";
   import type { Student } from "@data/students";
+  import { logger } from "@utils/log";
   export let signoutHistoryItems: SignoutHistoryEntry[];
-  export let student: Student | null;
+  export let student: Student | null = null;
   export let currentOnlyMode = false;
   export let studentOnlyMode = false;
   export let dailyOnlyMode = false;
-  $: console.log(signoutHistoryItems);
+  $: logger.logVerbose("signoutHistoryItems", signoutHistoryItems);
 </script>
 
 <table class="w3-table w3-striped w3-bordered w3-small">

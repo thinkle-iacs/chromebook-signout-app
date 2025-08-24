@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 import { tick } from "svelte";
 import { searchForStudent } from "@data/students";
 import { searchForStaff } from "@data/staff";
@@ -18,13 +19,13 @@ export let assetTag = writable("");
 export let assetTags = writable([]);
 
 assetTag.subscribe((s) => {
-  console.log("Asset Tag change!", s);
+  logger.logVerbose("Asset Tag change!", s);
   if (s.toUpperCase) {
     let value = s.toUpperCase();
-    console.log("Upper", value);
+    logger.logVerbose("Upper", value);
     return value;
   } else {
-    console.log("Unchanged", s);
+    logger.logVerbose("Unchanged", s);
     return s;
   }
 });
@@ -39,7 +40,7 @@ export const validateStudent = async (
   studentNameStore = studentName,
   studentDropdownStore = studentDropdown
 ) => {
-  console.log("Validate student", s);
+  logger.logVerbose("Validate student", s);
   studentDropdownStore.set([]);
   studentUpdateCount += 1;
   let myUpdateNumber = studentUpdateCount;
@@ -109,7 +110,7 @@ export const validateStaff = async (
   staffNameStore = staffName,
   staffDropdownStore = staffDropdown
 ) => {
-  console.log("Validate staff", s);
+  logger.logVerbose("Validate staff", s);
   staffDropdownStore.set([]);
   staffUpdateCount += 1;
   let myUpdateNumber = staffUpdateCount;
@@ -193,7 +194,7 @@ export const validateAssets = async (
 export const validateAsset = async (
   s
 ): Promise<{ name: string; valid: boolean }> => {
-  console.log("Validate asset", s);
+  logger.logVerbose("Validate asset", s);
   if (s && s.length >= 3) {
     let $assetStore = get(assetStore);
     if ($assetStore[s]) {

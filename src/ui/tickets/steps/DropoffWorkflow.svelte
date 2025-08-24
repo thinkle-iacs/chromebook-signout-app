@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import type { Asset } from "@data/inventory";
   import { Notification } from "@data/notifications";
   import TicketNotificationsSummary from "./../components/TicketNotificationsSummary.svelte";
@@ -33,7 +34,8 @@
     const { merged, updates } = mergeUpdates(ticket, draft);
     mergedTicket = merged;
     draft = updates;
-    console.log("Merged ticket", mergedTicket, "Draft", draft);
+
+    logger.logVerbose("Merged ticket", mergedTicket, "Draft", draft);
   }
 
   // Drop-off specifics
@@ -89,7 +91,7 @@
     : "Mark <b>temp-not-needed</b>";
   $: buttonLabel = `<span>${checkInLabel}, ${checkOutLabel} and update Status to Have Device</span>`;
 
-  $: console.log(
+  $: logger.logVerbose(
     "Updated mainTag",
     mainTag,
     "draftTemp",
@@ -128,7 +130,7 @@
       draft = {};
       showToast("success", "Changes saved.");
     } catch (e) {
-      console.error("Failed to save draft", e);
+      logger.logError("Failed to save draft", e);
       showToast("error", "Failed to save changes");
     }
   }
@@ -236,7 +238,7 @@
       draft = {};
       showToast("success", "Drop-off processed");
     } catch (e) {
-      console.error("Dropoff processing failed:", e);
+      logger.logError("Dropoff processing failed:", e);
       showToast("error", "Failed to process drop-off");
     } finally {
       processing = false;

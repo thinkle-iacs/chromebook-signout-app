@@ -23,6 +23,7 @@
   } from "@data/inventory";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import { get } from "svelte/store";
+  import { logger } from "@utils/log";
   import ReportTable from "./ReportTable.svelte";
 
   let activeTab: "studentLoans" | "staffLoans" | "nonLoaned" = "studentLoans";
@@ -102,7 +103,7 @@
     await processBatch();
     loginDataLoading = false;
     loginDataProgress = total;
-    console.log("All statuses updated:", machineStatuses);
+    logger.logVerbose("All statuses updated:", machineStatuses);
   }
 
   function addMachineInfo(assets, machineStatuses) {
@@ -180,7 +181,7 @@
       headers = ["Asset Tag", "Location", "Purpose", "Status"];
     }
   }
-  $: console.log(displayData);
+  $: logger.logVerbose("displayData", displayData);
 </script>
 
 <div class="w3-container">

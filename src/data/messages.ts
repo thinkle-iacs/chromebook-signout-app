@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 
 export const messagesStore = writable({});
 
@@ -14,7 +15,7 @@ export async function getMessages() {
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
-  console.log("Got message data:", json);
+  logger.logVerbose("Got message data:", json);
   messagesStore.update(($messageStore) => {
     $messageStore = {};
     for (let result of json) {
@@ -23,7 +24,7 @@ export async function getMessages() {
         _id: result.id,
       };
     }
-    console.log("messageStore:", JSON.stringify($messageStore));
+    logger.logVerbose("messageStore:", JSON.stringify($messageStore));
     return $messageStore;
   });
   return json;

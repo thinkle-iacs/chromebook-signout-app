@@ -2,6 +2,7 @@
   import StudentInfo from "@people/students/StudentInfo.svelte";
   import router from "page";
   import { onMount } from "svelte";
+  import { logger } from "@utils/log";
 
   import type { Staff } from "@data/staff"; // Import Staff type
   import type { Asset } from "@data/inventory";
@@ -18,10 +19,10 @@
   import MessageSender from "@notifications/MessageSender.svelte";
   import StudentGoogleAdminHistory from "@googleAdmin/StudentGoogleAdminHistory.svelte";
 
-  export let name;
+  export let name = "";
   if (name) {
     $staffName = name;
-    console.log("Got staff", $staffName, name);
+    logger.logVerbose("Got staff", $staffName, name);
   }
 
   let lookupForm;
@@ -34,7 +35,7 @@
 
   function doValidation(...args) {
     if (lookupForm) {
-      console.log("Validate!");
+      logger.logVerbose("Validate!");
       lookupForm.validate();
     }
   }
@@ -44,7 +45,7 @@
   $: staff = $staffStore[$staffName];
 
   $: if (staff) {
-    console.log("Found staff:", staff);
+    logger.logVerbose("Found staff:", staff);
     router(`/staff/${staff["Full Name"]}`);
   } else {
     router(`/staff/`);
@@ -55,12 +56,12 @@
 
   async function getCurrentLoans() {
     current = await getCurrentLoansForStaff(staff); // Fetch current loans for staff
-    console.log("Current loans for staff:", current);
+    logger.logVerbose("Current loans for staff:", current);
   }
 
   async function getSignoutHistory() {
     let staffResults = await lookupSignoutHistory({ staff });
-    console.log("Got staff results", staffResults);
+    logger.logVerbose("Got staff results", staffResults);
     staffResults.reverse();
     loans = staffResults;
     let recordNumbers = new Set();
@@ -69,21 +70,21 @@
       assetTags.add(r["Asset Tag (from Asset)"][0]);
       recordNumbers.add(r.Num);
     });
-    console.log("We have tags:", assetTags);
+    logger.logVerbose("We have tags:", assetTags);
     for (let tag of Array.from(assetTags)) {
-      console.log("Now look up other results for ", tag);
+      logger.logVerbose("Now look up other results for ", tag);
       let assetResults = await lookupSignoutHistory({
         asset: { "Asset Tag": tag },
       });
       for (let result of assetResults) {
         if (!recordNumbers.has(result.Num)) {
-          console.log("Adding", result);
+          logger.logVerbose("Adding", result);
           loans = [...loans, result];
           recordNumbers.add(result.Num);
         }
       }
     }
-    console.log("Now sort", loans);
+    logger.logVerbose("Now sort", loans);
     loans.sort((a, b) => b.Num - a.Num);
     loans = loans;
   }

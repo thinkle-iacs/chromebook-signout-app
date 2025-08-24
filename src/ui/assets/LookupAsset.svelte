@@ -35,7 +35,6 @@
 
   function doValidation(...args) {
     if (lookupForm) {
-      console.log("validate!");
       lookupForm.validate();
     }
   }

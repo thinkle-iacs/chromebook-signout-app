@@ -29,7 +29,8 @@
     loading = false;
   });
 
-  $: console.log("Got ticket:", ticket);
+  import { logger } from "@utils/log";
+  $: logger.logVerbose("Got ticket:", ticket);
 </script>
 
 {#if loading}
@@ -40,7 +41,7 @@
   <TicketWorkflow
     {ticket}
     onUpdateTicket={(updatedTicket, history) => {
-      console.log("Ticket updated!", updatedTicket, history);
+      logger.logVerbose("Ticket updated!", updatedTicket, history);
       ticket = updatedTicket;
     }}
   />
@@ -48,7 +49,7 @@
     {ticket}
     readOnly={false}
     onTicketChange={(newTicket) => {
-      console.log("Got me a change to the ticket!", newTicket);
+  logger.logVerbose("Got me a change to the ticket!", newTicket);
       ticket = newTicket;
     }}
   /> -->

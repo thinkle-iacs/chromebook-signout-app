@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import AssetDisplay from "./AssetDisplay.svelte";
   import type { ChromebookInfo } from "@data/google";
   import { assetStore, searchForAsset } from "@data/inventory";
@@ -29,7 +30,7 @@
   let asset: Asset;
   if ($assetStore[info.serialNumber.toLowerCase()]) {
     asset = $assetStore[info.serialNumber.toLowerCase()];
-    console.log("Already had ", asset, "for", info);
+    logger.logRegular("Already had ", asset, "for", info);
   } else {
     searchForAsset(null, null, info.serialNumber).then((val) => {
       asset = $assetStore[info.serialNumber.toLowerCase()];

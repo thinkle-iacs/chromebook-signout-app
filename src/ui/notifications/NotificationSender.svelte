@@ -14,6 +14,7 @@
   } from "@data/notifications";
   import { messagesStore } from "@data/messages";
   import Message from "./BulkMessageSender.svelte";
+  import { logger } from "@utils/log";
   export let notifications;
 
   let toSend: Notification[] = [];
@@ -36,7 +37,7 @@
   let result: NotificationResult[];
   async function send() {
     result = await createNotifications(toSend);
-    console.log("Got result", result);
+    logger.logVerbose("Got result", result);
   }
 
   async function sendReal() {
@@ -50,10 +51,10 @@
       });
     }
     let oldResult = result;
-    console.log("Old result was", oldResult);
-    console.log("Pushing updates...", updates);
+    logger.logVerbose("Old result was", oldResult);
+    logger.logVerbose("Pushing updates...", updates);
     result = await updateNotifications(updates);
-    console.log("done with update!", result);
+    logger.logVerbose("done with update!", result);
   }
 
   async function getAllNotifications() {
@@ -67,17 +68,17 @@
   function updateResults(history) {
     let changed = false;
     for (let item of history) {
-      console.log("Got history item", item);
+      logger.logVerbose("Got history item", item);
       let correspondingNotification = result.filter(
         (n) => n.Num == item.fields.Num
       );
 
-      console.log("Got corresponding item!", correspondingNotification);
+      logger.logVerbose("Got corresponding item!", correspondingNotification);
       if (correspondingNotification) {
         for (let property in item.fields) {
           // Update???
           if (correspondingNotification[property] != item.fields[property]) {
-            console.log("Updating", property);
+            logger.logVerbose("Updating", property);
             correspondingNotification[property] = item.fields[property];
             changed = true;
           }

@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 
 export let studentsStore = writable({});
 
@@ -24,7 +25,7 @@ export async function searchForStudent(name) {
     "/.netlify/functions/index?mode=student&name=" + encodeURIComponent(name)
   );
   let json = await response.json();
-  console.log("Got data:", json);
+  logger.logVerbose("Got data:", json);
   studentsStore.update(($studentsStore) => {
     for (let result of json) {
       $studentsStore[result.fields.LASID] = {
@@ -55,6 +56,6 @@ export async function addStudentNote(student: Student, note: string) {
       encodeURIComponent(note)
   );
   let json = await response.json();
-  console.log("Got data:", json);
+  logger.logVerbose("Got data:", json);
   return json;
 }

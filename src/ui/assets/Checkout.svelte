@@ -39,7 +39,7 @@
   import StudentNote from "@people/students/StudentNote.svelte";
   import StudentTag from "@people/students/StudentTag.svelte";
   import CheckoutTicketLink from "@ui/tickets/components/CheckoutTicketLink.svelte";
-
+  import { logger } from "@utils/log";
   let status: CheckoutStatus = "Out";
   let notes = "";
   let studentNotes = "";
@@ -52,9 +52,9 @@
   /* let charger: null = null; */
 
   onMount(async () => {
-    console.log("Fetch contacts!");
+    logger.logVerbose("Fetch contacts!");
     await getContacts();
-    console.log($contactStore);
+    logger.logVerbose($contactStore);
   });
 
   let validators = () => ({
@@ -161,14 +161,14 @@
       checkedOut = [record, ...checkedOut];
       return true;
     } else {
-      console.log("Unexpected result", result);
+      logger.logError("Unexpected result", result);
       return false;
     }
   }
 
   async function checkOut() {
     getNote();
-    console.log("Updated note:", notes);
+    logger.logVerbose("Updated note:", notes);
     let success: boolean = false;
     if (assets) {
       for (let asset of assets) {
@@ -180,7 +180,7 @@
     } */
     if (studentNotes) {
       success = await addStudentNote(student, studentNotes);
-      console.log("student note success?", success);
+      logger.logVerbose("student note success?", success);
     }
     if (success) {
       $studentName = "";
@@ -308,7 +308,6 @@ Hinge bolts:New screws needed for display hinges*/
         let top = outerDiv.closest(".w3-main");
         let room = bod.clientHeight - top.clientHeight;
         if (room > 0) {
-          console.log("We have", room, "px available");
           textHeight += room;
         }
       }, 100);
@@ -326,7 +325,7 @@ Hinge bolts:New screws needed for display hinges*/
       if (valid) {
         checkOut();
       } else {
-        console.log("Not ready to check out!");
+        logger.logRegular("Not ready to check out!");
       }
     }}
   >

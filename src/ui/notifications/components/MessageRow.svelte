@@ -11,6 +11,7 @@
     NotificationUpdates,
   } from "@data/notifications";
   import { messagesStore } from "@data/messages";
+  import { logger } from "@utils/log";
 
   export let notification: Notification;
 
@@ -27,7 +28,11 @@
       }
     }
   }
-  $: console.log("Got notification row", notification, notification.message);
+  $: logger.logVerbose(
+    "Got notification row",
+    notification,
+    notification.message
+  );
 </script>
 
 <tr class="" on:click={() => (expanded = !expanded)}>

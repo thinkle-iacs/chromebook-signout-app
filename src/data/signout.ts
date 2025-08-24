@@ -4,6 +4,7 @@ import type { Asset } from "./inventory";
 import { assetStore } from "./inventory";
 import { get } from "svelte/store";
 import { user } from "./user";
+import { logger } from "@utils/log";
 export type CheckoutStatus =
   | "Out"
   | "Returned"
@@ -46,7 +47,8 @@ export async function signoutAsset(
   }
   params.FormUser = $user.email;
   let response = await fetch(
-    "/.netlify/functions/index?" + new URLSearchParams(params as Record<string, string>)
+    "/.netlify/functions/index?" +
+      new URLSearchParams(params as Record<string, string>)
   );
   let json = await response.json();
   if (json && json.length == 1) {
@@ -54,14 +56,14 @@ export async function signoutAsset(
     // manually update email since we might display that...
     if (student && Status == "Out") {
       assetStore.update(($assetStore) => {
-        console.log("update store based on record", record);
+        logger.logVerbose("update store based on record", record);
         let tag = asset["Asset Tag"];
         let oldRecord = $assetStore[tag] || {};
         $assetStore[tag] = {
           ...oldRecord,
           "Email (from Student (Current))": student.Email,
         };
-        console.log($assetStore);
+        logger.logVerbose("assetStore after update", $assetStore);
         return $assetStore;
       });
     }
