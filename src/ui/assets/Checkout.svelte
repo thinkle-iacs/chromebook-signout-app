@@ -565,32 +565,37 @@ Hinge bolts:New screws needed for display hinges*/
         id="notes"
         class="w3-input w3-border"
         placeholder={notePlaceholder}
-        style:height={`${textHeight}px`}
+        style="height: 80px;"
       />
     </FormField>
 
     {#if student}
-      <button
-        class="w3-button"
-        class:w3-light-grey={!showStudentNoteMode}
-        class:w3-blue={showStudentNoteMode}
-        on:click={() => {
-          showStudentNoteMode = !showStudentNoteMode;
-          if (showStudentNoteMode && !studentNotes && student?.Notes) {
-            studentNotes = student.Notes;
-          }
-        }}>{showStudentNoteMode ? "Hide" : "Edit"} Student Notes</button
-      >
+      <div style="margin-left: 12px; margin-bottom: 1em;">
+        <button
+          class="w3-button w3-margin-bottom"
+          class:w3-light-grey={!showStudentNoteMode}
+          class:w3-blue={showStudentNoteMode}
+          style="width: auto; display: inline-block;"
+          on:click={() => {
+            showStudentNoteMode = !showStudentNoteMode;
+            if (showStudentNoteMode && !studentNotes && student?.Notes) {
+              studentNotes = student.Notes;
+            }
+          }}>{showStudentNoteMode ? "Hide" : "Edit"} Student Notes</button
+        >
+      </div>
       {#if showStudentNoteMode}
         <textarea
           bind:value={studentNotes}
           class="w3-input w3-border"
           placeholder="Notes to add for this student"
-          style:height={`${textHeight}px`}
+          style="height: 60px;"
         />
       {/if}
     {/if}
-    <CheckoutTicketLink {student} asset={assets && assets[0]} />
+    <div style="margin-left: 12px; margin-bottom: 1em;">
+      <CheckoutTicketLink {student} asset={assets && assets[0]} />
+    </div>
     <input
       class:w3-red={valid}
       disabled={!valid}
@@ -602,9 +607,10 @@ Hinge bolts:New screws needed for display hinges*/
 </article>
 
 {#if checkedOut.length}
-  Send Message:
-  <MessageSender signoutItem={checkedOut[0]} />
-  <article class="w3-container">
+  <article class="w3-container" style="max-width: 1100px; margin: 1em auto;">
+    <h3>Send Message</h3>
+    <MessageSender signoutItem={checkedOut[0]} />
+    
     <h4>Recent Updates</h4>
     <SignoutHistoryTable signoutHistoryItems={checkedOut} />
   </article>

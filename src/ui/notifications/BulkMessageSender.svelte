@@ -275,13 +275,21 @@
 
   <div class="w3-cell-row w3-align-middle">
     {#if emails && emails.length}
-      <div class="modal-wrap">
-        <div class="w3-container w3-card modal-content">
-          <h3>Ready to Send {emails.length} Emails</h3>
-          <button class="w3-button w3-grey" on:click={() => (emails = [])}
-            >Close</button
-          >
-          <NotificationSender notifications={emails} />
+      <div class="modal-backdrop">
+        <div class="modal">
+          <header class="modal-header">
+            <h3>Ready to Send {emails.length} Emails</h3>
+            <button 
+              class="close-btn w3-button w3-round w3-grey" 
+              on:click={() => (emails = [])}
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+          </header>
+          <div class="modal-body">
+            <NotificationSender notifications={emails} />
+          </div>
         </div>
       </div>
     {:else}
@@ -467,22 +475,57 @@
   th:nth-child(3) {
     max-width: 5.5em;
   }
-  .modal-wrap {
+  
+  .modal-backdrop {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    padding: 16px;
-    box-sizing: border-box;
-    display: grid;
-    place-content: center;
-    z-index: 99;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
   }
-
-  .modal-wrap > * {
-    background-color: white;
-    overflow-y: scroll;
-    max-height: 80vh;
+  
+  .modal {
+    background: white;
+    border-radius: 8px;
+    width: min(1200px, 90vw);
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+  
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .close-btn {
+    padding: 8px 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    min-width: auto;
+  }
+  
+  .close-btn:hover {
+    background: #dee2e6 !important;
+  }
+  
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 80px);
   }
 </style>
