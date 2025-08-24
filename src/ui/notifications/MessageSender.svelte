@@ -87,7 +87,7 @@
   let notification;
 </script>
 
-<div class="w3-container w3-border w3-padding-32">
+<div class="message-sender">
   {#if notification}
     <NotificationSender notifications={[notification]} />
     <button class="w3-btn" on:click={() => (notification = null)}>Cancel</button
@@ -138,8 +138,18 @@
 </div>
 
 <style>
+  .message-sender {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    background: #f9f9f9;
+    margin-bottom: 1em;
+  }
+  
   h2 {
-    font-size: normal;
+    font-size: 18px;
+    margin: 0 0 1em 0;
+    color: #333;
   }
   a {
     text-decoration: none;

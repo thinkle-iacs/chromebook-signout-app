@@ -78,6 +78,14 @@ function runScheduleTest() {
   console.log("\n✨ Test complete!");
 }
 
+// Jest test case
+describe('Schedule Parsing', () => {
+  it('should parse schedule data without errors', () => {
+    // Basic test to ensure the schedule parsing functions work
+    expect(() => runScheduleTest()).not.toThrow();
+  });
+});
+
 // Run the test if this file is executed directly
 if (require.main === module) {
   runScheduleTest();
