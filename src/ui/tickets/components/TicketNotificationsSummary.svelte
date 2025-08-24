@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import type { Ticket } from "@data/tickets";
   import { getNotifications } from "@data/notifications";
 
@@ -30,7 +31,10 @@
     if (open && rows.length === 0) {
       loading = true;
       try {
-        console.log("Fetching notifications for ticket number", ticket.Number);
+        logger.logVerbose(
+          "Fetching notifications for ticket number",
+          ticket.Number
+        );
         rows = await getNotifications({ ticketNumber: String(ticket.Number) });
       } finally {
         loading = false;

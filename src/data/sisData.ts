@@ -1,6 +1,7 @@
 // Simple SIS API testing functions
+import { logger } from "@utils/log";
 export async function testSISConnection() {
-  console.log("[SIS Data] Testing basic connectivity...");
+  logger.logVerbose("[SIS Data] Testing basic connectivity...");
 
   try {
     const response = await fetch(
@@ -8,13 +9,13 @@ export async function testSISConnection() {
     );
     return await response.json();
   } catch (error) {
-    console.error("[SIS Data] Connection test failed:", error);
+    logger.logError("[SIS Data] Connection test failed:", error);
     throw error;
   }
 }
 
 export async function testSISAuth() {
-  console.log("[SIS Data] Testing SIS authentication...");
+  logger.logVerbose("[SIS Data] Testing SIS authentication...");
 
   try {
     const response = await fetch(
@@ -22,13 +23,13 @@ export async function testSISAuth() {
     );
     return await response.json();
   } catch (error) {
-    console.error("[SIS Data] Auth test failed:", error);
+    logger.logError("[SIS Data] Auth test failed:", error);
     throw error;
   }
 }
 
 export async function testStudentLookup(studentEmail: string) {
-  console.log("[SIS Data] Testing student lookup for:", studentEmail);
+  logger.logVerbose("[SIS Data] Testing student lookup for:", studentEmail);
 
   try {
     const response = await fetch(
@@ -38,13 +39,13 @@ export async function testStudentLookup(studentEmail: string) {
     );
     return await response.json();
   } catch (error) {
-    console.error("[SIS Data] Student lookup failed:", error);
+    logger.logError("[SIS Data] Student lookup failed:", error);
     throw error;
   }
 }
 
 export async function testScheduleLookup(studentEmail: string) {
-  console.log("[SIS Data] Testing schedule lookup for:", studentEmail);
+  logger.logVerbose("[SIS Data] Testing schedule lookup for:", studentEmail);
 
   try {
     const response = await fetch(
@@ -54,7 +55,7 @@ export async function testScheduleLookup(studentEmail: string) {
     );
     return await response.json();
   } catch (error) {
-    console.error("[SIS Data] Schedule lookup failed:", error);
+    logger.logError("[SIS Data] Schedule lookup failed:", error);
     throw error;
   }
 }

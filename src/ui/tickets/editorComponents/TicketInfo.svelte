@@ -9,7 +9,8 @@
   export let ticket: Ticket;
   export let onChange: (updates: Partial<Ticket>) => void = () => {};
   export let disabled: boolean = false;
-  $: console.log("TicketInfo got new ticket: ", ticket);
+  import { logger } from "@utils/log";
+  $: logger.logVerbose("TicketInfo got new ticket: ", ticket);
   let device = getTicketDevice(ticket);
 
   function getTicketDevice(ticket, assetStoreForForceUpdate) {

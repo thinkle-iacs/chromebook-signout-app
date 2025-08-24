@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 import type { Asset } from "./inventory";
 import type { Student } from "./students";
 
@@ -67,10 +68,10 @@ export async function getDeviceInfo(
     "/.netlify/functions/index?mode=google&serial=" +
       encodeURIComponent(device.Serial)
   );
-  console.log("Fetching device Info for ", device.Serial);
+  logger.logVerbose("Fetching device Info for ", device.Serial);
   if (response.status == 200) {
     let json = await response.json();
-    console.log("getDeviceInfo returning", json);
+    logger.logVerbose("getDeviceInfo returning", json);
     serialCache[device.Serial] = json.result;
     return json.result as ChromebookInfo;
   }
@@ -89,10 +90,10 @@ export async function getDevicesForUser(
       encodeURIComponent(user.Email)
   );
 
-  console.log("Fetching devices for ", user.Email);
+  logger.logVerbose("Fetching devices for ", user.Email);
   if (response.status == 200) {
     let json = await response.json();
-    console.log("getDevicesForUser returning", json);
+    logger.logVerbose("getDevicesForUser returning", json);
     userCache[user.Email] = json.result;
     return json.result as ChromebookInfo[];
   }
@@ -102,7 +103,7 @@ export async function checkMachineStatus(asset: Asset) {
   const googleData = await getDeviceInfo(asset);
 
   if (!googleData) {
-    console.warn("No Google Admin data found for asset:", asset["Asset Tag"]);
+    logger.logWarn("No Google Admin data found for asset:", asset["Asset Tag"]);
     return {
       status: "No data",
       lastUserMatch: false,

@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 import { Staff } from "./staff";
 
 export const assetStore = writable({});
@@ -52,7 +53,7 @@ export async function searchForAsset(
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
-  console.log("Got asset data:", json);
+  logger.logVerbose("Got asset data:", json);
   assetStore.update(($assetStore) => {
     for (let result of json) {
       let item = {
@@ -66,7 +67,7 @@ export async function searchForAsset(
       // New: also index by record id for quick lookup when we only have the id
       $assetStore[result.id] = item;
     }
-    console.log("assetStore:", JSON.stringify($assetStore));
+    logger.logVerbose("assetStore:", JSON.stringify($assetStore));
     return $assetStore;
   });
 
@@ -138,7 +139,7 @@ export async function fetchReport({
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
-  console.log("Got report data:", json);
+  logger.logVerbose("Got report data:", json);
 
   assetStore.update(($assetStore) => {
     for (let result of json) {
@@ -210,7 +211,7 @@ export async function updateAsset(id: string, fields: any) {
 
     return updatedAsset;
   } catch (error) {
-    console.error("Error updating asset:", error);
+    logger.logError("Error updating asset:", error);
     throw error;
   }
 }

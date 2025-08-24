@@ -1,4 +1,5 @@
 <script lang="ts">
+  import LogLevel from "@components/LogLevel.svelte";
   import { logger } from "@utils/log";
   import Checkout from "@assets/Checkout.svelte";
   import LookupAsset from "@assets/LookupAsset.svelte";
@@ -22,6 +23,7 @@
   import Toast from "@components/Toast.svelte";
   import { toastStore } from "@components/toastStore";
   import TestMenu from "./TestMenu.svelte";
+  import LogLevel from "./components/LogLevel.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -153,6 +155,7 @@
     router.start();
   });
   let navActive;
+  let showLogLevel = false;
 </script>
 
 <!-- Markup copied from original App.svelte left unchanged intentionally -->
@@ -265,9 +268,17 @@
           e.stopPropagation();
         }}>☰</button
       >
-      <h4 class="w3-bar-item w3-center w3-blue">
+      <h4
+        class="w3-bar-item w3-center w3-blue"
+        on:dblclick={() => {
+          showLogLevel = !showLogLevel;
+        }}
+      >
         {title}
       </h4>
+      {#if showLogLevel}
+        <LogLevel />
+      {/if}
     </header>
 
     {#if !$loggedIn}

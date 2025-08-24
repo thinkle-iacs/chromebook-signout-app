@@ -2,12 +2,12 @@
 
 import { writable, get } from "svelte/store";
 
-const LOG_ERROR = 4;
-const LOG_PRIORITY = 3;
-const LOG_REGULAR = 2;
-const LOG_VERBOSE = 1;
+export const LOG_ERROR = 4;
+export const LOG_PRIORITY = 3;
+export const LOG_REGULAR = 2;
+export const LOG_VERBOSE = 1;
 
-let logLevel = writable(LOG_REGULAR);
+export let logLevel = writable(LOG_REGULAR);
 if (window.location.hostname === "localhost") {
   logLevel.set(LOG_REGULAR);
 } else {
@@ -23,6 +23,8 @@ export function log(level: number, ...args: any[]) {
     args = ["***", ...args, "***"];
   } else if (level == LOG_ERROR) {
     args = ["!!!", ...args, "!!!"];
+  } else {
+    args = [":::", ...args, ":::"];
   }
   if (level >= get(logLevel)) {
     if (level === 1) {

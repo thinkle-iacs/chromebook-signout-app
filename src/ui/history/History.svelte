@@ -1,4 +1,5 @@
 <script type="ts">
+  import { logger } from "@utils/log";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import { onMount } from "svelte";
   import SignoutHistoryTable from "./SignoutHistoryTable.svelte";
@@ -76,11 +77,11 @@
         return false;
       }
     } else {
-      console.log("unexpected asset?", asset);
+      logger.logVerbose("unexpected asset?", asset);
     }
   }
   function getUserData(h) {
-    console.log("Get user data!", h);
+    logger.logVerbose("Get user data!", h);
     for (let entry of h) {
       let name = getName(entry);
       if (name) {
@@ -113,7 +114,7 @@
     }
     // react
     sortUsers();
-    console.log("userData", userData);
+    logger.logVerbose("userData", userData);
     history = $fullHistory;
   }
 
@@ -140,11 +141,11 @@
   $: sortUsers(excludeChargerMode);
 
   function getUsers(users, excludeStaffMode) {
-    console.log("Filtering users...", users);
+    logger.logVerbose("Filtering users...", users);
     let result = users.filter(
       (u: "") => !excludeStaffMode || u.split("@")[0].includes(".")
     );
-    console.log("Got ", result);
+    logger.logVerbose("Got ", result);
     return result;
   }
   let loanHistoryMode = false;

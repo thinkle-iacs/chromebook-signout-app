@@ -64,7 +64,8 @@
       ticketLinks = [...ticketLinks, { number, comment }];
     }
   }
-  $: console.log(
+  import { logger } from "@utils/log";
+  $: logger.logVerbose(
     "Ticket links for asset:",
     asset,
     "student",

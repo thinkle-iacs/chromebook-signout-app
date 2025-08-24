@@ -1,5 +1,6 @@
 import { get } from "svelte/store";
 import { user } from "./user";
+import { logger } from "@utils/log";
 
 export type Notification = {
   "Signout History": string[];
@@ -74,9 +75,9 @@ export async function updateNotifications(
     let batched = splitIntoTens(updates);
     let results = [];
     for (let b of batched) {
-      console.log("Working on batch");
+      logger.logVerbose("Working on batch");
       results = [...results, ...(await updateNotifications(b))];
-      console.log("Have results:", results);
+      logger.logVerbose("Have results:", results);
     }
     return results;
   }
@@ -111,9 +112,9 @@ export async function createNotifications(
     let batched = splitIntoTens(notifications);
     let results = [];
     for (let b of batched) {
-      console.log("Working on batch");
+      logger.logVerbose("Working on batch");
       results = [...results, ...(await createNotifications(b))];
-      console.log("Have results:", results);
+      logger.logVerbose("Have results:", results);
     }
     return results;
   }
@@ -122,7 +123,10 @@ export async function createNotifications(
     //records : notifications,
   };
   let $user = get(user);
-  console.log("Firing off request to create notifications", notifications);
+  logger.logVerbose(
+    "Firing off request to create notifications",
+    notifications
+  );
   let response = await fetch(
     "/.netlify/functions/index?" + new URLSearchParams(params),
     {

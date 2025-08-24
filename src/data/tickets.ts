@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 import { restructureLookupFields } from "./restructureLookups";
 import type { Asset } from "./inventory";
 import type { Student } from "./students";
@@ -133,7 +134,7 @@ export async function getOpenTicketsForAsset(
     const allTickets = await getTickets({ assetTag });
     return allTickets.filter((ticket) => ticket["Ticket Status"] !== "Closed");
   } catch (error) {
-    console.error("Error getting tickets for asset:", error);
+    logger.logError("Error getting tickets for asset:", error);
     return [];
   }
 }
@@ -146,7 +147,7 @@ export async function getOpenTicketsForStudent(
     const allTickets = await getTickets({ student: studentName });
     return allTickets.filter((ticket) => ticket["Ticket Status"] !== "Closed");
   } catch (error) {
-    console.error("Error getting tickets for student:", error);
+    logger.logError("Error getting tickets for student:", error);
     return [];
   }
 }
@@ -165,7 +166,7 @@ export async function createTicket(ticketData: Partial<Ticket>) {
   });
   let json = await response.json();
   json = restructureLookupFields(json); // restructure linked fields
-  console.log("Created ticket:", json);
+  logger.logVerbose("Created ticket:", json);
   if (json.error) {
     return json; // caller will handle toast / error path
   }
@@ -191,7 +192,7 @@ export async function updateTicket(id: string, updates: Partial<Ticket>) {
     body: JSON.stringify({ id, ...updates }),
   });
   let json = await response.json();
-  console.log("Updated ticket:", json);
+  logger.logVerbose("Updated ticket:", json);
 
   // If the API returns the Airtable record object, convert it to our Ticket shape
   // (fields, id, etc). If already in Ticket shape, this is a no-op.

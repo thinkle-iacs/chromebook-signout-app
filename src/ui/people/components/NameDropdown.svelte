@@ -1,6 +1,7 @@
 <script lang="ts">
   export let mode: "staff" | "student" = "student";
   export let inputElement: HTMLInputElement | null;
+  import { logger } from "@utils/log";
   let dropdownElement: HTMLElement | null;
 
   import {
@@ -12,10 +13,10 @@
 
   function select(name) {
     if (mode == "staff") {
-      console.log("Set staff=>", name);
+      logger.logVerbose("Set staff=>", name);
       $staffName = name;
     } else {
-      console.log("Set student=>", name);
+      logger.logVerbose("Set student=>", name);
       $studentName = name;
     }
   }
@@ -61,7 +62,7 @@
       }
     });
   }
-  $: console.log("Dropdown:", dropdown, "show:", show);
+  $: logger.logVerbose("Dropdown:", dropdown, "show:", show);
 </script>
 
 {#if dropdown.length && show}

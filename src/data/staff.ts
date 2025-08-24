@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 
 export type Staff = {
   _id: string;
@@ -23,7 +24,7 @@ export async function searchForStaff(name) {
       "/.netlify/functions/index?mode=staff&name=" + encodeURIComponent(name)
     );
     let json = await response.json();
-    console.log("Got staff data", json);
+    logger.logVerbose("Got staff data", json);
     const results = [];
     staffStore.update(($staffStore) => {
       for (let result of json) {

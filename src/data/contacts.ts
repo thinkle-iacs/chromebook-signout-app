@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { logger } from "@utils/log";
 //import type { Writable } from "svelte/store";
 
 /* export const contractStore: Writable<{
@@ -34,7 +35,7 @@ export async function getContacts() {
   let paramString = new URLSearchParams(params);
   let response = await fetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
-  console.log("Got contact data:", json);
+  logger.logVerbose("Got contact data:", json);
   contactStore.update(($contactStore) => {
     $contactStore = {};
     for (let result of json) {
@@ -45,7 +46,7 @@ export async function getContacts() {
         _id: result.id,
       };
     }
-    console.log("contactStore:", JSON.stringify($contactStore));
+    logger.logVerbose("contactStore:", JSON.stringify($contactStore));
     return $contactStore;
   });
   return json;

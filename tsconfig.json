@@ -6,10 +6,19 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@data/*": ["src/data/*"],
+      "@data/*": ["data/*"],
       "@components/*": ["ui/components/*"],
+      "@notifications/*": ["ui/notifications/*"],
+      "@assets/*": ["ui/assets/*"],
+      "@people/*": ["ui/people/*"],
+      "@googleAdmin/*": ["ui/googleAdmin/*"],
+      "@contracts/*": ["ui/contracts/*"],
+      "@history/*": ["ui/history/*"],
+      "@auth/*": ["ui/auth/*"],
+      "@utils/*": ["ui/utils/*"],
       "@ui/*": ["ui/*"],
-      "@ui": ["ui"]
+      "@tickets/*": ["ui/tickets/*"],
+      "@scheduling/*": ["ui/scheduling/*"]
     }
   },
   "include": ["src/**/*", "ui/**/*"],
