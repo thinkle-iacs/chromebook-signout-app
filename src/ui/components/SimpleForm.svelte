@@ -6,7 +6,6 @@
   export let validators;
   let formObject;
   onMount(() => {
-    console.log("Create for mwith ", validators);
     if (validators) {
       formObject = form(validators, {
         initCheck: true,

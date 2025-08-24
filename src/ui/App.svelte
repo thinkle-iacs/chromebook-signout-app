@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import Checkout from "@assets/Checkout.svelte";
   import LookupAsset from "@assets/LookupAsset.svelte";
   import Contracts from "@contracts/Contracts.svelte";
@@ -259,7 +260,7 @@
       <button
         class="mobileNav w3-bar-item w3-blue"
         on:click={(e) => {
-          console.log("mobileNav click!");
+          logger.logVerbose("mobileNav click!");
           navActive = true;
           e.stopPropagation();
         }}>☰</button

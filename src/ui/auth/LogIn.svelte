@@ -3,23 +3,24 @@
   import { onMount } from "svelte";
   import { user, loggedIn } from "@data/user";
   import { l } from "@utils/util";
+  import { logger } from "@utils/log";
 
   onMount(() => {
     netlifyIdentity.init();
     $user = netlifyIdentity.currentUser();
     // Bind to events
-    netlifyIdentity.on("init", (u) => console.log("init", u));
+    netlifyIdentity.on("init", (u) => logger.logVerbose("LogIn init", u));
     netlifyIdentity.on("login", (u) => {
-      console.log("login", u);
+      logger.logRegular("LogIn login", u);
       $user = u;
     });
     netlifyIdentity.on("logout", () => {
-      console.log("Logged out");
+      logger.logRegular("LogIn logout");
       $user = null;
     });
-    netlifyIdentity.on("error", (err) => console.error("Error", err));
-    netlifyIdentity.on("open", () => console.log("Widget opened"));
-    netlifyIdentity.on("close", () => console.log("Widget closed"));
+    netlifyIdentity.on("error", (err) => logger.logError("LogIn error", err));
+    netlifyIdentity.on("open", () => logger.logVerbose("LogIn widget opened"));
+    netlifyIdentity.on("close", () => logger.logVerbose("LogIn widget closed"));
 
     // Unbind from events
     //netlifyIdentity.off("login"); // to unbind all registered handlers

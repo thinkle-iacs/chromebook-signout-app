@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import type { Staff } from "@data/staff";
   import ChromebookInfoDisplay from "@assets/ChromebookInfoDisplay.svelte";
   import type { Student } from "@data/students";
@@ -9,7 +10,7 @@
   let chromebooks: ChromebookInfo[] | void;
 
   async function updateChromebooks() {
-    console.log("Update chromebooks for", student);
+    logger.logVerbose("Update chromebooks for", student);
     chromebooks = await getDevicesForUser(student);
   }
 

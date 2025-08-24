@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "@utils/log";
   import { onMount } from "svelte";
   import { getContracts, contractStore, mapContract } from "@data/contracts";
   import type { Contract } from "@data/contracts";
@@ -92,15 +93,14 @@
 
   $: {
     if (autoMode && student) {
-      console.log("Autoconfirm!");
       doMapContract();
     }
   }
 
   function doValidation(...args) {
-    console.log("Do validate!", $studentName);
+    logger.logVerbose("Do validate!", $studentName);
     if (contractForm) {
-      console.log("Validate");
+      logger.logVerbose("Validate");
       contractForm.validate();
     }
   }
