@@ -565,32 +565,37 @@ Hinge bolts:New screws needed for display hinges*/
         id="notes"
         class="w3-input w3-border"
         placeholder={notePlaceholder}
-        style:height={`${textHeight}px`}
+        style:height="80px"
       />
     </FormField>
 
     {#if student}
-      <button
-        class="w3-button"
-        class:w3-light-grey={!showStudentNoteMode}
-        class:w3-blue={showStudentNoteMode}
-        on:click={() => {
-          showStudentNoteMode = !showStudentNoteMode;
-          if (showStudentNoteMode && !studentNotes && student?.Notes) {
-            studentNotes = student.Notes;
-          }
-        }}>{showStudentNoteMode ? "Hide" : "Edit"} Student Notes</button
-      >
+      <div class="w3-right-align">
+        <button
+          class="w3-button"
+          class:w3-light-grey={!showStudentNoteMode}
+          class:w3-blue={showStudentNoteMode}
+          style="width: auto;"
+          on:click={() => {
+            showStudentNoteMode = !showStudentNoteMode;
+            if (showStudentNoteMode && !studentNotes && student?.Notes) {
+              studentNotes = student.Notes;
+            }
+          }}>{showStudentNoteMode ? "Hide" : "Edit"} Student Notes</button
+        >
+      </div>
       {#if showStudentNoteMode}
         <textarea
           bind:value={studentNotes}
           class="w3-input w3-border"
           placeholder="Notes to add for this student"
-          style:height={`${textHeight}px`}
+          style:height="60px"
         />
       {/if}
     {/if}
-    <CheckoutTicketLink {student} asset={assets && assets[0]} />
+    <div class="w3-right-align">
+      <CheckoutTicketLink {student} asset={assets && assets[0]} />
+    </div>
     <input
       class:w3-red={valid}
       disabled={!valid}

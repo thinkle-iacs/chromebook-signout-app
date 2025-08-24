@@ -87,120 +87,124 @@
   let notification;
 </script>
 
-<div class="w3-container w3-border w3-padding-32">
-  {#if notification}
-    <NotificationSender notifications={[notification]} />
-    <button class="w3-btn" on:click={() => (notification = null)}>Cancel</button
-    >
-  {:else}
-    <h2>Send Message about:</h2>
-    {#if asset}<AssetDisplay {asset} />{/if}
-    <MessageSelector bind:selectedMessage />
+<div class="modal-backdrop">
+  <div class="modal-content w3-container w3-white w3-card-4 w3-round-large">
+    <div class="modal-header">
+      <h2>Send Message</h2>
+      <button class="close-btn" on:click={() => (notification = null)} aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      {#if notification}
+        <NotificationSender notifications={[notification]} />
+        <div class="w3-margin-top">
+          <button class="w3-btn w3-gray" on:click={() => (notification = null)}>Cancel</button>
+        </div>
+      {:else}
+        <h3>Send Message about:</h3>
+        {#if asset}<AssetDisplay {asset} />{/if}
+        <MessageSelector bind:selectedMessage />
 
-    <table class="w3-table w3-striped w3-margin-bottom">
-      <tbody>
-        {#if contacts}
-          <tr>
-            <td><input bind:checked={sendToContacts} type="checkbox" /> </td>
-            <td>
-              Contacts: {JSON.stringify(getEmails(contacts).join(","))}
-            </td>
-          </tr>
+        <table class="w3-table w3-striped w3-margin-bottom">
+          <tbody>
+            {#if contacts}
+              <tr>
+                <td><input bind:checked={sendToContacts} type="checkbox" /> </td>
+                <td>
+                  Contacts: {JSON.stringify(getEmails(contacts).join(","))}
+                </td>
+              </tr>
+            {/if}
+            {#if signoutItem["Email (from Students)"]}
+              <tr>
+                <td>
+                  <input bind:checked={forceTrue} type="checkbox" />
+                </td>
+                <td>
+                  {signoutItem["Email (from Students)"]}
+                </td>
+              </tr>
+            {/if}
+            {#if signoutItem["Email (from Staff)"]}
+              <tr>
+                <td>
+                  <input bind:checked={forceTrue} type="checkbox" />
+                </td>
+                <td>
+                  {signoutItem["Email (from Staff)"]}
+                </td>
+              </tr>
+            {/if}
+          </tbody>
+        </table>
+        {#if selectedMessage}
+          <button class="w3-btn w3-green w3-block" on:click={prepareMessage}>
+            Queue Up Message
+          </button>
         {/if}
-        {#if signoutItem["Email (from Students)"]}
-          <tr>
-            <td>
-              <input bind:checked={forceTrue} type="checkbox" />
-            </td>
-            <td>
-              {signoutItem["Email (from Students)"]}
-            </td>
-          </tr>
-        {/if}
-        {#if signoutItem["Email (from Staff)"]}
-          <tr>
-            <td>
-              <input bind:checked={forceTrue} type="checkbox" />
-            </td>
-            <td>
-              {signoutItem["Email (from Staff)"]}
-            </td>
-          </tr>
-        {/if}
-      </tbody>
-    </table>
-    {#if selectedMessage}
-      <button class="w3-btn w3-green" on:click={prepareMessage}>
-        Queue Up Message
-      </button>
-    {/if}
-  {/if}
+      {/if}
+    </div>
+  </div>
 </div>
 
 <style>
-  h2 {
-    font-size: normal;
-  }
-  a {
-    text-decoration: none;
-  }
-  a:hover {
-    text-decoration: underline;
-  }
-  label {
-    display: inline-flex;
-    align-items: center;
-    color: #333;
-    transition: all 300ms;
-  }
-  label input[type="radio"] {
-    margin-right: 5px;
-  }
-  .bold {
-    color: black;
-    text-shadow: 0px 0px 1px #222;
-  }
-  input[type="radio"] {
-    margin-left: 16px;
-  }
-  article {
-    max-width: 1100px;
-    margin: auto;
-    margin-top: 1em;
-  }
-  @media (min-width: 640px) {
-    main {
-      max-width: none;
-    }
-  }
-  .slot {
-    display: contents;
-  }
-  .row {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .row > :global(*) {
-    margin-left: 16px;
-  }
-  .row > :global(*):first-child {
-    margin-left: 0;
-  }
-  .rowDetail {
-    min-height: 72px;
-  }
-
-  .noteChoice > label:first-child {
-    position: absolute;
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
     left: 0;
-    max-width: 10em;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+    box-sizing: border-box;
   }
-  .noteChoice {
-    margin-left: 10em;
-    margin-top: 5px;
+  
+  .modal-content {
+    max-width: min(1200px, 90vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
   }
-  textarea {
-    height: 4em;
+  
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .modal-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+  
+  .close-btn {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+    padding: 0;
+    line-height: 1;
+  }
+  
+  .close-btn:hover {
+    color: #c6093b;
+  }
+  
+  .modal-body {
+    padding: 24px;
+  }
+  
+  h3 {
+    font-size: 1.1em;
+    margin-top: 0;
   }
 </style>
