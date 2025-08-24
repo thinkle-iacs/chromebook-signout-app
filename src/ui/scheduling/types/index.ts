@@ -29,6 +29,11 @@ export interface ScheduleBlock {
   isFree: boolean; // false
   blockName?: string; // "Block 1" (optional)
   subject?: string; // "Art" (optional)
+  teachers?: {
+    givenName?: string;
+    familyName?: string;
+    email?: string;
+  }[];
 }
 
 export interface StructuredDaySchedule {

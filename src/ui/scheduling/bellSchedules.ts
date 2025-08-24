@@ -750,113 +750,151 @@ export function parseProjectScheduleFromSIS(
     Fri: "friday",
   };
 
+  // Helper: expand strings like "Mon-Tues,Thur-Fri" to ["monday","tuesday","thursday","friday"]
+  const expandDays = (daysExpr: string): string[] => {
+    const order = ["Mon", "Tues", "Wed", "Thur", "Fri"];
+    const out: string[] = [];
+    if (!daysExpr) return out;
+    // Split on commas first (e.g., "Mon-Tues,Thur-Fri" or "Mon,Wed,Fri")
+    const parts = daysExpr
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    for (const part of parts) {
+      if (part.includes("-")) {
+        const [startRaw, endRaw] = part.split("-").map((p) => p.trim());
+        const startIdx = order.indexOf(startRaw as any);
+        const endIdx = order.indexOf(endRaw as any);
+        if (startIdx !== -1 && endIdx !== -1) {
+          for (let i = startIdx; i <= endIdx; i++) {
+            const full = dayMap[order[i]];
+            if (full) out.push(full);
+          }
+        }
+      } else {
+        const full = dayMap[part as any];
+        if (full) out.push(full);
+      }
+    }
+    return out;
+  };
+
   // Process each class
   for (const cls of sisSchedule.classes) {
     if (!cls.periods || cls.periods.length === 0) continue;
 
     for (const periodString of cls.periods) {
-      // Check if this is Middle School format: "BLOCK A(Mon) BLOCK D(Thu)"
+      // Always attempt to match all relevant patterns that may coexist within the string
+
+      // 1) Middle School BLOCK letters, e.g., "BLOCK A(Mon) BLOCK D(Thu)"
       const msBlockMatches =
         periodString.match(/BLOCK ([A-E])\(([^)]+)\)/g) || [];
+      for (const blockMatch of msBlockMatches) {
+        const match = blockMatch.match(/BLOCK ([A-E])\(([^)]+)\)/);
+        if (!match) continue;
+        const block = match[1].toLowerCase(); // A -> a
+        const daysString = match[2];
+        const days = expandDays(daysString);
+        for (const fullDay of days) {
+          weekSchedule[fullDay][`block_${block}`] =
+            cls.title || cls.courseName || "Unknown Class";
+        }
+      }
 
-      if (msBlockMatches.length > 0) {
-        // Handle Middle School format
-        for (const blockMatch of msBlockMatches) {
-          const match = blockMatch.match(/BLOCK ([A-E])\(([^)]+)\)/);
+      // 2) Plain WIN, Adv, and L/R with weekday lists/ranges (Middle School)
+      const winMatches = periodString.match(/\bWIN\(([^)]+)\)/g) || [];
+      for (const m of winMatches) {
+        const mm = m.match(/\bWIN\(([^)]+)\)/);
+        if (!mm) continue;
+        const days = expandDays(mm[1]);
+        for (const fullDay of days) {
+          weekSchedule[fullDay]["win"] =
+            cls.title || cls.courseName || "Unknown Class";
+        }
+      }
+
+      const advPlainMatches = periodString.match(/\bAdv\(([^)]+)\)/g) || [];
+      for (const m of advPlainMatches) {
+        const mm = m.match(/\bAdv\(([^)]+)\)/);
+        if (!mm) continue;
+        const days = expandDays(mm[1]);
+        for (const fullDay of days) {
+          weekSchedule[fullDay]["adv"] =
+            cls.title || cls.courseName || "Unknown Class";
+        }
+      }
+
+      const lrMatches = periodString.match(/L\/R\(([^)]+)\)/g) || [];
+      for (const m of lrMatches) {
+        const mm = m.match(/L\/R\(([^)]+)\)/);
+        if (!mm) continue;
+        const days = expandDays(mm[1]);
+        for (const fullDay of days) {
+          weekSchedule[fullDay]["l_r"] =
+            cls.title || cls.courseName || "Unknown Class";
+        }
+      }
+
+      // 3) High School "Block n(Dx)" style
+      const hsBlockMatches =
+        periodString.match(/Block (\d+)\(([^)]+)\)/g) || [];
+      if (hsBlockMatches.length) {
+        const cycleToDay: Record<string, string> = {
+          D1: "monday",
+          D2: "tuesday",
+          D3: "wednesday",
+          D4: "thursday",
+          D5: "friday",
+        };
+        for (const blockMatch of hsBlockMatches) {
+          const match = blockMatch.match(/Block (\d+)\(([^)]+)\)/);
           if (!match) continue;
-
-          const block = match[1].toLowerCase(); // A -> a
-          const daysString = match[2]; // "Mon" or "Mon-Tues"
-
-          // Handle day ranges like "Mon-Tues"
-          const days = daysString.split("-").map((d) => d.trim());
-
-          for (const dayAbbr of days) {
-            const fullDay = dayMap[dayAbbr];
-            if (fullDay) {
-              weekSchedule[fullDay][`block_${block}`] =
+          const blockNum = match[1];
+          const cycleDaysString = match[2];
+          const cycleDays = cycleDaysString.split(",").map((d) => d.trim());
+          for (const cycleDay of cycleDays) {
+            const weekDay = cycleToDay[cycleDay];
+            if (weekDay) {
+              weekSchedule[weekDay][`block_${blockNum}`] =
                 cls.title || cls.courseName || "Unknown Class";
             }
           }
         }
-      } else {
-        // Check if this is High School format: "Block 1(D1) Block 3(D3) Block 4(D4)"
-        const hsBlockMatches =
-          periodString.match(/Block (\d+)\(([^)]+)\)/g) || [];
+      }
 
-        if (hsBlockMatches.length > 0) {
-          // Handle High School format
-          // For now, map cycle days to weekdays: D1=Mon, D2=Tue, D3=Wed, D4=Thu, D5=Fri
-          const cycleToDay: Record<string, string> = {
-            D1: "monday",
-            D2: "tuesday",
-            D3: "wednesday",
-            D4: "thursday",
-            D5: "friday",
-          };
-
-          for (const blockMatch of hsBlockMatches) {
-            const match = blockMatch.match(/Block (\d+)\(([^)]+)\)/);
-            if (!match) continue;
-
-            const blockNum = match[1]; // 1, 2, 3, 4
-            const cycleDaysString = match[2]; // "D1" or "D1,D2"
-
-            // Handle multiple cycle days like "D1,D2"
-            const cycleDays = cycleDaysString.split(",").map((d) => d.trim());
-
-            for (const cycleDay of cycleDays) {
-              const weekDay = cycleToDay[cycleDay];
+      // 4) High School "Adv/L n(Dx-Dy,...)" style
+      const advLunchMatches =
+        periodString.match(/(Adv\/L \d+)\(([^)]+)\)/g) || [];
+      for (const advMatch of advLunchMatches) {
+        const match = advMatch.match(/(Adv\/L \d+)\(([^)]+)\)/);
+        if (!match) continue;
+        const periodName = match[1].toLowerCase().replace(/[\/\s]+/g, "_"); // e.g., adv_l_1
+        const cycleDaysString = match[2];
+        const cycleToDay: Record<string, string> = {
+          D1: "monday",
+          D2: "tuesday",
+          D3: "wednesday",
+          D4: "thursday",
+          D5: "friday",
+        };
+        const parts = cycleDaysString.split(",");
+        for (const part of parts) {
+          if (part.includes("-")) {
+            const [start, end] = part.split("-").map((p) => p.trim());
+            const startNum = parseInt(start.replace("D", ""));
+            const endNum = parseInt(end.replace("D", ""));
+            for (let i = startNum; i <= endNum; i++) {
+              const weekDay = cycleToDay[`D${i}`];
               if (weekDay) {
-                weekSchedule[weekDay][`block_${blockNum}`] =
+                weekSchedule[weekDay][periodName] =
                   cls.title || cls.courseName || "Unknown Class";
               }
             }
-          }
-        } else {
-          // Handle other formats like "Adv/L 1(D1-D2,D4-D5)"
-          const advLunchMatches =
-            periodString.match(/(Adv\/L \d+)\(([^)]+)\)/g) || [];
-
-          for (const advMatch of advLunchMatches) {
-            const match = advMatch.match(/(Adv\/L \d+)\(([^)]+)\)/);
-            if (!match) continue;
-
-            const periodName = match[1].toLowerCase().replace(/[\/\s]+/g, "_"); // "Adv/L 1" -> "adv_l_1"
-            const cycleDaysString = match[2]; // "D1-D2,D4-D5"
-
-            // Parse ranges and individual days
-            const cycleToDay: Record<string, string> = {
-              D1: "monday",
-              D2: "tuesday",
-              D3: "wednesday",
-              D4: "thursday",
-              D5: "friday",
-            };
-
-            // Split by comma and handle ranges
-            const parts = cycleDaysString.split(",");
-            for (const part of parts) {
-              if (part.includes("-")) {
-                // Handle ranges like "D1-D2"
-                const [start, end] = part.split("-");
-                const startNum = parseInt(start.replace("D", ""));
-                const endNum = parseInt(end.replace("D", ""));
-                for (let i = startNum; i <= endNum; i++) {
-                  const weekDay = cycleToDay[`D${i}`];
-                  if (weekDay) {
-                    weekSchedule[weekDay][periodName] =
-                      cls.title || cls.courseName || "Unknown Class";
-                  }
-                }
-              } else {
-                // Handle individual days like "D4"
-                const weekDay = cycleToDay[part.trim()];
-                if (weekDay) {
-                  weekSchedule[weekDay][periodName] =
-                    cls.title || cls.courseName || "Unknown Class";
-                }
-              }
+          } else {
+            const weekDay = cycleToDay[part.trim()];
+            if (weekDay) {
+              weekSchedule[weekDay][periodName] =
+                cls.title || cls.courseName || "Unknown Class";
             }
           }
         }
@@ -1085,6 +1123,13 @@ export function mapSISPeriodToBellPeriod(
     const advPeriod = allPeriods.find((p) => p.id.includes("adv"));
     if (advPeriod) {
       matchedPeriods.push(advPeriod);
+    }
+  }
+
+  if (sisPeriodString.includes("WIN")) {
+    const winPeriod = allPeriods.find((p) => p.id.includes("win"));
+    if (winPeriod) {
+      matchedPeriods.push(winPeriod);
     }
   }
 

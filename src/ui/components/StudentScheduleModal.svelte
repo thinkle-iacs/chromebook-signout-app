@@ -6,9 +6,11 @@
     testScheduleLookup,
     isValidStudentEmail,
   } from "@data/sisData";
+  import { studentsStore } from "@data/students";
 
   export let studentEmail: string = "";
   export let open: boolean = false;
+  $: student = $studentsStore[studentEmail];
 
   const dispatch = createEventDispatcher();
 
@@ -132,6 +134,19 @@
                         <div class="class-name">{block.class}</div>
                         {#if block.room}
                           <div class="room-info">Room: {block.room}</div>
+                        {/if}
+                        {#if block.teachers}
+                          <div class="teachers-info">
+                            <ul>
+                              {#each block.teachers as teacher}
+                                <li>
+                                  {teacher.givenName}
+                                  {teacher.familyName}
+                                  <span class="email">({teacher.email})</span>
+                                </li>
+                              {/each}
+                            </ul>
+                          </div>
                         {/if}
                       </div>
                     </div>
@@ -260,5 +275,19 @@
     font-size: 12px;
     color: #666;
     font-style: italic;
+  }
+  .teachers-info {
+    font-size: 12px;
+    color: #666;
+  }
+  .teachers-info ul {
+    padding-inline-start: 0;
+  }
+  .teachers-info li {
+    list-style: none;
+    display: inline-block;
+  }
+  .teachers-info .email {
+    font-size: x-small;
   }
 </style>

@@ -85,6 +85,7 @@ export function buildStructuredSchedule(
             subjects: classDetails?.subjects,
           }),
           blockName: bellPeriod.displayName,
+          teachers: classDetails?.teachers || [],
           subject:
             classDetails?.subjects?.[0] || getSubjectFromClassName(className),
         });

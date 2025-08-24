@@ -337,6 +337,46 @@ async function lookupStudentByEmail(
   return student;
 }
 
+// Fetch teachers for a given class using OneRoster v1.1 API
+async function fetchTeachersForClass(
+  classId: string,
+  authToken: string,
+  baseUrl: string
+): Promise<any[]> {
+  console.log("[SIS Teachers] Fetching teachers for class:", classId);
+
+  if (!classId) {
+    throw new Error("Class ID is required to fetch teachers");
+  }
+
+  const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
+  const url = `${cleanBaseUrl}/classes/${classId}/teachers?limit=100&offset=0&orderBy=asc`;
+  console.log("[SIS Teachers] Request URL:", url);
+
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+
+  console.log("[SIS Teachers] Response status:", response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.log("[SIS Teachers] Error response:", errorText);
+    throw new Error(
+      `SIS API error getting teachers: ${response.status} - ${errorText}`
+    );
+  }
+
+  const data = await response.json();
+  console.log("[SIS Teachers] Response data:", JSON.stringify(data, null, 2));
+
+  // OneRoster v1.1 response structure: { teachers: [...] }
+  return Array.isArray(data.users) ? data.users : [];
+}
+
 // Simple schedule fetch function - OneRoster v1.1 compliant
 async function fetchStudentClasses(
   student: any,
@@ -378,6 +418,17 @@ async function fetchStudentClasses(
 
   const data = await response.json();
   console.log("[SIS Classes] Response data:", JSON.stringify(data, null, 2));
+
+  // Add teacher data to classes
+  if (Array.isArray(data.classes)) {
+    for (const cls of data.classes) {
+      cls.teachers = await fetchTeachersForClass(
+        cls.sourcedId,
+        authToken,
+        baseUrl
+      );
+    }
+  }
 
   return data;
 }
