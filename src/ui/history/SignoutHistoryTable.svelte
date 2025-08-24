@@ -14,7 +14,7 @@
   $: console.log(signoutHistoryItems);
 </script>
 
-<table class="w3-table w3-small">
+<table class="w3-table w3-striped w3-bordered w3-small">
   <tr>
     <th>#</th>
     <th> Time </th>
@@ -100,10 +100,6 @@
 </table>
 
 <style>
-  .tag {
-    display: inline-block;
-    padding: 8px;
-  }
   tr {
     color: grey;
   }

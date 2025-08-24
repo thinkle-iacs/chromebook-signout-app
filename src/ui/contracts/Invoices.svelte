@@ -63,7 +63,7 @@
   {#if loading}
     <p>Loading…</p>
   {:else}
-    <table class="w3-table-all w3-small">
+    <table class="w3-table w3-striped w3-bordered w3-small">
       <thead>
         <tr>
           <th>Student Email</th>

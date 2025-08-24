@@ -94,7 +94,7 @@
 {#if !result}
   <div>
     To Send:
-    <table class="w3-table w3-hoverable">
+    <table class="w3-table w3-striped w3-hoverable">
       <tbody>
         {#each notifications as notification}
           <MessageRow {notification} />

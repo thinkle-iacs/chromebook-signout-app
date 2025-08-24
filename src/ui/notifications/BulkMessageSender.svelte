@@ -380,7 +380,7 @@
       {/if}
     </div>
 
-    <table class="w3-table">
+    <table class="w3-table w3-striped w3-bordered">
       <tr>
         <th>
           <input type="checkbox" on:change={updateAllCheckboxes} />
@@ -466,10 +466,6 @@
   td:nth-child(3),
   th:nth-child(3) {
     max-width: 5.5em;
-  }
-  td a,
-  th a {
-    text-overflow: ellipsis;
   }
   .modal-wrap {
     position: fixed;
