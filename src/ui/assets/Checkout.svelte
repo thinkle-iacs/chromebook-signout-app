@@ -604,15 +604,16 @@ Hinge bolts:New screws needed for display hinges*/
     />
   </SimpleForm>
 </article>
-
-{#if checkedOut.length}
-  Send Message:
-  <MessageSender signoutItem={checkedOut[0]} />
-  <article class="w3-container">
-    <h4>Recent Updates</h4>
-    <SignoutHistoryTable signoutHistoryItems={checkedOut} />
-  </article>
-{/if}
+<article class="w3-container">
+  {#if checkedOut.length}
+    Send Message:
+    <MessageSender signoutItem={checkedOut[0]} />
+    <article class="w3-container">
+      <h4>Recent Updates</h4>
+      <SignoutHistoryTable signoutHistoryItems={checkedOut} />
+    </article>
+  {/if}
+</article>
 
 <style>
   a {
