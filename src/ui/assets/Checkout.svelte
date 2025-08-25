@@ -643,14 +643,7 @@ Hinge bolts:New screws needed for display hinges*/
     margin: auto;
     margin-top: 1em;
   }
-  @media (min-width: 640px) {
-    main {
-      max-width: none;
-    }
-  }
-  .slot {
-    display: contents;
-  }
+
   .row {
     display: flex;
     flex-direction: row;
