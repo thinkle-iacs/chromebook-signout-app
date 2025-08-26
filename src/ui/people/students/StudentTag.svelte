@@ -10,9 +10,13 @@
 
   // Determine if student is MS or HS based on YOG
   function getSchoolLevel(yog: string): string {
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0=Jan, 6=July
+    // If after June (i.e., July or later), seniors graduate next year
+    const seniorGradYear = currentMonth >= 6 ? currentYear + 1 : currentYear;
     const graduationYear = parseInt(yog);
-    const grade = 12 - (graduationYear - currentYear);
+    const grade = 12 - (graduationYear - seniorGradYear);
 
     if (grade <= 8) {
       return "MS";
