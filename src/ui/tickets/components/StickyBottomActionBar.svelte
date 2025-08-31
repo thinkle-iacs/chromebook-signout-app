@@ -24,16 +24,10 @@
     box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.15);
     z-index: 10;
   }
-  .sticky-bottom-action-bar button {
-    font-weight: 600;
-  }
   @media (max-width: 640px) {
     .sticky-bottom-action-bar {
       flex-direction: column;
       align-items: stretch;
-    }
-    .sticky-bottom-action-bar button {
-      width: 100%;
     }
   }
 </style>
