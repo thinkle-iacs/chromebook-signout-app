@@ -37,7 +37,7 @@ export function mergeUpdates(ticket: Ticket, draftUpdates: Partial<Ticket>) {
     const newVal = draftUpdates[key];
     const oldVal = ticket[key];
     if (!valuesEqual(oldVal, newVal)) {
-      updates[key] = newVal;
+      (updates as any)[key] = newVal;
     }
   }
 
