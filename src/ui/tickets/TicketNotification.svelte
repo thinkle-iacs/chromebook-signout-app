@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { notificationsBase } from "./../../functions/Airtable.ts";
   import { logger } from "@utils/log";
   import TicketNotificationsSummary from "./components/TicketNotificationsSummary.svelte";
   import TicketNotification from "./TicketNotification.svelte";
   import type { Ticket } from "@data/tickets";
   import { createNotifications } from "@data/notifications";
   import { messagesStore, getMessages } from "@data/messages";
-
+  import { isValidEmail } from "@utils/util";
   export let ticket: Ticket;
   export let defaultMessage = "RepairComplete";
   export let messages = [
@@ -53,12 +54,32 @@
   $: hasExistingNotifications =
     ((ticket as any)?.Notifications || []).length > 0;
 
-  function defaultRecipients() {
-    const studentEmail = (ticket as any)["Email (from Student)"]?.[0];
-    const parent1 = (ticket as any)["Contact1Email (from Student)"]?.[0];
-    const parent2 = (ticket as any)["Contact2Email (from Student)"]?.[0];
+  function getDefaultRecipients(ticket) {
+    console.log("Get default notifications...", ticket);
+    const studentEmail = (ticket as any)?._linked?.Student?.Email;
+    const parent1 = (ticket as any)?._linked?.Student?.["Contact1Email"];
+    const parent2 = (ticket as any)?._linked?.Student?.["Contact2Email"];
     return [studentEmail, parent1, parent2].filter(Boolean);
   }
+
+  let defaultRecipientList = [];
+  let extraRecipients = [];
+  let recipientChecks: boolean[] = [];
+  let notificationRecipients = [];
+
+  $: defaultRecipientList = getDefaultRecipients(ticket);
+  $: if (defaultRecipientList) {
+    // Initialize checkboxes to true for each recipient
+    if (recipientChecks.length !== defaultRecipientList.length) {
+      recipientChecks = defaultRecipientList.map(() => true);
+    }
+  }
+
+  $: notificationRecipients = [
+    ...defaultRecipientList.filter((r, i) => recipientChecks[i]),
+    ...extraRecipients,
+  ];
+  $: console.log("Recipients are:", notificationRecipients);
 
   async function send() {
     if (!selectedMessageId) {
@@ -67,7 +88,8 @@
     }
     sending = true;
     try {
-      const [recipient, recipient2, recipient3] = defaultRecipients();
+      const [recipient, recipient2, recipient3, recipient4, recipient5] =
+        notificationRecipients;
       const notifications = [
         {
           Ticket: [ticket._id],
@@ -76,6 +98,8 @@
           Recipient: recipient,
           Recipient2: recipient2,
           Recipient3: recipient3,
+          Recipient4: recipient4,
+          Recipient5: recipient5,
           Send: true,
         },
       ];
@@ -88,34 +112,38 @@
     } catch (e) {
       logger.logError("Failed to send notification:", e);
       alert("Failed to send notification");
+      // Use getDefaultRecipients() to get all possible recipients
     } finally {
       sending = false;
     }
   }
 </script>
 
-<div class="w3-panel w3-border">
-  <h5>Send Ticket Notification</h5>
+{#if ticket}
+  <div class="w3-panel w3-border">
+    <h5>Send Ticket Notification</h5>
 
-  {#if hasExistingNotifications}
-    <!-- Show summary first, with option to send another -->
-    <TicketNotificationsSummary {ticket} />
-
-    {#if !showSendInterface}
-      <div class="w3-section">
-        <button
-          class="w3-button w3-blue w3-small"
-          on:click={() => (showSendInterface = true)}
-        >
-          Send Another Notification
-        </button>
-      </div>
+    {#if hasExistingNotifications}
+      <TicketNotificationsSummary {ticket} />
+      {#if !showSendInterface}
+        <div class="w3-section">
+          <button
+            class="w3-button w3-blue w3-small"
+            on:click={() => (showSendInterface = true)}
+          >
+            Send Another Notification
+          </button>
+        </div>
+      {/if}
     {/if}
 
-    {#if showSendInterface}
+    {#if showSendInterface || !hasExistingNotifications}
       <div class="w3-section w3-border-top w3-padding-top">
-        <h6>Send Another Notification</h6>
-        <!-- Notification sender interface -->
+        <h6>
+          {hasExistingNotifications
+            ? "Send Another Notification"
+            : "Send Ticket Notification"}
+        </h6>
         <div class="w3-small w3-text-gray">
           Selected: {selectedTemplate
             ? selectedTemplate.Name ||
@@ -154,7 +182,14 @@
                   <pre
                     class="w3-code w3-light-gray"
                     style="white-space: pre-wrap;">{selectedTemplate.Body ||
-                      "(no body)"}</pre>
+                      "(no body)"}
+
+{extraText}
+Ticket Number: {ticket.Number}
+Ticket Status: {ticket["Ticket Status"]}
+User Description: {ticket["User Description"] || "(none)"}
+Notes: {ticket.Notes || "(none)"}
+</pre>
                 </div>
               </details>
             {/if}
@@ -170,6 +205,31 @@
             />
           </div>
         </div>
+        <div class="w3-margin-top">
+          <h4 class="w3-small">Recipients:</h4>
+          <div class="w3-section">
+            {#each defaultRecipientList as recipient, i}
+              <label class="w3-check w3-small name-label">
+                <input type="checkbox" bind:checked={recipientChecks[i]} />
+                {recipient}
+              </label>
+            {/each}
+            {#each Array(5 - defaultRecipientList.length).fill("") as _, i}
+              {#if i == 0 || isValidEmail(extraRecipients[i - 1])}
+                <label class="w3-check w3-small name-label">
+                  <input
+                    type="checkbox"
+                    checked={isValidEmail(extraRecipients[i])}
+                  />
+                  <input
+                    bind:value={extraRecipients[i]}
+                    placeholder="Type valid email to add..."
+                  />
+                </label>
+              {/if}
+            {/each}
+          </div>
+        </div>
         <div class="w3-section">
           <button
             class="w3-button w3-blue"
@@ -178,84 +238,27 @@
           >
             {sending ? "Sending…" : "Send Notification"}
           </button>
-          <button
-            class="w3-button w3-light-gray w3-margin-left"
-            on:click={() => (showSendInterface = false)}
-          >
-            Cancel
-          </button>
+          {#if hasExistingNotifications}
+            <button
+              class="w3-button w3-light-gray w3-margin-left"
+              on:click={() => (showSendInterface = false)}
+            >
+              Cancel
+            </button>
+          {/if}
         </div>
         {#if result}
           <div class="w3-small w3-text-green">Notification sent.</div>
         {/if}
       </div>
     {/if}
-  {:else}
-    <!-- No existing notifications, show the send interface directly -->
-    <div class="w3-small w3-text-gray">
-      Selected: {selectedTemplate
-        ? selectedTemplate.Name ||
-          selectedTemplate.Subject ||
-          selectedTemplate.ID ||
-          selectedTemplate._id
-        : "(none)"}
-    </div>
-    <div class="w3-row-padding">
-      <div class="w3-col s12 m6">
-        <label for="msg-template" class="w3-small">Message Template</label>
-        <select
-          id="msg-template"
-          class="w3-select w3-border"
-          bind:value={selectedMessageId}
-          disabled={templates.length === 0}
-        >
-          <option value=""
-            >{templates.length === 0 ? "Loading…" : "Select…"}</option
-          >
-          {#each templates as t (t._id)}
-            <option value={t._id}>{t.Name || t.Subject || t.ID || t._id}</option
-            >
-          {/each}
-        </select>
+  </div>
+{/if}
 
-        {#if selectedTemplate}
-          <details class="w3-margin-top">
-            <summary class="w3-small">Preview message</summary>
-            <div class="w3-small w3-section">
-              <div>
-                <strong>Subject:</strong>
-                {selectedTemplate.Subject || "(no subject)"}
-              </div>
-              <pre
-                class="w3-code w3-light-gray"
-                style="white-space: pre-wrap;">{selectedTemplate.Body ||
-                  "(no body)"}</pre>
-            </div>
-          </details>
-        {/if}
-      </div>
-      <div class="w3-col s12 m6">
-        <label for="extra-text" class="w3-small">Extra Text</label>
-        <textarea
-          id="extra-text"
-          class="w3-input w3-border"
-          rows="5"
-          bind:value={extraText}
-          placeholder="Optional note…"
-        />
-      </div>
-    </div>
-    <div class="w3-section">
-      <button
-        class="w3-button w3-blue"
-        on:click={send}
-        disabled={sending || templates.length === 0}
-      >
-        {sending ? "Sending…" : "Send Notification"}
-      </button>
-    </div>
-    {#if result}
-      <div class="w3-small w3-text-green">Notification sent.</div>
-    {/if}
-  {/if}
-</div>
+<style>
+  label.name-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+</style>
