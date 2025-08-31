@@ -103,7 +103,10 @@ export async function checkMachineStatus(asset: Asset) {
   const googleData = await getDeviceInfo(asset);
 
   if (!googleData) {
-    logger.logWarn("No Google Admin data found for asset:", asset["Asset Tag"]);
+    logger.logError(
+      "No Google Admin data found for asset:",
+      asset["Asset Tag"]
+    );
     return {
       status: "No data",
       lastUserMatch: false,
