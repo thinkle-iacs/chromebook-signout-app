@@ -225,6 +225,12 @@
       sortOrder = "desc";
     }
   }
+
+  function popOutTicket() {
+    let ticketNumber = selectedTicket?.Number;
+    let url = `/ticket/number/${ticketNumber}`;
+    window.open(url, "_blank");
+  }
 </script>
 
 <div class="w3-container">
@@ -540,15 +546,24 @@
 <!-- Ticket Detail Modal -->
 {#if showDetailModal && selectedTicket}
   <div class="modal" style="display: block;">
-    <button
-      class="close-button"
-      on:click={closeDetailModal}
-      on:keydown={(e) => e.key === "Enter" && closeDetailModal()}
-      tabindex="0"
-      title="Close"
-    >
-      &times;
-    </button>
+    <div class="modal-buttons">
+      <button
+        class="pop-out-button"
+        on:click={popOutTicket}
+        title="Open in new window"
+      >
+        ⧉
+      </button>
+      <button
+        class="close-button"
+        on:click={closeDetailModal}
+        on:keydown={(e) => e.key === "Enter" && closeDetailModal()}
+        tabindex="0"
+        title="Close"
+      >
+        &times;
+      </button>
+    </div>
     <div class="opaque">
       <TicketWorkflow
         ticket={structuredClone(selectedTicket)}
@@ -575,10 +590,16 @@
     text-decoration: none;
   }
 
-  .close-button {
+  .modal-buttons {
     position: absolute;
     top: 15px;
     right: 20px;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .modal-buttons button {
     width: 40px;
     height: 40px;
     background: white;
@@ -595,7 +616,7 @@
     transition: all 0.2s ease;
   }
 
-  .close-button:hover {
+  .modal-buttons button:hover {
     background: #f44336;
     color: white;
     border-color: #f44336;
