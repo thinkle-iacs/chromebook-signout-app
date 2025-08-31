@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { notificationsBase } from "./../../functions/Airtable.ts";
   import { logger } from "@utils/log";
   import TicketNotificationsSummary from "./components/TicketNotificationsSummary.svelte";
   import TicketNotification from "./TicketNotification.svelte";
@@ -185,6 +184,7 @@
                       "(no body)"}
 
 {extraText}
+
 Ticket Number: {ticket.Number}
 Ticket Status: {ticket["Ticket Status"]}
 User Description: {ticket["User Description"] || "(none)"}
