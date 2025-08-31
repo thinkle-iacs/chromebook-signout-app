@@ -3,7 +3,7 @@ import { logger } from "@utils/log";
 import { restructureLookupFields } from "./restructureLookups";
 import type { Asset } from "./inventory";
 import type { Student } from "./students";
-import { Staff } from "./staff";
+import type { Staff } from "./staff";
 export let ticketsStore = writable({});
 
 export type Ticket = {
