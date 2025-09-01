@@ -181,11 +181,12 @@
     getNote();
     logger.logVerbose("Updated note:", notes);
     let success: boolean = false;
+    let verb = statusToVerb[status] || "Updating";
     if (assets) {
       let count = 0;
       for (let asset of assets) {
         count++;
-        $checkoutStatus = `Checking out ${count} of ${assets.length}`;
+        $checkoutStatus = `${verb} ${count} of ${assets.length}`;
         success = await doCheckout(asset, notes, daily);
         $checkoutStatus = "";
       }
@@ -217,6 +218,15 @@
     Repairing: "Repairing",
     Retire: "Retire",
   };
+
+  const statusToVerb = {
+    Out: "Checking out",
+    Returned: "Returning",
+    Lost: "Marking as Lost",
+    Repairing: "Repairing",
+    Retire: "Retiring",
+  };
+
   let valid;
   $: valid =
     !!assets &&
