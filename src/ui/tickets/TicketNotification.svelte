@@ -1,11 +1,14 @@
 <script lang="ts">
+  import TicketNotificationBlurb from "./TicketNotificationBlurb.svelte";
   import { logger } from "@utils/log";
+
   import TicketNotificationsSummary from "./components/TicketNotificationsSummary.svelte";
   import TicketNotification from "./TicketNotification.svelte";
   import type { Ticket } from "@data/tickets";
   import { createNotifications } from "@data/notifications";
   import { messagesStore, getMessages } from "@data/messages";
   import { isValidEmail } from "@utils/util";
+  import EmailBlob from "@components/EmailBlob.svelte";
   export let ticket: Ticket;
   export let defaultMessage = "RepairComplete";
   export let messages = [
@@ -18,6 +21,7 @@
   // Message templates (store is keyed by human-friendly ID)
   let selectedMessageId: string = ""; // Airtable _id once resolved
   $: allTemplates = Object.values($messagesStore || {});
+
   $: templates =
     messages && messages.length > 0
       ? messages
@@ -54,7 +58,7 @@
     ((ticket as any)?.Notifications || []).length > 0;
 
   function getDefaultRecipients(ticket) {
-    console.log("Get default notifications...", ticket);
+    logger.logVerbose("Get default notifications...", ticket);
     const studentEmail = (ticket as any)?._linked?.Student?.Email;
     const parent1 = (ticket as any)?._linked?.Student?.["Contact1Email"];
     const parent2 = (ticket as any)?._linked?.Student?.["Contact2Email"];
@@ -78,7 +82,8 @@
     ...defaultRecipientList.filter((r, i) => recipientChecks[i]),
     ...extraRecipients,
   ];
-  $: console.log("Recipients are:", notificationRecipients);
+  $: logger.logVerbose("Recipients are:", notificationRecipients);
+  let haveSent = 0;
 
   async function send() {
     if (!selectedMessageId) {
@@ -103,11 +108,16 @@
         },
       ];
       result = await createNotifications(notifications as any);
+      ticket.Notifications = [
+        ...(ticket as any)?.Notifications,
+        result.id || result._id,
+      ];
 
       // Reset form after successful send
       extraText = "";
       selectedMessageId = "";
       showSendInterface = false;
+      haveSent++;
     } catch (e) {
       logger.logError("Failed to send notification:", e);
       alert("Failed to send notification");
@@ -123,7 +133,9 @@
     <h5>Send Ticket Notification</h5>
 
     {#if hasExistingNotifications}
-      <TicketNotificationsSummary {ticket} />
+      {#key `${ticket._id}-${haveSent}`}<TicketNotificationsSummary
+          {ticket}
+        />{/key}
       {#if !showSendInterface}
         <div class="w3-section">
           <button
@@ -178,18 +190,9 @@
                     <strong>Subject:</strong>
                     {selectedTemplate.Subject || "(no subject)"}
                   </div>
-                  <pre
-                    class="w3-code w3-light-gray"
-                    style="white-space: pre-wrap;">{selectedTemplate.Body ||
-                      "(no body)"}
-
-{extraText}
-
-Ticket Number: {ticket.Number}
-Ticket Status: {ticket["Ticket Status"]}
-User Description: {ticket["User Description"] || "(none)"}
-Notes: {ticket.Notes || "(none)"}
-</pre>
+                  <EmailBlob>{selectedTemplate.Body || "(no body)"}</EmailBlob>
+                  <EmailBlob>{extraText}</EmailBlob>
+                  <TicketNotificationBlurb {ticket}></TicketNotificationBlurb>
                 </div>
               </details>
             {/if}

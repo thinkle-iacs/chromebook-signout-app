@@ -1,6 +1,7 @@
 import { get } from "svelte/store";
 import { user } from "./user";
 import { logger } from "@utils/log";
+import { restructureLookupFields } from "./restructureLookups";
 
 export type Notification = {
   "Signout History": string[];
@@ -103,6 +104,21 @@ export async function getNotifications(
   });
   let json = await response.json();
   return json;
+}
+
+export async function getNotificationsObjects(
+  params: { ticketNumber?: string } = {}
+): Promise<Notification[]> {
+  let json = await getNotifications(params);
+  let notifications = json.map((r) => {
+    let restructured = restructureLookupFields(r);
+    return {
+      ...r.fields,
+      _id: r.id,
+      _linked: restructured.linkedFields,
+    };
+  });
+  return notifications;
 }
 
 export async function createNotifications(
