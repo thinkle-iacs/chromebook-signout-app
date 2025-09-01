@@ -74,7 +74,7 @@
       on:click={moveToInProgress}
       aria-label="Move to In Progress (Machine Not Needed)"
     >
-      Software / Setup Problem (Machine Not Needed)
+      Machine Not Needed (Software / Setup Problem)
     </button>
     <button
       class="w3-button w3-blue"

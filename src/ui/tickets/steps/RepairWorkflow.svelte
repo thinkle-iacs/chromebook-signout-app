@@ -199,9 +199,7 @@
   <TicketDescription ticket={mergedTicket} onChange={handleChange} />
 
   <div class="w3-row-padding w3-section">
-    <div class="w3-col s12 m12">
-      <RepairPickList onSelect={handleRepairPick} disabled={saving} />
-    </div>
+    <div class="w3-col s12 m12"></div>
     <div class="w3-col s12 m6">
       <label for="device-status-select" class="w3-text-blue"
         ><b>Device Status (Inventory)</b></label
@@ -221,30 +219,6 @@
         Current: {currentAssetStatus || "None"}
       </div>
     </div>
-
-    <div class="w3-col s12 m6">
-      <label for="repair-cost-input" class="w3-text-blue"
-        ><b>Repair Cost</b></label
-      >
-      <input
-        id="repair-cost-input"
-        type="number"
-        class="w3-input w3-border"
-        min="0"
-        step="0.01"
-        value={mergedTicket["Repair Cost"] != null
-          ? String(mergedTicket["Repair Cost"])
-          : ""}
-        on:input={(e) => {
-          const num = e.target.valueAsNumber;
-          handleChange({
-            "Repair Cost": num === undefined || isNaN(num) ? undefined : num,
-          });
-        }}
-        placeholder="0.00"
-        disabled={saving}
-      />
-    </div>
   </div>
 
   <!-- Invoices Section -->
@@ -263,30 +237,55 @@
     ]}
   />
 
-  <!-- Resolution Section -->
-  <div class="w3-section w3-padding w3-border w3-round">
-    <h5 style="margin-top:0;">Resolution</h5>
-    <select
-      class="w3-select w3-border w3-small"
-      on:change={(e) => handleChange({ Resolution: e.target.value })}
-    >
-      <option value="" disabled selected={!mergedTicket.Resolution}
-        >Select resolution...</option
-      >
-      {#each resolutions as r}
-        <option value={r} selected={mergedTicket.Resolution === r}>{r}</option>
-      {/each}
-    </select>
-    <div class="w3-small w3-text-gray" style="margin-top:4px;">
-      Select a resolution for the repair work.
-    </div>
-  </div>
-
   <!-- Sticky Action Bar -->
   <StickyBottomActionBar className="w3-border-top">
     <button class="w3-button w3-blue" on:click={saveChanges} disabled={saving}>
       {saving ? "Saving..." : "Save"}
     </button>
+    <div style="display:flex;align-items:start;gap:8px" class="w3-small">
+      <RepairPickList onSelect={handleRepairPick} disabled={saving} />
+      <div>
+        <label for="repair-cost-input" class="w3-text-blue"
+          ><b>Repair Cost</b></label
+        >
+        <input
+          id="repair-cost-input"
+          type="number"
+          class="w3-input w3-border"
+          min="0"
+          step="0.01"
+          value={mergedTicket["Repair Cost"] != null
+            ? String(mergedTicket["Repair Cost"])
+            : ""}
+          on:input={(e) => {
+            const num = e.target.valueAsNumber;
+            handleChange({
+              "Repair Cost": num === undefined || isNaN(num) ? undefined : num,
+            });
+          }}
+          placeholder="0.00"
+          disabled={saving}
+        />
+      </div>
+      <!-- Resolution Section -->
+      <div>
+        <label for="resolution" class="w3-text-blue"><b>Resolution</b></label>
+        <select
+          id="resolution"
+          class="w3-select w3-border w3-small"
+          on:change={(e) => handleChange({ Resolution: e.target.value })}
+        >
+          <option value="" disabled selected={!mergedTicket.Resolution}
+            >Select resolution...</option
+          >
+          {#each resolutions as r}
+            <option value={r} selected={mergedTicket.Resolution === r}
+              >{r}</option
+            >
+          {/each}
+        </select>
+      </div>
+    </div>
     <button
       class="w3-button w3-green"
       on:click={markReadyForPickup}

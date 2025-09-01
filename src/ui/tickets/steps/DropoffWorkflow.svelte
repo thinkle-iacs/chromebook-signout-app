@@ -41,7 +41,7 @@
 
   // Drop-off specifics
   let checkInDevice = true;
-  let provideTemp = true;
+  let provideTemp = false;
 
   $: if (provideTemp && !["Needed", "Loaned"].includes(draft["Temp Status"])) {
     handleChange({ "Temp Status": "Needed" });
@@ -324,6 +324,17 @@
           </ul>
         </div> -->
   </div>
+
+  <button
+    class="w3-button w3-white"
+    on:click={() =>
+      updateTicket(
+        { "Ticket Status": "In Progress" },
+        { action: "Moved to In Progress", status: "In Progress" }
+      )}
+  >
+    Machine Not Needed
+  </button>
 
   <button
     class="w3-button w3-green long-button"
