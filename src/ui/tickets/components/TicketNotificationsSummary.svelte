@@ -101,16 +101,13 @@
                               {/if}
                             {/each}
                           </div>
-                          <EmailBlob>
-                            {n._linked?.Messages?.Body}
-                            <TicketNotificationBlurb {ticket} />
-                          </EmailBlob>
+
+                          <EmailBlob>{n._linked?.Messages?.Body}</EmailBlob>
+                          {#if n.ExtraText}
+                            <EmailBlob>{n.ExtraText}</EmailBlob>
+                          {/if}
+                          <TicketNotificationBlurb {ticket} />
                         </div>
-                      {/if}
-                      {#if n.ExtraText}
-                        <EmailBlob>
-                          {n.ExtraText}
-                        </EmailBlob>
                       {/if}
                     </div>
                   </td>
