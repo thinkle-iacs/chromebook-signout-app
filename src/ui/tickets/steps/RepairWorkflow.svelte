@@ -12,7 +12,8 @@
   import TicketNotification from "../TicketNotification.svelte";
   import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
   import { mergeUpdates } from "./draftManager";
-
+  export let signoutAsset;
+  export let createNotifications;
   export let ticket: Ticket;
   export let updateTicket: (
     updates: Partial<Ticket>,
@@ -252,6 +253,7 @@
   <!-- Notifications Section -->
   <TicketNotification
     {ticket}
+    {createNotifications}
     defaultMessage="TicketUpdate"
     messages={[
       "TicketUpdate",

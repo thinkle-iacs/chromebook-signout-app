@@ -1,7 +1,7 @@
 <script lang="ts">
   import { logger } from "@utils/log";
   import type { Asset } from "@data/inventory";
-  import { Notification } from "@data/notifications";
+  import type { Notification } from "@data/notifications";
   import TicketNotificationsSummary from "./../components/TicketNotificationsSummary.svelte";
   import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
@@ -9,7 +9,7 @@
   import TicketDescription from "../editorComponents/TicketDescription.svelte";
   import TicketAssetAssignment from "../editorComponents/TicketAssetAssignment.svelte";
   import TicketNotification from "../TicketNotification.svelte";
-  import { signoutAsset } from "@data/signout";
+  import { signoutAsset as apiSignoutAsset } from "@data/signout";
   import { assetStore } from "@data/inventory";
   import { get } from "svelte/store";
   import ShowPendingChanges from "../components/ShowPendingChanges.svelte";
@@ -17,7 +17,8 @@
   import Toast from "@components/Toast.svelte";
   import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
   import AssetDisplay from "@ui/assets/AssetDisplay.svelte";
-
+  export let createNotifications;
+  export let signoutAsset = apiSignoutAsset;
   export let ticket: Ticket;
   export let updateTicket: (
     updates: Partial<Ticket>,
@@ -264,6 +265,7 @@
 
   <TicketDescription ticket={mergedTicket} onChange={handleChange} />
   <TicketNotification
+    {createNotifications}
     ticket={mergedTicket}
     defaultMessage="BringMachineForRepairLoanReady"
   />

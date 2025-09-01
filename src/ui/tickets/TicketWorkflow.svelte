@@ -3,10 +3,7 @@
   import { logger } from "@utils/log";
   import { user } from "@data/user";
   import type { Ticket } from "@data/tickets";
-  import {
-    updateTicket as saveTicket,
-    createTicket as apiCreateTicket,
-  } from "@data/tickets";
+  import { updateTicket as apiUpdateTicket, createTicket } from "@data/tickets";
   import type { HistoryEntry } from "./history";
   // New step components
   import NewTicketWorkflow from "./steps/NewTicketWorkflow.svelte";
@@ -17,11 +14,17 @@
   import InProgressWorkflow from "./steps/InProgressWorkflow.svelte";
   import ClosedWorkflow from "./steps/ClosedWorkflow.svelte";
   import { showToast } from "@ui/components/toastStore";
+  import { createNotifications as apiCreateNotifications } from "@data/notifications";
+  import { signoutAsset as apiSignoutAsset } from "@data/signout";
 
   // ---- props ----
   export let ticket: Ticket;
   export let readOnly: boolean = false;
   export let onUpdateTicket: (t: Ticket, historyEntry: any) => void = () => {};
+  export let saveTicket = apiUpdateTicket;
+  export let apiCreateTicket = createTicket;
+  export let signoutAsset = apiSignoutAsset;
+  export let createNotifications = apiCreateNotifications;
 
   // ---- timeline steps (labels shown in header) ----
   const FLOW_STEPS = [
@@ -327,6 +330,8 @@
   this={stepComponent(currentStep(ticket["Ticket Status"]))}
   {ticket}
   {updateTicket}
+  {signoutAsset}
+  {createNotifications}
 />
 
 <style>
