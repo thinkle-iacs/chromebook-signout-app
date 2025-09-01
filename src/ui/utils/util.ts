@@ -26,3 +26,25 @@ export function isValidEmail(email: string) {
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(String(email).toLowerCase());
 }
+
+export function withLoadingIndicator(asyncCall, loadingStore, key = null) {
+  const setStore = (bool) => {
+    if (key) {
+      loadingStore.update((s) => ({ ...s, [key]: bool }));
+    } else {
+      loadingStore.set(bool);
+    }
+  };
+
+  return async (...args) => {
+    setStore(true);
+    try {
+      const result = await asyncCall(...args);
+      setStore(false);
+      return result;
+    } catch (error) {
+      setStore(false);
+      throw error;
+    }
+  };
+}

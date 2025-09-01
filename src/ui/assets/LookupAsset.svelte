@@ -13,6 +13,12 @@
   import ChromebookInfoDisplay from "./ChromebookInfoDisplay.svelte";
   import { getTickets, type Ticket } from "@data/tickets";
   import TicketTable from "@tickets/TicketTable.svelte";
+  import { withLoadingIndicator } from "@utils/util";
+  import { writable } from "svelte/store";
+  import Loader from "@components/Loader.svelte";
+
+  let validatingAsset = writable(false);
+
   export let tag;
   $: if (tag) {
     $assetTag = tag;
@@ -27,7 +33,7 @@
           name: "",
           valid: s && s.length >= 3,
         }),
-        validateAsset,
+        withLoadingIndicator(validateAsset, validatingAsset),
       ],
     },
   });
@@ -140,6 +146,11 @@
         bind:value={$assetTag}
         class:valid={$lookupForm?.valid}
       />
+      {#if $validatingAsset && $assetTag.length > 3}
+        <Loader working={true} text="Looking up asset..." />
+      {:else if $assetTag.length > 3 && !asset}
+        <p class="w3-small w3-text-red">No asset found</p>
+      {/if}
     </FormField>
   </SimpleForm>
   {#if asset}

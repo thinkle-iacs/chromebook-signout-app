@@ -14,7 +14,7 @@
   import type { Staff } from "@data/staff";
   import { getCurrentLoansForStudent } from "@data/inventory";
   import type { Asset } from "@data/inventory";
-  import { l } from "@utils/util";
+  import { l, withLoadingIndicator } from "@utils/util";
   import type { CheckoutStatus } from "@data/signout";
   import { signoutAsset } from "@data/signout";
   import { addStudentNote, getStudent } from "@data/students";
@@ -40,6 +40,7 @@
   import StudentTag from "@people/students/StudentTag.svelte";
   import CheckoutTicketLink from "@ui/tickets/components/CheckoutTicketLink.svelte";
   import { logger } from "@utils/log";
+  import Loader from "@components/Loader.svelte";
   let status: CheckoutStatus = "Out";
   let notes = "";
   let studentNotes = "";
@@ -51,6 +52,12 @@
   let assets: Asset[] | null = null;
   /* let charger: null = null; */
 
+  let validating = writable({
+    assetTag: false,
+    staffName: false,
+    studentName: false,
+  });
+
   onMount(async () => {
     logger.logVerbose("Fetch contacts!");
     await getContacts();
@@ -60,7 +67,9 @@
   let validators = () => ({
     assetTag: {
       value: $assetTags,
-      validators: [validateAssets],
+      validators: [
+        withLoadingIndicator(validateAssets, validating, "assetTag"),
+      ],
     },
     /* charger: {
       value: $chargerTag,
@@ -84,7 +93,7 @@
             valid,
           };
         },
-        validateStaff,
+        withLoadingIndicator(validateStaff, validating, "staffName"),
       ],
     },
     studentName: {
@@ -103,7 +112,7 @@
           valid: !s || s.indexOf(" ") == -1 || s.indexOf(",") > -1,
           type: "warning",
         }), */
-        validateStudent,
+        withLoadingIndicator(validateStudent, validating, "studentName"),
       ],
     },
   });
@@ -139,6 +148,8 @@
     student: Student;
   }[] = [];
 
+  let checkoutStatus = writable("");
+
   async function doCheckout(assetObject, notes, daily) {
     let result = await signoutAsset(
       studentMode && student,
@@ -171,15 +182,21 @@
     logger.logVerbose("Updated note:", notes);
     let success: boolean = false;
     if (assets) {
+      let count = 0;
       for (let asset of assets) {
+        count++;
+        $checkoutStatus = `Checking out ${count} of ${assets.length}`;
         success = await doCheckout(asset, notes, daily);
+        $checkoutStatus = "";
       }
     }
     /* if (charger) {
       success = await doCheckout(charger, (!assets && notes) || "", daily);
     } */
     if (studentNotes) {
+      $checkoutStatus = `Adding student note`;
       success = await addStudentNote(student, studentNotes);
+      $checkoutStatus = "";
       logger.logVerbose("student note success?", success);
     }
     if (success) {
@@ -361,6 +378,10 @@ Hinge bolts:New screws needed for display hinges*/
             autocomplete="off"
             placeholder="Last, First"
           />
+          <Loader
+            working={$studentName && $validating.studentName}
+            text="Finding student..."
+          />
         {:else}
           <input
             bind:value={$staffName}
@@ -370,6 +391,10 @@ Hinge bolts:New screws needed for display hinges*/
             class="w3-input"
             autocomplete="off"
             placeholder="Last, First"
+          />
+          <Loader
+            working={$staffName && $validating.staffName}
+            text="Finding staff..."
           />
         {/if}
         <div slot="details">
@@ -458,12 +483,16 @@ Hinge bolts:New screws needed for display hinges*/
     </div>
     {#if assets.length}
       <div in:fly|local={{ y: -30 }} out:fade class="rowDetail row">
-        {#each assets as asset}
-          {#if asset}
-            <div in:fade|local out:fade|local>
+        {#each assets as asset, i}
+          <div in:fade|local out:fade|local>
+            {#if asset}
               <AssetDisplay {asset} showOwner={true} />
-            </div>
-          {/if}
+            {:else if $validating.assetTag}
+              <Loader working={true} text="Finding asset..." />
+            {:else if $assetTags[i].length > 3}
+              <span class="w3-text-red">No Matching Asset Found</span>
+            {/if}
+          </div>
         {/each}
       </div>
     {/if}
@@ -595,9 +624,10 @@ Hinge bolts:New screws needed for display hinges*/
     <div class="w3-right-align w3-margin-bottom">
       <CheckoutTicketLink {student} asset={assets && assets[0]} />
     </div>
+    <Loader working={Boolean($checkoutStatus)} text={$checkoutStatus} />
     <input
       class:w3-red={valid}
-      disabled={!valid}
+      disabled={!valid || Boolean($checkoutStatus)}
       type="submit"
       class="w3-button"
       value={statusToButtonName[status]}

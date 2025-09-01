@@ -9,6 +9,7 @@
   } from "@data/contracts";
   import type { Contract } from "@data/contracts";
   import { onMount } from "svelte";
+  import Loader from "@components/Loader.svelte";
   export let student: Student;
   onMount(() => updateContractsIfNeeded());
   let contract: Contract;
@@ -46,7 +47,7 @@
       Contract signed on {contract.Date} by {contract.Signature}
     </div>
   {:else if fetchingContracts}
-    <div class="icon w3-yellow w3-padding-16">⌛ Fetching Contract...</div>
+    <Loader working={fetchingContracts} text="⌛ Fetching Contract..." />
   {:else}
     <div class="icon w3-red w3-padding-16">
       ✗ No Contract On File!
