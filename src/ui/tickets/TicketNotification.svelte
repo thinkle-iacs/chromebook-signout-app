@@ -5,12 +5,13 @@
   import TicketNotificationsSummary from "./components/TicketNotificationsSummary.svelte";
   import TicketNotification from "./TicketNotification.svelte";
   import type { Ticket } from "@data/tickets";
-  import { createNotifications } from "@data/notifications";
+  import { createNotifications as apiCreateNotifications } from "@data/notifications";
   import { messagesStore, getMessages } from "@data/messages";
   import { isValidEmail } from "@utils/util";
   import EmailBlob from "@components/EmailBlob.svelte";
   export let ticket: Ticket;
   export let defaultMessage = "RepairComplete";
+  export let createNotifications = apiCreateNotifications;
   export let messages = [
     "BringMachineForRepairNoLoan",
     "BringMachineForRepairLoanReady",

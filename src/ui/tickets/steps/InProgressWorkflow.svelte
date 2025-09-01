@@ -8,7 +8,9 @@
 
   import { mergeUpdates } from "./draftManager";
   import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
+  export let createNotifications;
   export let ticket: Ticket;
+  export let signoutAsset;
   export let updateTicket: (
     updates: Partial<Ticket>,
     historyEntry: HistoryEntry<Record<string, { from?: unknown; to?: unknown }>>
@@ -93,6 +95,7 @@
   ticket={mergedTicket}
   defaultMessage="TicketUpdate"
   onChange={handleChange}
+  {createNotifications}
 />
 <StickyBottomActionBar colorClass="w3-amber" className="inprogress-action-bar">
   <div

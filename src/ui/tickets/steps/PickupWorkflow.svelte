@@ -1,18 +1,19 @@
 <script lang="ts">
   import { logger } from "@utils/log";
-  import TicketNotificationsSummary from "./../components/TicketNotificationsSummary.svelte";
+
   import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
   import TicketInfo from "../editorComponents/TicketInfo.svelte";
   import TicketDescription from "../editorComponents/TicketDescription.svelte";
   import TicketNotification from "../TicketNotification.svelte";
-  import { signoutAsset } from "@data/signout";
+  import { signoutAsset as apiSignoutAsset } from "@data/signout";
   import { assetStore } from "@data/inventory";
   import { get } from "svelte/store";
   import ShowPendingChanges from "../components/ShowPendingChanges.svelte";
   import { mergeUpdates } from "./draftManager";
   import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
-
+  export let createNotifications;
+  export let signoutAsset = apiSignoutAsset;
   export let ticket: Ticket;
   export let updateTicket: (
     updates: Partial<Ticket>,
@@ -147,7 +148,7 @@
 
   <TicketInfo ticket={mergedTicket} onChange={handleChange} />
   <TicketDescription ticket={mergedTicket} onChange={handleChange} />
-  <TicketNotificationsSummary ticket={mergedTicket} />
+  <TicketNotification {createNotifications} ticket={mergedTicket} />
 
   <div class="w3-section w3-padding w3-border w3-round">
     <h5 style="margin-top:0;">Pickup Actions</h5>
