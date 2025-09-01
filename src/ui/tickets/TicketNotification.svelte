@@ -108,10 +108,11 @@
           Send: true,
         },
       ];
+      debugger;
       result = await createNotifications(notifications as any);
       ticket.Notifications = [
-        ...(ticket as any)?.Notifications,
-        result.id || result._id,
+        ...((ticket as any)?.Notifications || []),
+        result[0].id || result[0]._id,
       ];
 
       // Reset form after successful send
