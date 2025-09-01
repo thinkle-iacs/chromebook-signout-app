@@ -6,6 +6,7 @@
   import TicketWorkflow from "./TicketWorkflow.svelte";
   import type { HistoryEntry } from "./history";
   import { showToast } from "@ui/components/toastStore";
+  import Loader from "@components/Loader.svelte";
 
   let loading = true;
   let error: string | null = null;
@@ -246,9 +247,7 @@
   </div>
 
   {#if loading}
-    <div class="w3-panel w3-blue">
-      <p>Loading tickets...</p>
-    </div>
+    <Loader text="Loading tickets" working={true} />
   {:else if error}
     <div class="w3-panel w3-red">
       <p>Error: {error}</p>

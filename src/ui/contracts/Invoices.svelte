@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import type { InvoiceResult } from "@data/invoices";
   import { getInvoices } from "@data/invoices";
+  import Loader from "@components/Loader.svelte";
 
   let loading = true;
   let rows: InvoiceResult[] = [];
@@ -61,7 +62,7 @@
   </div>
 
   {#if loading}
-    <p>Loading…</p>
+    <Loader text="Loading invoices" working={true} />
   {:else}
     <table class="w3-table w3-striped w3-bordered w3-small">
       <thead>

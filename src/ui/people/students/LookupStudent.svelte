@@ -17,6 +17,7 @@
   import MessageSender from "@notifications/MessageSender.svelte";
   import StudentGoogleAdminHistory from "@googleAdmin/StudentGoogleAdminHistory.svelte";
   import StudentTicketsTab from "./StudentTicketsTab.svelte";
+  import Loader from "@components/Loader.svelte";
   export let name = "";
   if (name) {
     $studentName = name;
@@ -171,7 +172,11 @@
           <h3>Signout History:</h3>
           {#if !loans}
             <p class="w3-opacity w3-ital">
-              {loansLoaded ? "No history" : "Fetching..."}
+              {#if loansLoaded}
+                No history
+              {:else}
+                <Loader text="Fetching..." working={true} />
+              {/if}
             </p>
           {:else if loans.length}
             {#if latestLoan}
