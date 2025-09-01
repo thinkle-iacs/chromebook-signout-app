@@ -15,15 +15,12 @@
   import { fade } from "svelte/transition";
   import LookupStaff from "@people/staff/LookupStaff.svelte";
   import Reports from "./reports/Reports.svelte";
-  import SISTest from "./scheduling/SISTest.svelte";
-  import ScheduleTester from "./scheduling/ScheduleTester.svelte";
   import TicketBrowser from "./tickets/TicketBrowser.svelte";
   import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
   import Invoices from "@contracts/Invoices.svelte";
   import Toast from "@components/Toast.svelte";
   import { toastStore } from "@components/toastStore";
-  import TestMenu from "./TestMenu.svelte";
-  import LogLevel from "./components/LogLevel.svelte";
+  import { testRoutes } from "./tests/test-routes";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -126,14 +123,6 @@
       title = "IACS Chromebook Reports";
     });
 
-    router("/sis-test/", (ctx) => {
-      page = SISTest;
-      title = "SIS API Test Tool";
-    });
-    router("/schedule-test/", (ctx) => {
-      page = ScheduleTester;
-      title = "Schedule Structure Tester";
-    });
     router("/tickets/", (ctx) => {
       page = TicketBrowser;
       title = "Ticket Browser";
@@ -142,16 +131,20 @@
       page = Invoices;
       title = "Invoices";
     });
-    router("/test/", (ctx) => {
-      page = TestMenu;
-      title = "Internal Test Tools";
-    });
 
     router("/ticket/number/:number", (ctx) => {
       params = { number: ctx.params.number };
       page = TicketNumberPage;
       title = `Ticket #${ctx.params.number}`;
     });
+
+    for (let route in testRoutes) {
+      router(route, (ctx) => {
+        page = testRoutes[route].page;
+        title = testRoutes[route].title;
+      });
+    }
+
     router.start();
   });
   let navActive;

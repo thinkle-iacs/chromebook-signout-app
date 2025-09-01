@@ -1,6 +1,4 @@
 <script lang="ts">
-  import SISTest from "./scheduling/SISTest.svelte"; // only to ensure bundler keeps route components available
-  import ScheduleTester from "./scheduling/ScheduleTester.svelte";
   // No direct rendering of those components here, just links.
   // Optionally gate with a prop if needed later.
 </script>
@@ -12,10 +10,10 @@
   </p>
   <ul class="w3-ul w3-card w3-small" style="max-width:480px;">
     <li>
-      <a class="w3-text-blue" href="/sis-test/">SIS API Test Tool</a>
+      <a class="w3-text-blue" href="/test/sis/">SIS API Test Tool</a>
     </li>
     <li>
-      <a class="w3-text-blue" href="/schedule-test/"
+      <a class="w3-text-blue" href="/test/schedule/"
         >Schedule Structure Tester</a
       >
     </li>
