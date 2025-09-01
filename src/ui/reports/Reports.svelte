@@ -25,6 +25,7 @@
   import { get } from "svelte/store";
   import { logger } from "@utils/log";
   import ReportTable from "./ReportTable.svelte";
+  import Loader from "@components/Loader.svelte";
 
   let activeTab: "studentLoans" | "staffLoans" | "nonLoaned" = "studentLoans";
   let studentLoans = [];
@@ -268,7 +269,7 @@
     {/if}
 
     {#if loading}
-      <p class="w3-opacity">Loading...</p>
+      <Loader working={true} text="Loading data" />
     {:else}
       <!-- Single ReportTable for all tabs -->
       <ReportTable data={displayData} {columns} {headers} {filename} />

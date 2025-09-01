@@ -9,6 +9,7 @@
     fullHistory,
     fetching,
   } from "@data/signoutHistory";
+  import Loader from "@components/Loader.svelte";
 
   let history: SignoutHistoryEntry[] = [];
 
@@ -240,30 +241,12 @@
     <SignoutHistoryTable signoutHistoryItems={history} />
   </div>
 {:else}
-  <div class="big-card w3-card w3-center w3-yellow">
-    {#if fetching}
-      Hold on... this might take a sec
-    {:else if fullHistory.length && !history.length}
-      Almost there...
-    {:else}
-      Huh, maybe there was no data? Or AirTable didn't feel like ponying up all
-      that data?
-    {/if}
+  <div class="w3-card w3-center">
+    <Loader text="Hold on... this might take a sec" working={true} />
   </div>
 {/if}
 
 <style>
-  .big-card {
-    height: 300px;
-    width: 300px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: auto;
-    margin-top: 2em;
-    font-size: x-large;
-  }
-
   .sticky {
     position: sticky;
     top: 2px;

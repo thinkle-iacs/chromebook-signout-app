@@ -6,8 +6,13 @@
   import type { Ticket } from "@data/tickets";
   import { get, writable } from "svelte/store";
   import { showToast } from "@ui/components/toastStore";
+  import { withLoadingIndicator } from "@utils/util";
+  import Loader from "@components/Loader.svelte";
 
   let myAssetTag = writable("");
+  let verifyingAsset = writable(false);
+
+  let doValidateAsset = withLoadingIndicator(validateAsset, verifyingAsset);
 
   export let ticket: Ticket;
   export let field: "Device" | "Temporary Device" = "Device";
@@ -64,7 +69,8 @@
     currentAsset = get(assetStore)[$myAssetTag.toUpperCase()];
     // Trigger validation to show any validation messages
     if (editing && $myAssetTag.length >= 2) {
-      validateAsset($myAssetTag, myAssetTag);
+      console.log("Validating", $myAssetTag);
+      doValidateAsset($myAssetTag, myAssetTag);
     }
   } else {
     currentAsset = null;
@@ -140,6 +146,13 @@
           bind:value={$myAssetTag}
           autocomplete="off"
         />
+        {#if $verifyingAsset}
+          <Loader text="Looking up asset..." working={true} />
+        {:else if $myAssetTag.length >= 2 && !currentAsset && displayAsset?.["Asset Tag"] !== $myAssetTag}
+          <!-- If we've typed something AND we didn't find an asset AND it's not the same
+         as the asset we've already got saved -->
+          <p class="w3-small w3-text-red">No asset found</p>
+        {/if}
       </div>
 
       {#if currentAsset}
