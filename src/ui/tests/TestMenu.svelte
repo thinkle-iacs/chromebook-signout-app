@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { testRoutes } from "./test-routes";
+
   // No direct rendering of those components here, just links.
   // Optionally gate with a prop if needed later.
 </script>
@@ -9,13 +11,10 @@
     Internal tools not shown in main navigation.
   </p>
   <ul class="w3-ul w3-card w3-small" style="max-width:480px;">
-    <li>
-      <a class="w3-text-blue" href="/test/sis/">SIS API Test Tool</a>
-    </li>
-    <li>
-      <a class="w3-text-blue" href="/test/schedule/"
-        >Schedule Structure Tester</a
-      >
-    </li>
+    {#each Object.entries(testRoutes) as [path, { title }]}
+      <li>
+        <a class="w3-text-blue" href={path}>{title}</a>
+      </li>
+    {/each}
   </ul>
 </div>
