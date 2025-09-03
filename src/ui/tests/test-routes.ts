@@ -2,6 +2,7 @@ import ScheduleTester from "./ScheduleTester.svelte";
 import TestMenu from "./TestMenu.svelte";
 import SisTest from "./SISTest.svelte";
 import LoaderTest from "./ui/LoaderTest.svelte";
+import TicketWorkflowTest from "./tickets/TicketWorkflowTest.svelte";
 
 ScheduleTester;
 
@@ -21,5 +22,9 @@ export const testRoutes = {
   "/test/ui/loader": {
     page: LoaderTest,
     title: "UI Loader Test",
+  },
+  "/test/tickets/workflow": {
+    page: TicketWorkflowTest,
+    title: "Ticket Workflow Test",
   },
 };

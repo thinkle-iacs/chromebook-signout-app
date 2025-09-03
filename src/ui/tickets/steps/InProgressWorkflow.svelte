@@ -8,7 +8,9 @@
 
   import { mergeUpdates } from "./draftManager";
   import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
+  export let createNotifications;
   export let ticket: Ticket;
+  export let signoutAsset;
   export let updateTicket: (
     updates: Partial<Ticket>,
     historyEntry: HistoryEntry<Record<string, { from?: unknown; to?: unknown }>>
@@ -70,10 +72,20 @@
 
   <TicketInfo ticket={mergedTicket} onChange={handleChange} />
   <TicketDescription ticket={mergedTicket} onChange={handleChange} />
-
-  <div class="w3-section w3-padding w3-border w3-round">
-    <h5 style="margin-top:0;">Resolution</h5>
+</div>
+<TicketNotification
+  ticket={mergedTicket}
+  defaultMessage="TicketUpdate"
+  onChange={handleChange}
+  {createNotifications}
+/>
+<StickyBottomActionBar colorClass="w3-amber" className="inprogress-action-bar">
+  <div class="">
+    <label for="resolution" class="w3-text-blue" style="margin-top:0;"
+      >Resolution</label
+    >
     <select
+      id="resolution"
       class="w3-select w3-border w3-small"
       on:change={(e) => handleChange({ Resolution: e.target.value })}
     >
@@ -84,27 +96,6 @@
         <option value={r} selected={mergedTicket.Resolution === r}>{r}</option>
       {/each}
     </select>
-    <div class="w3-small w3-text-gray" style="margin-top:4px;">
-      Select a resolution before closing.
-    </div>
-  </div>
-</div>
-<TicketNotification
-  ticket={mergedTicket}
-  defaultMessage="TicketUpdate"
-  onChange={handleChange}
-/>
-<StickyBottomActionBar colorClass="w3-amber" className="inprogress-action-bar">
-  <div
-    class="w3-small"
-    style="flex:1 1 auto; display:flex; flex-direction:column; gap:4px;"
-  >
-    <strong>Finish work</strong>
-    <span
-      >{mergedTicket.Resolution
-        ? `Ready to close with: ${mergedTicket.Resolution}`
-        : "Choose resolution to enable Close"}</span
-    >
   </div>
   <button
     class="w3-button w3-brown"

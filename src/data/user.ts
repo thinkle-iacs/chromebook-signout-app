@@ -5,10 +5,10 @@ export let user = writable(
   window.location.hostname === "localhost"
     ? {
         // DO NOT COMMIT - LOCAL TESTING ONLY
-      /*  email: "thinkle@innovationcharter.org",
+        email: "thinkle@innovationcharter.org",
         user_metadata: {
           full_name: "Tom Hinkle",
-        }, */
+        },
         // END NON-COMMITAL SECTION
       }
     : {}

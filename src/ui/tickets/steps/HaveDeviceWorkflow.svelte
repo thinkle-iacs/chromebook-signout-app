@@ -12,6 +12,8 @@
     updates: Partial<Ticket>,
     historyEntry: HistoryEntry<Record<string, { from?: unknown; to?: unknown }>>
   ) => Promise<void> | void;
+  export let createNotifications;
+  export let signoutAsset;
 
   // Local draft state for this step
   let draft: Partial<Ticket> = {};

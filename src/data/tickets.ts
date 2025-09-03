@@ -50,10 +50,10 @@ export type Ticket = {
     | "Returned";
   "Form Name": string;
   FormEmail: string;
-  Staff: string;
-  Student: string;
+  Staff?: string;
+  Student?: string[];
   FormAsset: string;
-  Device: string;
+  Device: string[];
   Notes: string;
   "Temporary Device": string;
   SubmittedBy: string;

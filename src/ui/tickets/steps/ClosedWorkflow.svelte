@@ -11,6 +11,9 @@
   ) => Promise<void> | void;
   const __unused = updateTicket;
 
+  export let createNotifications;
+  export let signoutAsset;
+
   import { mergeUpdates } from "./draftManager";
   let draft: Partial<Ticket> = {};
   let mergedTicket: Ticket;
