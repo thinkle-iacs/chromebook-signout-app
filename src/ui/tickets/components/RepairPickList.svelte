@@ -33,7 +33,7 @@
   }
 </script>
 
-<div class="w3-section">
+<div>
   <label class="w3-text-blue" for="repair-pick-select"
     ><b>Repair Item Quick Pick</b></label
   >

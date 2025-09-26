@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createNotifications } from "@data/notifications";
   import type { Ticket } from "@data/tickets";
   import type { HistoryEntry } from "../history";
   import TicketInfo from "../editorComponents/TicketInfo.svelte";
@@ -6,6 +7,8 @@
   import ShowPendingChanges from "../components/ShowPendingChanges.svelte";
   import { mergeUpdates } from "./draftManager";
   import StickyBottomActionBar from "../components/StickyBottomActionBar.svelte";
+  export let createNotifications;
+  export let signoutAsset;
   export let ticket: Ticket;
   export let updateTicket: (
     updates: Partial<Ticket>,
@@ -71,7 +74,7 @@
       on:click={moveToInProgress}
       aria-label="Move to In Progress (Machine Not Needed)"
     >
-      Software / Setup Problem (Machine Not Needed)
+      Machine Not Needed (Software / Setup Problem)
     </button>
     <button
       class="w3-button w3-blue"
