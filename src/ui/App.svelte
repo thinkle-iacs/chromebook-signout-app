@@ -19,6 +19,7 @@
   import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
   import Invoices from "@contracts/Invoices.svelte";
   import Toast from "@components/Toast.svelte";
+  import ConfirmDialog from "@ui/components/ConfirmDialog.svelte";
   import { toastStore } from "@components/toastStore";
   import { testRoutes } from "./tests/test-routes";
 
@@ -301,6 +302,7 @@
     timeout={toast.timeout || 3500}
   />
 {/if}
+<ConfirmDialog />
 
 <style>
   header {
