@@ -231,32 +231,34 @@
   class="w3-padding w3-bar"
   style="align-items:center;display:flex;gap:0.5em;"
 >
-  <label class="w3-bar-item"
-    >Mismatched:
-    <select
-      bind:value={filterMismatched}
-      on:change={(e) => setFilterMismatched(e.target.value)}
-      class="w3-select w3-border"
-      style="width:auto;display:inline-block;margin-left:4px;"
-    >
-      <option value={FILTER_ANY}>All</option>
-      <option value={FILTER_TRUE}>Yes</option>
-      <option value={FILTER_FALSE}>No</option>
-    </select>
-  </label>
-  <label class="w3-bar-item"
-    >Stale:
-    <select
-      bind:value={filterStale}
-      on:change={(e) => setFilterStale(e.target.value)}
-      class="w3-select w3-border"
-      style="width:auto;display:inline-block;margin-left:4px;"
-    >
-      <option value={FILTER_ANY}>All</option>
-      <option value={FILTER_TRUE}>Yes</option>
-      <option value={FILTER_FALSE}>No</option>
-    </select>
-  </label>
+  {#if haveGoogleData}
+    <label class="w3-bar-item"
+      >Mismatched:
+      <select
+        bind:value={filterMismatched}
+        on:change={(e) => setFilterMismatched(e.target.value)}
+        class="w3-select w3-border"
+        style="width:auto;display:inline-block;margin-left:4px;"
+      >
+        <option value={FILTER_ANY}>All</option>
+        <option value={FILTER_TRUE}>Yes</option>
+        <option value={FILTER_FALSE}>No</option>
+      </select>
+    </label>
+    <label class="w3-bar-item"
+      >Stale:
+      <select
+        bind:value={filterStale}
+        on:change={(e) => setFilterStale(e.target.value)}
+        class="w3-select w3-border"
+        style="width:auto;display:inline-block;margin-left:4px;"
+      >
+        <option value={FILTER_ANY}>All</option>
+        <option value={FILTER_TRUE}>Yes</option>
+        <option value={FILTER_FALSE}>No</option>
+      </select>
+    </label>
+  {/if}
   <label class="w3-bar-item">
     Model:
     <input
