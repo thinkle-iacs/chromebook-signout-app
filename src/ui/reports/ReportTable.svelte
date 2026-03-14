@@ -96,7 +96,7 @@
   function selectGoodAssets() {
     // Select assets that are NOT mismatched and NOT stale
     const goodRows = filteredData.filter(
-      (row) => row.lastUserMatch !== false && !isStale(row.lastUsed)
+      (row) => row.lastUserMatch !== false && !isStale(row.lastUsed),
     );
     selectedAssetTags = new Set(goodRows.map((row) => row["Asset Tag"]));
   }
@@ -113,7 +113,7 @@
   $: {
     // Expand _ASSET into ASSET_COLUMNS for exportColumns
     let baseColumns = columns.flatMap((col) =>
-      col === "_ASSET" ? ASSET_COLUMNS : [col]
+      col === "_ASSET" ? ASSET_COLUMNS : [col],
     );
     if (includeGoogleDataInExport) {
       exportColumns = [
@@ -169,7 +169,7 @@
           const asset = data.find((row) => row["Asset Tag"] === tag);
           if (!asset) throw new Error(`Asset not found: ${tag}`);
           await signoutAsset(null, null, asset, "", "Lost", false);
-        })
+        }),
       );
       selectedAssetTags = new Set();
     } catch (e) {
@@ -200,7 +200,7 @@
           const asset = data.find((row) => row["Asset Tag"] === tag);
           if (!asset) throw new Error(`Asset not found: ${tag}`);
           await signoutAsset(null, null, asset, lostNote, "Lost", false);
-        })
+        }),
       );
       selectedAssetTags = new Set();
       closeLostConfirm();
@@ -211,78 +211,91 @@
     }
   }
 
-  // Add state for report/run buttons
-  let reportRun = false;
-  let loginDataReady = false;
-
-  function handleRunReport() {
-    reportRun = true;
-    loginDataReady = false;
-    // ...existing logic for running the report...
-  }
-  function handleGetLoginData() {
-    loginDataReady = true;
-    // ...existing logic for getting login data...
-  }
+  export let loginDataReady = false;
 </script>
 
 <!-- Filter controls -->
-<div
-  class="w3-padding w3-bar"
-  style="align-items:center;display:flex;gap:0.5em;"
->
-  <label class="w3-bar-item"
-    >Mismatched:
-    <select
-      bind:value={filterMismatched}
-      on:change={(e) => setFilterMismatched(e.target.value)}
-      class="w3-select w3-border"
-      style="width:auto;display:inline-block;margin-left:4px;"
-    >
-      <option value={FILTER_ANY}>All</option>
-      <option value={FILTER_TRUE}>Yes</option>
-      <option value={FILTER_FALSE}>No</option>
-    </select>
-  </label>
-  <label class="w3-bar-item"
-    >Stale:
-    <select
-      bind:value={filterStale}
-      on:change={(e) => setFilterStale(e.target.value)}
-      class="w3-select w3-border"
-      style="width:auto;display:inline-block;margin-left:4px;"
-    >
-      <option value={FILTER_ANY}>All</option>
-      <option value={FILTER_TRUE}>Yes</option>
-      <option value={FILTER_FALSE}>No</option>
-    </select>
-  </label>
-  <label class="w3-bar-item">
-    Model:
-    <input
-      type="text"
-      bind:value={filterModel}
-      class="w3-input w3-border"
-      style="display:inline-block;width:auto;margin-left:4px;"
-    />
-  </label>
-  {#if haveGoogleData}
-    <label class="w3-bar-item">
-      <input
-        type="checkbox"
-        class="w3-check"
-        bind:checked={includeGoogleDataInExport}
-      />
-      Include Google Data in Export
-    </label>
-  {/if}
-  <button
-    class="w3-button w3-bar-item"
-    style="margin-left:1em;"
-    on:click={selectGoodAssets}>Select Good Assets</button
+{#if data.length}
+  <div
+    class="w3-padding w3-bar"
+    style="align-items:start;display:flex;gap:0.5em;"
   >
-</div>
+    <div
+      style="
+        display:grid; 
+        grid-template-areas: 'input1 input2' 'note note'; 
+        grid-gap: 0.5em;
+        "
+    >
+      <label
+        class="w3-bar-item"
+        tooltip="Whether the last user matches the current primary user of the asset"
+        >Mismatched:
+        <select
+          disabled={!loginDataReady}
+          bind:value={filterMismatched}
+          on:change={(e) => setFilterMismatched(e.target.value)}
+          class="w3-select w3-border"
+          style="width:auto;display:inline-block;margin-left:4px;"
+        >
+          <option value={FILTER_ANY}>All</option>
+          <option value={FILTER_TRUE}>Yes</option>
+          <option value={FILTER_FALSE}>No</option>
+        </select>
+      </label>
+      <label class="w3-bar-item"
+        >Stale:
+        <select
+          disabled={!loginDataReady}
+          bind:value={filterStale}
+          on:change={(e) => setFilterStale(e.target.value)}
+          class="w3-select w3-border"
+          style="width:auto;display:inline-block;margin-left:4px;"
+        >
+          <option value={FILTER_ANY}>All</option>
+          <option value={FILTER_TRUE}>Yes</option>
+          <option value={FILTER_FALSE}>No</option>
+        </select>
+      </label>
 
+      <div
+        class="w3-text-gray w3-small"
+        style="grid-area: note; padding: 0px 16px; font-style: italic;"
+      >
+        {#if !loginDataReady}
+          Run "Get Login Data" to filter by login status.
+        {:else}
+          Mismatched: machine not signed out to its last user.
+          <br />Stale: not used in last 30 days.
+        {/if}
+      </div>
+    </div>
+    <label class="w3-bar-item">
+      Model:
+      <input
+        type="text"
+        bind:value={filterModel}
+        class="w3-input w3-border"
+        style="display:inline-block;width:auto;margin-left:4px;"
+      />
+    </label>
+    {#if haveGoogleData}
+      <label class="w3-bar-item">
+        <input
+          type="checkbox"
+          class="w3-check"
+          bind:checked={includeGoogleDataInExport}
+        />
+        Include Google Data in Export
+      </label>
+    {/if}
+    <button
+      class="w3-button w3-bar-item"
+      style="margin-left:1em;"
+      on:click={selectGoodAssets}>Select Good Assets</button
+    >
+  </div>
+{/if}
 <div class="w3-responsive">
   <p>Showing <b>{filteredData.length}</b> records</p>
 
