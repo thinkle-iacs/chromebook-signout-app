@@ -265,8 +265,8 @@
         {#if !loginDataReady}
           Run "Get Login Data" to filter by login status.
         {:else}
-          Mismatched means the machine is not signed out to its last user.
-          <br />Stale means the machine has not been used in the last 30 days.
+          Mismatched: machine not signed out to its last user.
+          <br />Stale: not used in last 30 days.
         {/if}
       </div>
     </div>
