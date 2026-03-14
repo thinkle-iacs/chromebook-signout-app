@@ -4,7 +4,7 @@
 2. Add nice filters/sorting to just show the problem machines.
 3. Add the Active/Inactive status into the asset table in air table 
    so we can see whether these students are actually enrolled or not. 
-   Then add a filter to show only active or inactive students. 
+   Then add a filter to show only active or inactive students. (x)
 4. Get CSV export working nicely. 
 5. Integrate emailing directly here w/ our notifications system. 
 6. Integrate notes into the emailing so we can keep track of what we have said/done. 
@@ -12,7 +12,6 @@
 -->
 
 <script lang="ts">
-  import DataExporter from "./DataExporter.svelte";
   import { checkMachineStatus } from "@data/google";
 
   import {
@@ -21,7 +20,7 @@
     getNonLoanedChromebooks,
     assetStore,
   } from "@data/inventory";
-  import AssetDisplay from "@assets/AssetDisplay.svelte";
+
   import { get } from "svelte/store";
   import { logger } from "@utils/log";
   import ReportTable from "./ReportTable.svelte";
@@ -46,13 +45,13 @@
     reportRun = false;
     if (activeTab === "studentLoans") {
       studentLoans = await normalizeAssets(
-        await getStudentLoans(true, selectedYOG, selectedStudentStatus) // Pass Student Status
+        await getStudentLoans(true, selectedYOG, selectedStudentStatus), // Pass Student Status
       );
     } else if (activeTab === "staffLoans") {
       staffLoans = await normalizeAssets(await getStaffLoans(true));
     } else if (activeTab === "nonLoaned") {
       nonLoanedChromebooks = await normalizeAssets(
-        await getNonLoanedChromebooks()
+        await getNonLoanedChromebooks(),
       );
     }
     loading = false;
@@ -92,7 +91,7 @@
         batch.map(async (asset) => {
           const status = await checkMachineStatus(asset);
           machineStatuses[asset["Asset Tag"]] = status;
-        })
+        }),
       );
       index += MAX_CONCURRENT_REQUESTS;
       loginDataProgress = Math.min(index, total);
@@ -249,6 +248,7 @@
       class="w3-button w3-green w3-margin-top"
       on:click={checkAllStatuses}
       disabled={loading || displayData.length === 0 || loginDataLoading}
+      title="Check Google for login data; this lets us see when the machine was last used and by whom."
     >
       Get Login Data
     </button>
@@ -272,7 +272,13 @@
       <Loader working={true} text="Loading data" />
     {:else}
       <!-- Single ReportTable for all tabs -->
-      <ReportTable data={displayData} {columns} {headers} {filename} />
+      <ReportTable
+        data={displayData}
+        loginDataReady={displayData.length && !!loginDataProgress}
+        {columns}
+        {headers}
+        {filename}
+      />
     {/if}
   </div>
 </div>
