@@ -7,6 +7,6 @@
 [dev]
   framework = "svelte"
   command = "npm run dev"
-  targetPort = 5000
+  targetPort = 5001
   functions = "functions"
   port = 8888
