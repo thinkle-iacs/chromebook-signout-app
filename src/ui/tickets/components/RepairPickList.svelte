@@ -4,8 +4,6 @@
     amount: number;
   }
 
-  // Hardcoded list so tech staff can edit directly in repo
-  // To modify: adjust items below. Amounts are raw numbers (USD)
   const items: RepairItem[] = [
     { label: "LCD Screen", amount: 40 },
     { label: "Keyboard", amount: 50 },
@@ -20,36 +18,96 @@
     { label: "Camera", amount: 20 },
   ];
 
-  export let onSelect: (item: RepairItem) => void = () => {};
+  export let onSelect: (items: RepairItem[]) => void = () => {};
   export let disabled: boolean = false;
 
-  let selectedLabel = "";
+  let selectedItems: boolean[] = new Array(items.length).fill(false);
+  let expanded = false;
 
-  function handleSelect() {
-    const item = items.find((i) => i.label === selectedLabel);
-    if (item) {
-      onSelect(item);
-    }
+  function handleSelectionChange() {
+    const selected = items.filter((_, index) => selectedItems[index]);
+    onSelect(selected);
   }
+
+  function clearAll() {
+    selectedItems = new Array(items.length).fill(false);
+    handleSelectionChange();
+  }
+
+  $: totalCost = items
+    .filter((_, index) => selectedItems[index])
+    .reduce((sum, item) => sum + item.amount, 0);
 </script>
 
+<style>
+  .accordion-header {
+    cursor: pointer;
+    background: #eef3fa;
+    border: 1px solid #b9d3fa;
+    padding: 0.75em 1em;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  .accordion-header:hover {
+    background: #dbeaff;
+  }
+  .accordion-content {
+    padding: 1em;
+    border: 1px solid #b9d3fa;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+    margin-bottom: 1em;
+    background: white;
+  }
+  .chevron {
+    float: right;
+    font-size: 1.2em;
+    transition: transform 0.2s;
+  }
+  .chevron.expanded {
+    transform: rotate(90deg);
+  }
+</style>
+
 <div>
-  <label class="w3-text-blue" for="repair-pick-select"
-    ><b>Repair Item Quick Pick</b></label
-  >
-  <select
-    id="repair-pick-select"
-    class="w3-select w3-border"
-    bind:value={selectedLabel}
-    on:change={handleSelect}
-    {disabled}
-  >
-    <option value="">-- Select Item --</option>
-    {#each items as item}
-      <option value={item.label}>{item.label} (${item.amount})</option>
-    {/each}
-  </select>
-  <div class="w3-small w3-text-grey w3-padding-small">
-    Selecting an item will set the Repair Cost and add a line to Public Notes.
+  <div class="accordion-header" on:click={() => expanded = !expanded} aria-expanded={expanded}>
+    Repair Items Quick Pick
+    <span class="chevron {expanded ? 'expanded' : ''}">&#9654;</span>
+    {#if totalCost > 0}
+      <span class="w3-text-blue" style="float:right; margin-right:1.5em;">
+        Total: ${totalCost}
+      </span>
+    {/if}
   </div>
+  {#if expanded}
+    <div class="accordion-content">
+      <div class="w3-border w3-padding">
+        {#each items as item, index}
+          <label class="w3-check w3-block">
+            <input
+              type="checkbox"
+              bind:checked={selectedItems[index]}
+              on:change={handleSelectionChange}
+              {disabled}
+            />
+            <span class="w3-checkmark"></span>
+            {item.label} (${item.amount})
+          </label>
+        {/each}
+      </div>
+      <div class="w3-margin-top w3-small">
+        <button 
+          class="w3-button w3-small w3-border w3-margin-top" 
+          on:click={clearAll}
+          {disabled}
+        >
+          Clear All
+        </button>
+      </div>
+      <div class="w3-small w3-text-grey w3-padding-small">
+        Check items to add their costs and notes. Costs are additive.
+      </div>
+    </div>
+  {/if}
 </div>
