@@ -112,7 +112,7 @@
 
   function addMachineInfo(assets, machineStatuses) {
     return (assets || [])
-      .filter((asset) => asset && typeof asset === 'object')
+      .filter((asset) => asset && typeof asset === "object")
       .map((asset) => {
         const assetTag = asset["Asset Tag"];
         const status = machineStatuses[assetTag] || {};
@@ -122,8 +122,10 @@
           lastUsed: status.lastUsed || "Unknown",
           lastUserMatch: status.lastUserMatch || false,
           googleData: status.googleData || {},
-          recentUsers: status.googleData?.recentUsers?.map((u) => u.email) || [],
-          sessions: status.googleData?.activeTimeRanges?.map((r) => r.date) || [],
+          recentUsers:
+            status.googleData?.recentUsers?.map((u) => u.email) || [],
+          sessions:
+            status.googleData?.activeTimeRanges?.map((r) => r.date) || [],
         };
       });
   }

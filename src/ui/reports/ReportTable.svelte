@@ -285,9 +285,7 @@
 
 <!-- Filter controls -->
 {#if data.length}
-  <div
-    class="w3-padding filter-bar"
-  >
+  <div class="w3-padding filter-bar">
     <div
       style="
         display:grid; 
