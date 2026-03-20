@@ -30,6 +30,16 @@
       if (a[sortProp] === undefined || b[sortProp] === undefined) {
         return 0; // Handle undefined values gracefully
       }
+      // Special case: sort lastUsed as a date
+      if (sortProp === "lastUsed") {
+        const aDate = new Date(a[sortProp]);
+        const bDate = new Date(b[sortProp]);
+        if (direction === "asc") {
+          return aDate - bDate;
+        } else {
+          return bDate - aDate;
+        }
+      }
       if (direction === "asc") {
         if (a[sortProp] < b[sortProp]) return -1;
         if (a[sortProp] > b[sortProp]) return 1;
@@ -64,7 +74,61 @@
   // Filter state
   let filterMismatched = FILTER_ANY; // "all" | true | false
   let filterStale = FILTER_ANY; // "all" | true | false
-  let filterModel = "";
+
+  // Derive unique model and purpose values from data
+  $: uniqueModels = [
+    ...new Set(data.map((r) => r.Model).filter(Boolean)),
+  ].sort();
+  $: uniquePurposes = [
+    ...new Set(data.map((r) => r.Purpose).filter(Boolean)),
+  ].sort();
+
+  // Multi-select filter state
+  let selectedModels = new Set();
+  let selectedPurposes = new Set();
+  let prevModelKey = "";
+  let prevPurposeKey = "";
+
+  // Reset selections when the set of available values changes
+  $: {
+    const modelKey = uniqueModels.join("|");
+    if (modelKey !== prevModelKey) {
+      selectedModels = new Set(uniqueModels);
+      prevModelKey = modelKey;
+    }
+  }
+  $: {
+    const purposeKey = uniquePurposes.join("|");
+    if (purposeKey !== prevPurposeKey) {
+      selectedPurposes = new Set(uniquePurposes);
+      prevPurposeKey = purposeKey;
+    }
+  }
+
+  let showModelDropdown = false;
+  let showPurposeDropdown = false;
+
+  function toggleModel(model) {
+    if (selectedModels.has(model)) {
+      selectedModels.delete(model);
+    } else {
+      selectedModels.add(model);
+    }
+    selectedModels = new Set(selectedModels);
+  }
+  function togglePurpose(purpose) {
+    if (selectedPurposes.has(purpose)) {
+      selectedPurposes.delete(purpose);
+    } else {
+      selectedPurposes.add(purpose);
+    }
+    selectedPurposes = new Set(selectedPurposes);
+  }
+
+  // Expose filtered data for parent to read imperatively
+  export function getFilteredData() {
+    return filteredData;
+  }
 
   // Derived filtered data
   $: filteredData = sortedData.filter((row) => {
@@ -79,8 +143,13 @@
       if (filterStale === FILTER_FALSE && isStale(row.lastUsed)) return false;
     }
     if (
-      filterModel &&
-      !(row.Model || "").toLowerCase().includes(filterModel.toLowerCase())
+      selectedModels.size < uniqueModels.length &&
+      !selectedModels.has(row.Model)
+    )
+      return false;
+    if (
+      selectedPurposes.size < uniquePurposes.length &&
+      !selectedPurposes.has(row.Purpose)
     )
       return false;
     return true;
@@ -217,8 +286,7 @@
 <!-- Filter controls -->
 {#if data.length}
   <div
-    class="w3-padding w3-bar"
-    style="align-items:start;display:flex;gap:0.5em;"
+    class="w3-padding filter-bar"
   >
     <div
       style="
@@ -270,15 +338,110 @@
         {/if}
       </div>
     </div>
-    <label class="w3-bar-item">
-      Model:
-      <input
-        type="text"
-        bind:value={filterModel}
-        class="w3-input w3-border"
-        style="display:inline-block;width:auto;margin-left:4px;"
-      />
-    </label>
+    <div class="dropdown-filter" style="position:relative;">
+      <button
+        class="w3-button w3-border w3-bar-item"
+        on:click={() => (showModelDropdown = !showModelDropdown)}
+      >
+        Model: {selectedModels.size === uniqueModels.length
+          ? "All"
+          : `${selectedModels.size}/${uniqueModels.length}`}
+        &#9662;
+      </button>
+      {#if showModelDropdown}
+        <div class="filter-dropdown w3-card-4 w3-white">
+          <div
+            class="w3-bar w3-border-bottom"
+            style="display:flex;gap:4px;padding:4px;"
+          >
+            <button
+              class="w3-button w3-tiny w3-light-grey"
+              on:click={() => {
+                selectedModels = new Set(uniqueModels);
+              }}>All</button
+            >
+            <button
+              class="w3-button w3-tiny w3-light-grey"
+              on:click={() => {
+                selectedModels = new Set();
+              }}>None</button
+            >
+          </div>
+          <div style="max-height:250px;overflow-y:auto;padding:4px 8px;">
+            {#each uniqueModels as model}
+              <label
+                class="w3-block"
+                style="cursor:pointer;white-space:nowrap;padding:2px 0;"
+              >
+                <input
+                  type="checkbox"
+                  class="w3-check"
+                  checked={selectedModels.has(model)}
+                  on:change={() => toggleModel(model)}
+                />
+                {model}
+              </label>
+            {/each}
+          </div>
+          <button
+            class="w3-button w3-block w3-border-top w3-small"
+            on:click={() => (showModelDropdown = false)}>Done</button
+          >
+        </div>
+      {/if}
+    </div>
+    <div class="dropdown-filter" style="position:relative;">
+      <button
+        class="w3-button w3-border w3-bar-item"
+        on:click={() => (showPurposeDropdown = !showPurposeDropdown)}
+      >
+        Purpose: {selectedPurposes.size === uniquePurposes.length
+          ? "All"
+          : `${selectedPurposes.size}/${uniquePurposes.length}`}
+        &#9662;
+      </button>
+      {#if showPurposeDropdown}
+        <div class="filter-dropdown w3-card-4 w3-white">
+          <div
+            class="w3-bar w3-border-bottom"
+            style="display:flex;gap:4px;padding:4px;"
+          >
+            <button
+              class="w3-button w3-tiny w3-light-grey"
+              on:click={() => {
+                selectedPurposes = new Set(uniquePurposes);
+              }}>All</button
+            >
+            <button
+              class="w3-button w3-tiny w3-light-grey"
+              on:click={() => {
+                selectedPurposes = new Set();
+              }}>None</button
+            >
+          </div>
+          <div style="max-height:250px;overflow-y:auto;padding:4px 8px;">
+            {#each uniquePurposes as purpose}
+              <label
+                class="w3-block"
+                style="cursor:pointer;white-space:nowrap;padding:2px 0;"
+              >
+                <input
+                  type="checkbox"
+                  class="w3-check"
+                  checked={selectedPurposes.has(purpose)}
+                  on:change={() => togglePurpose(purpose)}
+                />
+                {purpose}
+              </label>
+            {/each}
+          </div>
+          <button
+            class="w3-button w3-block w3-border-top w3-small"
+            on:click={() => (showPurposeDropdown = false)}>Done</button
+          >
+        </div>
+      {/if}
+    </div>
     {#if haveGoogleData}
       <label class="w3-bar-item">
         <input
@@ -595,5 +758,23 @@
   }
   .close-modal-btn:hover {
     color: #c6093b;
+  }
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+  .dropdown-filter {
+    display: inline-block;
+    position: relative;
+  }
+  .filter-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    min-width: 220px;
+    background: #fff;
   }
 </style>

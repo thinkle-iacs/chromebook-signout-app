@@ -60,15 +60,17 @@
 
   function normalizeAssets(rawAssets) {
     const $assetStore = get(assetStore);
-    return rawAssets.map((rawAsset) => {
-      const assetTag = rawAsset.fields["Asset Tag"];
-      return (
-        $assetStore[assetTag] || {
-          ...rawAsset.fields,
-          _id: rawAsset.id,
-        }
-      );
-    });
+    return (rawAssets || [])
+      .filter((rawAsset) => rawAsset && rawAsset.fields)
+      .map((rawAsset) => {
+        const assetTag = rawAsset.fields["Asset Tag"];
+        return (
+          $assetStore[assetTag] || {
+            ...rawAsset.fields,
+            _id: rawAsset.id,
+          }
+        );
+      });
   }
 
   let loginDataLoading = false;
@@ -76,12 +78,14 @@
 
   const MAX_CONCURRENT_REQUESTS = 10; // Limit concurrency
 
+  // Reference to ReportTable to read filtered data imperatively
+  let reportTable;
+
   async function checkAllStatuses() {
     loginDataLoading = true;
     loginDataProgress = 0;
-    const assets = displayData;
-    const assetTags = assets.map((asset) => asset["Asset Tag"]);
-
+    const filtered = reportTable?.getFilteredData();
+    const assets = filtered?.length ? filtered : displayData;
     let index = 0;
     const total = assets.length;
 
@@ -107,19 +111,21 @@
   }
 
   function addMachineInfo(assets, machineStatuses) {
-    return assets.map((asset) => {
-      const assetTag = asset["Asset Tag"];
-      const status = machineStatuses[assetTag] || {};
-      return {
-        ...asset,
-        status: status.status || "Unknown",
-        lastUsed: status.lastUsed || "Unknown",
-        lastUserMatch: status.lastUserMatch || false,
-        googleData: status.googleData || {},
-        recentUsers: status.googleData?.recentUsers?.map((u) => u.email) || [],
-        sessions: status.googleData?.activeTimeRanges.map((r) => r.date) || [],
-      };
-    });
+    return (assets || [])
+      .filter((asset) => asset && typeof asset === 'object')
+      .map((asset) => {
+        const assetTag = asset["Asset Tag"];
+        const status = machineStatuses[assetTag] || {};
+        return {
+          ...asset,
+          status: status.status || "Unknown",
+          lastUsed: status.lastUsed || "Unknown",
+          lastUserMatch: status.lastUserMatch || false,
+          googleData: status.googleData || {},
+          recentUsers: status.googleData?.recentUsers?.map((u) => u.email) || [],
+          sessions: status.googleData?.activeTimeRanges?.map((r) => r.date) || [],
+        };
+      });
   }
 
   // Remove all per-tab table rendering, just keep displayData/columns/headers logic
@@ -248,7 +254,7 @@
       class="w3-button w3-green w3-margin-top"
       on:click={checkAllStatuses}
       disabled={loading || displayData.length === 0 || loginDataLoading}
-      title="Check Google for login data; this lets us see when the machine was last used and by whom."
+      title="Check Google for login data for the currently filtered machines."
     >
       Get Login Data
     </button>
@@ -273,6 +279,7 @@
     {:else}
       <!-- Single ReportTable for all tabs -->
       <ReportTable
+        bind:this={reportTable}
         data={displayData}
         loginDataReady={displayData.length && !!loginDataProgress}
         {columns}
