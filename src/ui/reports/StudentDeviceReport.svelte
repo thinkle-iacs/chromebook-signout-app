@@ -14,9 +14,17 @@
     | "student"
     | "yog"
     | "status"
+    | "summary"
     | "currentLoanCount"
     | "lastUsedMachineCount"
     | "problemCount";
+
+  type SummaryFilter =
+    | "all"
+    | "attention"
+    | "loginMismatch"
+    | "excludeCheckedInAfterUse"
+    | "checkedInAfterUseOnly";
 
   type DisplayRow = {
     key: string;
@@ -35,6 +43,7 @@
   let progress = { completed: 0, total: 0 };
   let sortColumn: SortColumn = "lastUsedMachineCount";
   let sortDirection: "asc" | "desc" = "desc";
+  let summaryFilter: SummaryFilter = "all";
   let expandedMachines = {};
   let tableScrollEl: HTMLDivElement | null = null;
   let topScrollEl: HTMLDivElement | null = null;
@@ -49,7 +58,13 @@
     ((inputMode === "yog" && selectedYOG.trim()) ||
       (inputMode === "list" && parsedEmails.length));
   $: sortedRows = sortRows(rows, sortColumn, sortDirection);
-  $: displayRows = flattenDisplayRows(sortedRows);
+  $: allDisplayRows = flattenDisplayRows(sortedRows);
+  $: displayRows = filterAndSortDisplayRows(
+    allDisplayRows,
+    summaryFilter,
+    sortColumn,
+    sortDirection,
+  );
   $: exportRows = flattenStudentDeviceReport(sortedRows);
   $: filename = [
     inputMode === "yog" ? selectedYOG || "students" : "student-list",
@@ -140,6 +155,10 @@
     column: SortColumn,
     direction: "asc" | "desc",
   ) {
+    if (column === "summary") {
+      return [...reportRows];
+    }
+
     const sorted = [...reportRows];
     sorted.sort((a, b) => {
       let aValue: string | number;
@@ -185,6 +204,82 @@
         machineIndex,
       }));
     }) as DisplayRow[];
+  }
+
+  function summarySortRank(machine: StudentDeviceReportMachine | null) {
+    if (!machine) return 99;
+
+    const ranks = {
+      signedOutToOther: 1,
+      signedOutToStaff: 2,
+      checkedInAfterGoogleUse: 3,
+      checkedInUnknown: 4,
+      unknown: 5,
+      checkedInAfterUse: 6,
+      checkedInSameDay: 7,
+      normal: 8,
+    };
+
+    return ranks[machine.status] ?? 98;
+  }
+
+  function matchesSummaryFilter(displayRow: DisplayRow, filter: SummaryFilter) {
+    const status = displayRow.machine?.status;
+
+    if (filter === "all") return true;
+    if (!status) return filter === "excludeCheckedInAfterUse";
+
+    if (filter === "attention") {
+      return !["normal", "checkedInAfterUse", "checkedInSameDay"].includes(
+        status,
+      );
+    }
+
+    if (filter === "loginMismatch") {
+      return ["signedOutToOther", "signedOutToStaff"].includes(status);
+    }
+
+    if (filter === "excludeCheckedInAfterUse") {
+      return status !== "checkedInAfterUse";
+    }
+
+    if (filter === "checkedInAfterUseOnly") {
+      return status === "checkedInAfterUse";
+    }
+
+    return true;
+  }
+
+  function filterAndSortDisplayRows(
+    reportRows: DisplayRow[],
+    filter: SummaryFilter,
+    column: SortColumn,
+    direction: "asc" | "desc",
+  ) {
+    const filtered = reportRows.filter((displayRow) =>
+      matchesSummaryFilter(displayRow, filter),
+    );
+
+    if (column !== "summary") {
+      return filtered;
+    }
+
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      const aRank = summarySortRank(a.machine);
+      const bRank = summarySortRank(b.machine);
+      if (aRank !== bRank) {
+        return direction === "asc" ? aRank - bRank : bRank - aRank;
+      }
+
+      const aStudent = a.row.student.Email || a.row.student.Name || "";
+      const bStudent = b.row.student.Email || b.row.student.Name || "";
+      if (aStudent < bStudent) return -1;
+      if (aStudent > bStudent) return 1;
+      return 0;
+    });
+
+    return sorted;
   }
 
   async function handleFileUpload(event: Event) {
@@ -376,6 +471,19 @@
       </select>
     </label>
 
+    <label>
+      Summary Filter
+      <select class="w3-select w3-border" bind:value={summaryFilter}>
+        <option value="all">All</option>
+        <option value="attention">Needs Attention</option>
+        <option value="loginMismatch">Login Mismatch Only</option>
+        <option value="excludeCheckedInAfterUse">
+          Exclude Checked In After Use
+        </option>
+        <option value="checkedInAfterUseOnly">Checked In After Use Only</option>
+      </select>
+    </label>
+
     <div class="actions">
       <button
         class="w3-button w3-green"
@@ -424,7 +532,8 @@
   {:else if rows.length}
     <p>
       Showing <b>{sortedRows.length}</b> students and
-      <b>{displayRows.length}</b> report rows with
+      <b>{displayRows.length}</b> of <b>{allDisplayRows.length}</b> report rows
+      with
       <b>{exportRows.filter((row) => row.Serial).length}</b> last-used machines
     </p>
 
@@ -457,7 +566,7 @@
               <th>Machine</th>
               <th>Last Activity</th>
               <th>Checkout Status</th>
-              <th>Summary</th>
+              <th on:click={() => setSort("summary")}>Summary</th>
               <th on:click={() => setSort("lastUsedMachineCount")}>Count</th>
             </tr>
           </thead>
