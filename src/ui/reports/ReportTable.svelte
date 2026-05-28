@@ -8,6 +8,7 @@
   export let data;
   export let columns = [];
   export let filename = "data.csv";
+  export let openAssetLinksInNewTab = false;
   // sortColumn is now a property name (string)
   let sortColumn = columns[0] || "";
   let sortDirection = "asc";
@@ -577,7 +578,10 @@
           {#each columns as column, i (i)}
             <td>
               {#if column == "_ASSET"}
-                <AssetDisplay asset={row} />
+                <AssetDisplay
+                  asset={row}
+                  openInNewTab={openAssetLinksInNewTab}
+                />
               {:else}
                 {row[column]}
               {/if}
