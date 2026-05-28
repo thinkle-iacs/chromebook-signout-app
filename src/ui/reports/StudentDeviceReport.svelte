@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy, onMount, tick } from "svelte";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import Loader from "@components/Loader.svelte";
   import DataExporter from "./DataExporter.svelte";
@@ -35,6 +36,12 @@
   let sortColumn: SortColumn = "lastUsedMachineCount";
   let sortDirection: "asc" | "desc" = "desc";
   let expandedMachines = {};
+  let tableScrollEl: HTMLDivElement | null = null;
+  let topScrollEl: HTMLDivElement | null = null;
+  let reportTableEl: HTMLTableElement | null = null;
+  let topScrollWidth = 0;
+  let showTopScroll = false;
+  let resizeObserver: ResizeObserver | null = null;
 
   $: parsedEmails = parseEmails(listInput);
   $: canRun =
@@ -49,6 +56,65 @@
     selectedStudentStatus || "all-statuses",
     "student-device-report.csv",
   ].join("-");
+
+  function syncScrollMetrics() {
+    if (!tableScrollEl || !reportTableEl) return;
+    topScrollWidth = reportTableEl.scrollWidth;
+    showTopScroll = reportTableEl.scrollWidth > tableScrollEl.clientWidth + 1;
+    if (topScrollEl && topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
+      topScrollEl.scrollLeft = tableScrollEl.scrollLeft;
+    }
+  }
+
+  function handleTopScroll() {
+    if (!tableScrollEl || !topScrollEl) return;
+    if (tableScrollEl.scrollLeft !== topScrollEl.scrollLeft) {
+      tableScrollEl.scrollLeft = topScrollEl.scrollLeft;
+    }
+  }
+
+  function handleTableScroll() {
+    if (!tableScrollEl || !topScrollEl) return;
+    if (topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
+      topScrollEl.scrollLeft = tableScrollEl.scrollLeft;
+    }
+  }
+
+  let syncPending = false;
+  async function scheduleSyncMetrics() {
+    if (syncPending) return;
+    syncPending = true;
+    await tick();
+    syncPending = false;
+    syncScrollMetrics();
+  }
+
+  $: displayRows.length, sortedRows.length, scheduleSyncMetrics();
+
+  onMount(() => {
+    const onResize = () => syncScrollMetrics();
+    window.addEventListener("resize", onResize);
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => syncScrollMetrics());
+      if (reportTableEl) {
+        resizeObserver.observe(reportTableEl);
+      }
+    }
+    scheduleSyncMetrics();
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  });
+
+  onDestroy(() => {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
+  });
 
   function parseEmails(value: string) {
     return value
@@ -72,7 +138,7 @@
   function sortRows(
     reportRows: StudentDeviceReportRow[],
     column: SortColumn,
-    direction: "asc" | "desc"
+    direction: "asc" | "desc",
   ) {
     const sorted = [...reportRows];
     sorted.sort((a, b) => {
@@ -104,7 +170,12 @@
     return reportRows.flatMap((row) => {
       if (!row.machines.length) {
         return [
-          { key: `${row.student._id}:none`, row, machine: null, machineIndex: 0 },
+          {
+            key: `${row.student._id}:none`,
+            row,
+            machine: null,
+            machineIndex: 0,
+          },
         ];
       }
       return row.machines.map((machine, machineIndex) => ({
@@ -204,7 +275,9 @@
     if (!machine || !users.length) return "";
     const nextUsers = users
       .slice(1, 4)
-      .filter((email) => email.toLowerCase() !== machine.lastUser.toLowerCase());
+      .filter(
+        (email) => email.toLowerCase() !== machine.lastUser.toLowerCase(),
+      );
     if (!nextUsers.length) return "No other recent users listed";
     return `Next recent: ${nextUsers.join(", ")}`;
   }
@@ -220,7 +293,9 @@
     if (!machine) return "";
     if (machine.currentOwner) {
       return `Signed out to ${machine.currentOwner}${
-        machine.checkoutTime ? ` on ${formatDateTime(machine.checkoutTime)}` : ""
+        machine.checkoutTime
+          ? ` on ${formatDateTime(machine.checkoutTime)}`
+          : ""
       }`;
     }
     if (machine.checkInTime) {
@@ -354,126 +429,154 @@
     </p>
 
     <div class="w3-responsive">
-      <table class="w3-table w3-bordered w3-striped report-table">
-        <thead>
-          <tr>
-            <th on:click={() => setSort("student")}>Student</th>
-            <th on:click={() => setSort("status")}>Status</th>
-            <th>Machine</th>
-            <th>Last Activity</th>
-            <th>Checkout Status</th>
-            <th>Summary</th>
-            <th on:click={() => setSort("lastUsedMachineCount")}>Count</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each displayRows as displayRow (displayRow.key)}
-            <tr class:has-warning={isWarningMachine(displayRow.machine)}>
-              <td>
-                <b>{displayRow.row.student.Email}</b>
-                <div class="w3-small">{displayRow.row.student.Name}</div>
-                <div class="w3-small">YOG {displayRow.row.student.YOG}</div>
-              </td>
-              <td>
-                <span
-                  class:inactive={displayRow.row.student.Status === "Inactive"}
-                  class="student-status"
-                >
-                  {displayRow.row.student.Status}
-                </span>
-                <div class="w3-small">
-                  {displayRow.row.currentLoanCount} currently signed out
-                  {#if displayRow.row.problemCount}
-                    | {displayRow.row.problemCount} warning{displayRow.row
-                      .problemCount === 1
-                      ? ""
-                      : "s"}
-                  {/if}
-                </div>
-              </td>
-              <td>
-                {#if displayRow.machine}
-                  <div class="machine-summary">
-                    {#if displayRow.machine.asset}
-                      <AssetDisplay
-                        asset={displayRow.machine.asset}
-                        openInNewTab={true}
-                        showOwner={true}
-                      />
-                    {:else}
-                      <div>
-                        <b>{displayRow.machine.assetTag}</b>
-                        <div class="w3-monospace w3-small">
-                          s/n {displayRow.machine.serial}
-                        </div>
-                      </div>
+      {#if showTopScroll}
+        <div
+          class="top-scrollbar"
+          bind:this={topScrollEl}
+          on:scroll={handleTopScroll}
+        >
+          <div
+            class="top-scrollbar-content"
+            style={`width: ${topScrollWidth}px;`}
+          ></div>
+        </div>
+      {/if}
+      <div
+        class="report-table-scroll"
+        bind:this={tableScrollEl}
+        on:scroll={handleTableScroll}
+      >
+        <table
+          bind:this={reportTableEl}
+          class="w3-table w3-bordered w3-striped report-table report-table-grid"
+        >
+          <thead>
+            <tr>
+              <th on:click={() => setSort("student")}>Student</th>
+              <th on:click={() => setSort("status")}>Status</th>
+              <th>Machine</th>
+              <th>Last Activity</th>
+              <th>Checkout Status</th>
+              <th>Summary</th>
+              <th on:click={() => setSort("lastUsedMachineCount")}>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each displayRows as displayRow (displayRow.key)}
+              <tr class:has-warning={isWarningMachine(displayRow.machine)}>
+                <td>
+                  <b>{displayRow.row.student.Email}</b>
+                  <div class="w3-small">{displayRow.row.student.Name}</div>
+                  <div class="w3-small">YOG {displayRow.row.student.YOG}</div>
+                </td>
+                <td>
+                  <span
+                    class:inactive={displayRow.row.student.Status ===
+                      "Inactive"}
+                    class="student-status"
+                  >
+                    {displayRow.row.student.Status}
+                  </span>
+                  <div class="w3-small">
+                    {displayRow.row.currentLoanCount} currently signed out
+                    {#if displayRow.row.problemCount}
+                      | {displayRow.row.problemCount} warning{displayRow.row
+                        .problemCount === 1
+                        ? ""
+                        : "s"}
                     {/if}
                   </div>
-                {:else}
-                  <span class="w3-text-gray">No Google last-used machines</span>
-                {/if}
-              </td>
-              <td>
-                {#if displayRow.machine}
-                  <div>
-                    {activitySummary(displayRow.machine) ||
-                      formatDate(displayRow.machine.lastUsed)}
-                  </div>
-                  <div class="w3-small">
-                    {recentUserSummary(displayRow.machine)}
-                    <button
-                      class="w3-button w3-tiny w3-border expand-button"
-                      on:click={() => toggleExpanded(displayRow.key)}
-                    >
-                      {expandedMachines[displayRow.key] ? "-" : "+"}
-                    </button>
-                  </div>
-                {/if}
-              </td>
-              <td>{formatCheckoutStatus(displayRow.machine)}</td>
-              <td>
-                {#if displayRow.machine}
-                  <span class={statusClass(displayRow.machine)}>
-                    {displayRow.machine.statusLabel}
-                  </span>
-                {:else}
-                  <span class="w3-text-gray">No Google latest-user machines</span>
-                {/if}
-              </td>
-              <td>{formatCount(displayRow)}</td>
-            </tr>
-            {#if expandedMachines[displayRow.key] && displayRow.machine}
-              <tr class="expanded-row">
-                <td colspan="7">
-                  <div class="expanded-grid">
-                    <div>
-                      <h4>Recent Users</h4>
-                      <ol>
-                        {#each recentUsers(displayRow.machine) as user}
-                          <li>{user.email || user.type}</li>
-                        {/each}
-                      </ol>
-                    </div>
-                    <div>
-                      <h4>Device Activity</h4>
-                      <ol>
-                        {#each [...(displayRow.machine.googleData?.activeTimeRanges || [])].reverse().slice(0, 10) as range}
-                          <li>
-                            {formatDate(range.date)}
-                            {#if formatDuration(range.activeTime)}
-                              for {formatDuration(range.activeTime)}
-                            {/if}
-                          </li>
-                        {/each}
-                      </ol>
-                    </div>
-                  </div>
                 </td>
+                <td>
+                  {#if displayRow.machine}
+                    <div class="machine-summary">
+                      {#if displayRow.machine.asset}
+                        <AssetDisplay
+                          asset={displayRow.machine.asset}
+                          openInNewTab={true}
+                          showOwner={true}
+                        />
+                      {:else}
+                        <div>
+                          <b>{displayRow.machine.assetTag}</b>
+                          <div class="w3-monospace w3-small">
+                            s/n {displayRow.machine.serial}
+                          </div>
+                        </div>
+                      {/if}
+                    </div>
+                  {:else}
+                    <span class="w3-text-gray"
+                      >No Google last-used machines</span
+                    >
+                  {/if}
+                </td>
+                <td>
+                  {#if displayRow.machine}
+                    <div>
+                      {activitySummary(displayRow.machine) ||
+                        formatDate(displayRow.machine.lastUsed)}
+                    </div>
+                    <div class="w3-small">
+                      {recentUserSummary(displayRow.machine)}
+                      <button
+                        class="w3-button w3-tiny w3-border expand-button"
+                        on:click={() => toggleExpanded(displayRow.key)}
+                      >
+                        {expandedMachines[displayRow.key] ? "-" : "+"}
+                      </button>
+                    </div>
+                  {/if}
+                </td>
+                <td>{formatCheckoutStatus(displayRow.machine)}</td>
+                <td>
+                  {#if displayRow.machine}
+                    <span class={statusClass(displayRow.machine)}>
+                      {displayRow.machine.statusLabel}
+                    </span>
+                  {:else}
+                    <span class="w3-text-gray"
+                      >No Google latest-user machines</span
+                    >
+                  {/if}
+                </td>
+                <td>{formatCount(displayRow)}</td>
               </tr>
-            {/if}
-          {/each}
-        </tbody>
-      </table>
+              {#if expandedMachines[displayRow.key] && displayRow.machine}
+                <tr class="expanded-row">
+                  <td colspan="7">
+                    <div class="expanded-grid">
+                      <div>
+                        <h4>Recent Users</h4>
+                        <ol>
+                          {#each recentUsers(displayRow.machine) as user}
+                            <li>{user.email || user.type}</li>
+                          {/each}
+                        </ol>
+                      </div>
+                      <div>
+                        <h4>Device Activity</h4>
+                        <ol>
+                          {#each [...(displayRow.machine.googleData?.activeTimeRanges || [])]
+                            .reverse()
+                            .slice(0, 10) as range}
+                            <li>
+                              {formatDate(range.date)}
+                              {#if formatDuration(range.activeTime)}
+                                for {formatDuration(range.activeTime)}
+                              {/if}
+                            </li>
+                          {/each}
+                        </ol>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              {/if}
+            {/each}
+          </tbody>
+        </table>
+      </div>
     </div>
   {/if}
 </section>
@@ -514,6 +617,23 @@
   }
   .report-table td {
     vertical-align: top;
+  }
+  .report-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .top-scrollbar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .top-scrollbar-content {
+    height: 1px;
+  }
+  .report-table-grid {
+    min-width: 980px;
+    table-layout: auto;
   }
   .has-warning {
     background-color: #fff8e1;

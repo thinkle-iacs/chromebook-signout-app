@@ -1,4 +1,5 @@
 <script>
+  import { onDestroy, onMount, tick } from "svelte";
   import { logger } from "@utils/log";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import DataExporter from "./DataExporter.svelte";
@@ -15,6 +16,75 @@
   export let headers = [];
 
   let sortedData = [];
+  let tableScrollEl;
+  let topScrollEl;
+  let reportTableEl;
+  let topScrollWidth = 0;
+  let showTopScroll = false;
+  let resizeObserver;
+
+  function syncScrollMetrics() {
+    if (!tableScrollEl || !reportTableEl) return;
+    topScrollWidth = reportTableEl.scrollWidth;
+    showTopScroll = reportTableEl.scrollWidth > tableScrollEl.clientWidth + 1;
+    if (topScrollEl && topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
+      topScrollEl.scrollLeft = tableScrollEl.scrollLeft;
+    }
+  }
+
+  function handleTopScroll() {
+    if (!tableScrollEl || !topScrollEl) return;
+    if (tableScrollEl.scrollLeft !== topScrollEl.scrollLeft) {
+      tableScrollEl.scrollLeft = topScrollEl.scrollLeft;
+    }
+  }
+
+  function handleTableScroll() {
+    if (!tableScrollEl || !topScrollEl) return;
+    if (topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
+      topScrollEl.scrollLeft = tableScrollEl.scrollLeft;
+    }
+  }
+
+  let syncPending = false;
+  async function scheduleSyncMetrics() {
+    if (syncPending) return;
+    syncPending = true;
+    await tick();
+    syncPending = false;
+    syncScrollMetrics();
+  }
+
+  $: filteredData.length,
+    columns.length,
+    headers.length,
+    haveGoogleData,
+    scheduleSyncMetrics();
+
+  onMount(() => {
+    const onResize = () => syncScrollMetrics();
+    window.addEventListener("resize", onResize);
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => syncScrollMetrics());
+      if (reportTableEl) {
+        resizeObserver.observe(reportTableEl);
+      }
+    }
+    scheduleSyncMetrics();
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  });
+
+  onDestroy(() => {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
+  });
 
   function isStale(lastUsed) {
     const thirtyDaysAgo = new Date();
@@ -504,127 +574,149 @@
     </div>
   {/if}
 
-  <table class="w3-table w3-bordered w3-striped">
-    <thead>
-      <tr>
-        <th>
-          <input
-            type="checkbox"
-            checked={selectedAssetTags.size === filteredData.length &&
-              filteredData.length > 0}
-            indeterminate={selectedAssetTags.size > 0 &&
-              selectedAssetTags.size < filteredData.length}
-            on:change={toggleSelectAll}
-          />
-        </th>
-        {#each headers as header, i}
-          <th
-            on:click={() => {
-              const colProp = columns[i];
-              if (sortColumn === colProp) {
-                sortDirection = sortDirection === "asc" ? "desc" : "asc";
-              } else {
-                sortColumn = colProp;
-                sortDirection = "asc";
-              }
-            }}
-          >
-            {header}
-          </th>
-        {/each}
-        {#if haveGoogleData}
-          <th
-            on:click={() => {
-              if (sortColumn === "lastUserMatch") {
-                sortDirection = sortDirection === "asc" ? "desc" : "asc";
-              } else {
-                sortColumn = "lastUserMatch";
-                sortDirection = "asc";
-              }
-            }}
-            style="cursor:pointer"
-          >
-            Last User?
-          </th>
-          <th
-            on:click={() => {
-              if (sortColumn === "lastUsed") {
-                sortDirection = sortDirection === "asc" ? "desc" : "asc";
-              } else {
-                sortColumn = "lastUsed";
-                sortDirection = "asc";
-              }
-            }}
-            style="cursor:pointer"
-          >
-            Last Used
-          </th>
-        {/if}
-      </tr>
-    </thead>
-    <tbody>
-      {#each filteredData as row (row.Serial)}
-        <tr
-          class:highlight-stale={haveGoogleData && isStale(row.lastUsed)}
-          class:highlight-wrong-user={haveGoogleData && !row.lastUserMatch}
-        >
-          <td>
+  {#if showTopScroll}
+    <div
+      class="top-scrollbar"
+      bind:this={topScrollEl}
+      on:scroll={handleTopScroll}
+    >
+      <div
+        class="top-scrollbar-content"
+        style={`width: ${topScrollWidth}px;`}
+      ></div>
+    </div>
+  {/if}
+  <div
+    class="report-table-scroll"
+    bind:this={tableScrollEl}
+    on:scroll={handleTableScroll}
+  >
+    <table
+      bind:this={reportTableEl}
+      class="w3-table w3-bordered w3-striped report-table-grid"
+    >
+      <thead>
+        <tr>
+          <th>
             <input
               type="checkbox"
-              checked={selectedAssetTags.has(row["Asset Tag"])}
-              on:change={() => toggleSelectRow(row)}
+              checked={selectedAssetTags.size === filteredData.length &&
+                filteredData.length > 0}
+              indeterminate={selectedAssetTags.size > 0 &&
+                selectedAssetTags.size < filteredData.length}
+              on:change={toggleSelectAll}
             />
-          </td>
-          {#each columns as column, i (i)}
-            <td>
-              {#if column == "_ASSET"}
-                <AssetDisplay
-                  asset={row}
-                  openInNewTab={openAssetLinksInNewTab}
-                />
-              {:else}
-                {row[column]}
-              {/if}
-            </td>
+          </th>
+          {#each headers as header, i}
+            <th
+              on:click={() => {
+                const colProp = columns[i];
+                if (sortColumn === colProp) {
+                  sortDirection = sortDirection === "asc" ? "desc" : "asc";
+                } else {
+                  sortColumn = colProp;
+                  sortDirection = "asc";
+                }
+              }}
+            >
+              {header}
+            </th>
           {/each}
           {#if haveGoogleData}
-            <td class="user">
-              {row.recentUsers[0]}
-              <button
-                class="w3-button w3-small"
-                on:click={() => {
-                  expandedUsers[row.Serial] = !expandedUsers[row.Serial];
-                }}>+</button
-              >
-              {#if expandedUsers[row.Serial]}
-                <ul>
-                  {#each row.recentUsers.slice(1) as user}
-                    <li>{user}</li>
-                  {/each}
-                </ul>
-              {/if}
-            </td>
-            <td class="session">
-              {row.lastUsed}<button
-                class="w3-button w3-small"
-                on:click={() => {
-                  expandedSessions[row.Serial] = !expandedSessions[row.Serial];
-                }}>+</button
-              >
-
-              {#if expandedSessions[row.Serial]}
-                <ul>
-                  {#each row.sessions as session}
-                    <li>{session}</li>
-                  {/each}
-                </ul>
-              {/if}
-            </td>
+            <th
+              on:click={() => {
+                if (sortColumn === "lastUserMatch") {
+                  sortDirection = sortDirection === "asc" ? "desc" : "asc";
+                } else {
+                  sortColumn = "lastUserMatch";
+                  sortDirection = "asc";
+                }
+              }}
+              style="cursor:pointer"
+            >
+              Last User?
+            </th>
+            <th
+              on:click={() => {
+                if (sortColumn === "lastUsed") {
+                  sortDirection = sortDirection === "asc" ? "desc" : "asc";
+                } else {
+                  sortColumn = "lastUsed";
+                  sortDirection = "asc";
+                }
+              }}
+              style="cursor:pointer"
+            >
+              Last Used
+            </th>
           {/if}
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each filteredData as row (row.Serial)}
+          <tr
+            class:highlight-stale={haveGoogleData && isStale(row.lastUsed)}
+            class:highlight-wrong-user={haveGoogleData && !row.lastUserMatch}
+          >
+            <td>
+              <input
+                type="checkbox"
+                checked={selectedAssetTags.has(row["Asset Tag"])}
+                on:change={() => toggleSelectRow(row)}
+              />
+            </td>
+            {#each columns as column, i (i)}
+              <td>
+                {#if column == "_ASSET"}
+                  <AssetDisplay
+                    asset={row}
+                    openInNewTab={openAssetLinksInNewTab}
+                  />
+                {:else}
+                  {row[column]}
+                {/if}
+              </td>
+            {/each}
+            {#if haveGoogleData}
+              <td class="user">
+                {row.recentUsers[0]}
+                <button
+                  class="w3-button w3-small"
+                  on:click={() => {
+                    expandedUsers[row.Serial] = !expandedUsers[row.Serial];
+                  }}>+</button
+                >
+                {#if expandedUsers[row.Serial]}
+                  <ul>
+                    {#each row.recentUsers.slice(1) as user}
+                      <li>{user}</li>
+                    {/each}
+                  </ul>
+                {/if}
+              </td>
+              <td class="session">
+                {row.lastUsed}<button
+                  class="w3-button w3-small"
+                  on:click={() => {
+                    expandedSessions[row.Serial] =
+                      !expandedSessions[row.Serial];
+                  }}>+</button
+                >
+
+                {#if expandedSessions[row.Serial]}
+                  <ul>
+                    {#each row.sessions as session}
+                      <li>{session}</li>
+                    {/each}
+                  </ul>
+                {/if}
+              </td>
+            {/if}
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 
   {#if showLostConfirm}
     <div
@@ -740,6 +832,23 @@
   }
   .data-exporter-wrap :global(button.w3-button) {
     margin-top: 0;
+  }
+  .report-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .top-scrollbar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .top-scrollbar-content {
+    height: 1px;
+  }
+  .report-table-grid {
+    min-width: 920px;
+    table-layout: auto;
   }
   .lost-confirm-modal {
     position: relative;
