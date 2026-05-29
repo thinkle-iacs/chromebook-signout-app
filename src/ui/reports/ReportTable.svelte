@@ -838,9 +838,15 @@
     -webkit-overflow-scrolling: touch;
   }
   .top-scrollbar {
+    position: sticky;
+    top: 0;
     overflow-x: auto;
     overflow-y: hidden;
     margin-bottom: 6px;
+    padding: 6px 0 4px;
+    background: #fff;
+    z-index: 20;
+    border-bottom: 1px solid #e0e0e0;
     -webkit-overflow-scrolling: touch;
   }
   .top-scrollbar-content {

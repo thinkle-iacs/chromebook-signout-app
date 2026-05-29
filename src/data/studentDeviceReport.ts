@@ -106,7 +106,7 @@ function dateKey(value: string | null | undefined) {
 
 function checkedInClassification(
   lastUsed: string | null,
-  latestHistory: SignoutHistoryEntry | null
+  latestHistory: SignoutHistoryEntry | null,
 ): Pick<
   StudentDeviceReportMachine,
   "status" | "statusLabel" | "currentOwner" | "checkoutTime" | "checkInTime"
@@ -169,7 +169,7 @@ function classifyMachine(
   student: Student,
   asset: Asset | null,
   lastUsed: string | null,
-  latestHistory: SignoutHistoryEntry | null
+  latestHistory: SignoutHistoryEntry | null,
 ): Pick<
   StudentDeviceReportMachine,
   "status" | "statusLabel" | "currentOwner" | "checkoutTime" | "checkInTime"
@@ -185,7 +185,9 @@ function classifyMachine(
   }
 
   const studentEmail = student.Email.toLowerCase();
-  const currentStudentEmail = normalizeEmail(asset["Email (from Student (Current))"]);
+  const currentStudentEmail = normalizeEmail(
+    asset["Email (from Student (Current))"],
+  );
   const currentStaffEmail = normalizeEmail(asset["Staff Email"]);
 
   if (currentStudentEmail) {
@@ -194,7 +196,8 @@ function classifyMachine(
         status: "normal",
         statusLabel: "Signed out to this student",
         currentOwner: currentStudentEmail,
-        checkoutTime: latestHistory?.Status === "Out" ? latestHistory.Time : null,
+        checkoutTime:
+          latestHistory?.Status === "Out" ? latestHistory.Time : null,
         checkInTime: null,
       };
     }
@@ -237,7 +240,9 @@ function indexAssets(assets: Asset[]) {
       bySerial.set(serial, asset);
     }
 
-    const studentEmail = normalizeEmail(asset["Email (from Student (Current))"]);
+    const studentEmail = normalizeEmail(
+      asset["Email (from Student (Current))"],
+    );
     if (studentEmail) {
       const loans = loansByStudentEmail.get(studentEmail) || [];
       loans.push(asset);
@@ -268,14 +273,14 @@ function indexLatestHistory(entries: SignoutHistoryEntry[]) {
 
 function isProblemMachine(machine: StudentDeviceReportMachine) {
   return !["normal", "checkedInAfterUse", "checkedInSameDay"].includes(
-    machine.status
+    machine.status,
   );
 }
 
 async function runWithConcurrency<T>(
   items: T[],
   limit: number,
-  worker: (item: T, index: number) => Promise<void>
+  worker: (item: T, index: number) => Promise<void>,
 ) {
   let nextIndex = 0;
   const workers = Array.from(
@@ -286,13 +291,13 @@ async function runWithConcurrency<T>(
         nextIndex += 1;
         await worker(items[index], index);
       }
-    }
+    },
   );
   await Promise.all(workers);
 }
 
 export function flattenStudentDeviceReport(
-  rows: StudentDeviceReportRow[]
+  rows: StudentDeviceReportRow[],
 ): Record<string, any>[] {
   const exportedRows: Record<string, any>[] = [];
 
@@ -330,7 +335,7 @@ export function flattenStudentDeviceReport(
         Serial: machine.serial,
         "Last Activity Date": machine.lastUsed || "",
         "Last Activity Duration": formatDuration(
-          getLastActiveTime(machine.googleData)
+          getLastActiveTime(machine.googleData),
         ),
         "Recent Users": recentUserEmails(machine.googleData).join(";"),
         "Checkout Status": machine.currentOwner
@@ -366,7 +371,7 @@ export async function buildStudentDeviceReport({
   const assets = (rawAssets || []).map(normalizeAssetRecord);
   const { bySerial, loansByStudentEmail } = indexAssets(assets);
   const latestHistoryByAssetTag = indexLatestHistory(
-    await lookupSignoutHistory({ isLatest: true })
+    await lookupSignoutHistory({ isLatest: true }),
   );
   const rows = new Array<StudentDeviceReportRow>(students.length);
   let completed = 0;
@@ -375,24 +380,34 @@ export async function buildStudentDeviceReport({
     students,
     MAX_CONCURRENT_GOOGLE_LOOKUPS,
     async (student, index) => {
-      const currentLoans =
-        loansByStudentEmail.get(student.Email.toLowerCase()) || [];
+      const studentEmail = normalizeEmail(student.Email);
+      const currentLoans = loansByStudentEmail.get(studentEmail) || [];
       let googleDevices: ChromebookInfo[] = [];
 
-      try {
-        googleDevices = (await getDevicesForUser(student)) || [];
-      } catch (error) {
-        logger.logError("Student device report Google lookup failed:", {
-          student,
-          error,
-        });
+      if (studentEmail) {
+        try {
+          googleDevices = (await getDevicesForUser(student)) || [];
+        } catch (error) {
+          logger.logError("Student device report Google lookup failed:", {
+            student,
+            error,
+          });
+        }
+      } else {
+        logger.logRegular(
+          "Student device report: missing student email; skipping Google lookup",
+          {
+            studentId: student._id,
+            studentName: student.Name,
+          },
+        );
       }
 
       const machines = googleDevices
         .filter(
           (device) =>
-            device.recentUsers?.[0]?.email?.toLowerCase() ===
-            student.Email.toLowerCase()
+            studentEmail &&
+            device.recentUsers?.[0]?.email?.toLowerCase() === studentEmail,
         )
         .map((device) => {
           const serial = normalizeSerial(device.serialNumber);
@@ -406,7 +421,7 @@ export async function buildStudentDeviceReport({
             student,
             asset,
             lastUsed,
-            latestHistory
+            latestHistory,
           );
           return {
             serial: device.serialNumber,
@@ -437,7 +452,7 @@ export async function buildStudentDeviceReport({
 
       completed += 1;
       onProgress?.({ completed, total: students.length, student });
-    }
+    },
   );
 
   return rows;

@@ -3,6 +3,7 @@
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import Loader from "@components/Loader.svelte";
   import DataExporter from "./DataExporter.svelte";
+  import { logger } from "@utils/log";
   import {
     buildStudentDeviceReport,
     flattenStudentDeviceReport,
@@ -40,6 +41,7 @@
   let rows: StudentDeviceReportRow[] = [];
   let loading = false;
   let error = "";
+  let errorDetails = "";
   let progress = { completed: 0, total: 0 };
   let sortColumn: SortColumn = "lastUsedMachineCount";
   let sortDirection: "asc" | "desc" = "desc";
@@ -47,9 +49,13 @@
   let expandedMachines = {};
   let tableScrollEl: HTMLDivElement | null = null;
   let topScrollEl: HTMLDivElement | null = null;
+  let viewportScrollEl: HTMLDivElement | null = null;
   let reportTableEl: HTMLTableElement | null = null;
   let topScrollWidth = 0;
   let showTopScroll = false;
+  let showViewportScroll = false;
+  let viewportScrollLeft = 0;
+  let viewportScrollWidth = 0;
   let resizeObserver: ResizeObserver | null = null;
 
   $: parsedEmails = parseEmails(listInput);
@@ -74,10 +80,26 @@
 
   function syncScrollMetrics() {
     if (!tableScrollEl || !reportTableEl) return;
+    const rect = tableScrollEl.getBoundingClientRect();
+
     topScrollWidth = reportTableEl.scrollWidth;
     showTopScroll = reportTableEl.scrollWidth > tableScrollEl.clientWidth + 1;
+    viewportScrollLeft = Math.max(0, rect.left);
+    viewportScrollWidth = Math.max(
+      0,
+      Math.min(rect.width, window.innerWidth - viewportScrollLeft),
+    );
+    showViewportScroll =
+      showTopScroll && rect.bottom > 0 && rect.top < window.innerHeight;
+
     if (topScrollEl && topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
       topScrollEl.scrollLeft = tableScrollEl.scrollLeft;
+    }
+    if (
+      viewportScrollEl &&
+      viewportScrollEl.scrollLeft !== tableScrollEl.scrollLeft
+    ) {
+      viewportScrollEl.scrollLeft = tableScrollEl.scrollLeft;
     }
   }
 
@@ -86,12 +108,34 @@
     if (tableScrollEl.scrollLeft !== topScrollEl.scrollLeft) {
       tableScrollEl.scrollLeft = topScrollEl.scrollLeft;
     }
+    if (
+      viewportScrollEl &&
+      viewportScrollEl.scrollLeft !== topScrollEl.scrollLeft
+    ) {
+      viewportScrollEl.scrollLeft = topScrollEl.scrollLeft;
+    }
+  }
+
+  function handleViewportScroll() {
+    if (!tableScrollEl || !viewportScrollEl) return;
+    if (tableScrollEl.scrollLeft !== viewportScrollEl.scrollLeft) {
+      tableScrollEl.scrollLeft = viewportScrollEl.scrollLeft;
+    }
+    if (topScrollEl && topScrollEl.scrollLeft !== viewportScrollEl.scrollLeft) {
+      topScrollEl.scrollLeft = viewportScrollEl.scrollLeft;
+    }
   }
 
   function handleTableScroll() {
-    if (!tableScrollEl || !topScrollEl) return;
-    if (topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
+    if (!tableScrollEl) return;
+    if (topScrollEl && topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
       topScrollEl.scrollLeft = tableScrollEl.scrollLeft;
+    }
+    if (
+      viewportScrollEl &&
+      viewportScrollEl.scrollLeft !== tableScrollEl.scrollLeft
+    ) {
+      viewportScrollEl.scrollLeft = tableScrollEl.scrollLeft;
     }
   }
 
@@ -108,7 +152,9 @@
 
   onMount(() => {
     const onResize = () => syncScrollMetrics();
+    const onScroll = () => syncScrollMetrics();
     window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, { passive: true });
     if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => syncScrollMetrics());
       if (reportTableEl) {
@@ -119,6 +165,7 @@
 
     return () => {
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
@@ -293,6 +340,7 @@
   async function runReport() {
     loading = true;
     error = "";
+    errorDetails = "";
     rows = [];
     progress = { completed: 0, total: 0 };
 
@@ -306,7 +354,13 @@
         },
       });
     } catch (err) {
-      error = err?.message || "Failed to build student device report.";
+      const reportError =
+        err instanceof Error
+          ? err
+          : new Error(String(err || "Failed to build student device report."));
+      error = reportError.message || "Failed to build student device report.";
+      errorDetails = reportError.stack || reportError.message;
+      logger.logError("StudentDeviceReport runReport failed", reportError);
     } finally {
       loading = false;
     }
@@ -365,13 +419,14 @@
 
   function recentUserSummary(machine: StudentDeviceReportMachine | null) {
     const users = recentUsers(machine)
-      .map((user) => user.email)
-      .filter(Boolean);
+      .map((user) => user?.email)
+      .filter((email): email is string => !!email);
     if (!machine || !users.length) return "";
+    const lastUserLower = (machine.lastUser || "").toLowerCase();
     const nextUsers = users
       .slice(1, 4)
       .filter(
-        (email) => email.toLowerCase() !== machine.lastUser.toLowerCase(),
+        (email) => !lastUserLower || email.toLowerCase() !== lastUserLower,
       );
     if (!nextUsers.length) return "No other recent users listed";
     return `Next recent: ${nextUsers.join(", ")}`;
@@ -519,7 +574,15 @@
   </div>
 
   {#if error}
-    <div class="w3-panel w3-pale-red w3-border">{error}</div>
+    <div class="w3-panel w3-pale-red w3-border">
+      <div>{error}</div>
+      {#if errorDetails}
+        <details class="error-details">
+          <summary>Details</summary>
+          <pre>{errorDetails}</pre>
+        </details>
+      {/if}
+    </div>
   {/if}
 
   {#if loading}
@@ -538,6 +601,19 @@
     </p>
 
     <div class="w3-responsive">
+      {#if showViewportScroll}
+        <div
+          class="viewport-scrollbar"
+          bind:this={viewportScrollEl}
+          on:scroll={handleViewportScroll}
+          style={`left: ${viewportScrollLeft}px; width: ${viewportScrollWidth}px;`}
+        >
+          <div
+            class="top-scrollbar-content"
+            style={`width: ${topScrollWidth}px;`}
+          ></div>
+        </div>
+      {/if}
       {#if showTopScroll}
         <div
           class="top-scrollbar"
@@ -732,13 +808,31 @@
     -webkit-overflow-scrolling: touch;
   }
   .top-scrollbar {
+    position: sticky;
+    top: 0;
     overflow-x: auto;
     overflow-y: hidden;
     margin-bottom: 6px;
+    padding: 6px 0 4px;
+    background: #fff;
+    z-index: 20;
+    border-bottom: 1px solid #e0e0e0;
     -webkit-overflow-scrolling: touch;
   }
   .top-scrollbar-content {
     height: 1px;
+  }
+  .viewport-scrollbar {
+    position: fixed;
+    bottom: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    z-index: 1200;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+    -webkit-overflow-scrolling: touch;
   }
   .report-table-grid {
     min-width: 980px;
@@ -810,5 +904,13 @@
   .status-unknown {
     background: #eeeeee;
     color: #424242;
+  }
+  .error-details {
+    margin-top: 8px;
+  }
+  .error-details pre {
+    white-space: pre-wrap;
+    margin: 6px 0 0;
+    font-size: 12px;
   }
 </style>
