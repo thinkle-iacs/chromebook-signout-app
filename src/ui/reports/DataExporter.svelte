@@ -6,22 +6,29 @@
   function exportToCSV() {
     if (!items.length) return;
 
+    function csvCell(value: any) {
+      if (Array.isArray(value)) {
+        value = value.join(";");
+      }
+      const text = value !== undefined && value !== null ? String(value) : "";
+      if (/[",\n\r]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`;
+      }
+      return text;
+    }
+
     // Build CSV content
     const csvHeaders = headers.length ? headers : Object.keys(items[0]);
     const csvRows = items.map(
       (item) =>
         csvHeaders
-          .map((header) => {
-            const value = item[header];
-            if (Array.isArray(value)) {
-              return value.join(";"); // Join array values with ";"
-            }
-            return value !== undefined ? value : ""; // Handle undefined values
-          })
+          .map((header) => csvCell(item[header]))
           .join(",") // Join fields with ","
     );
 
-    const csvContent = [csvHeaders.join(","), ...csvRows].join("\n");
+    const csvContent = [csvHeaders.map(csvCell).join(","), ...csvRows].join(
+      "\n"
+    );
 
     // Create a downloadable link
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });

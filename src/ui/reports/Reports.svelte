@@ -25,8 +25,13 @@
   import { logger } from "@utils/log";
   import ReportTable from "./ReportTable.svelte";
   import Loader from "@components/Loader.svelte";
+  import StudentDeviceReport from "./StudentDeviceReport.svelte";
 
-  let activeTab: "studentLoans" | "staffLoans" | "nonLoaned" = "studentLoans";
+  let activeTab:
+    | "studentLoans"
+    | "staffLoans"
+    | "nonLoaned"
+    | "studentDeviceReport" = "studentLoans";
   let studentLoans = [];
   let staffLoans = [];
   let nonLoanedChromebooks = [];
@@ -216,10 +221,20 @@
     >
       Non-Loaned Chromebooks
     </button>
+    <button
+      class="w3-bar-item w3-button"
+      class:w3-blue={activeTab === "studentDeviceReport"}
+      on:click={() => (activeTab = "studentDeviceReport")}
+    >
+      Student Device Report
+    </button>
   </nav>
 
   <div class="w3-container">
-    {#if activeTab === "studentLoans"}
+    {#if activeTab === "studentDeviceReport"}
+      <StudentDeviceReport />
+    {:else}
+      {#if activeTab === "studentLoans"}
       <div class="w3-margin-top">
         <label for="yog" class="w3-margin-right">YOG:</label>
         <input
@@ -242,26 +257,26 @@
           <option value="Inactive">Inactive</option>
         </select>
       </div>
-    {/if}
+      {/if}
 
-    <button
-      class="w3-button w3-green w3-margin-top"
-      class:w3-white={loading === false && reportRun}
-      on:click={fetchData}
-      disabled={loading}
-    >
-      {#if reportRun}Rerun{:else}Run{/if} Report
-    </button>
-    <button
-      class="w3-button w3-green w3-margin-top"
-      on:click={checkAllStatuses}
-      disabled={loading || displayData.length === 0 || loginDataLoading}
-      title="Check Google for login data for the currently filtered machines."
-    >
-      Get Login Data
-    </button>
+      <button
+        class="w3-button w3-green w3-margin-top"
+        class:w3-white={loading === false && reportRun}
+        on:click={fetchData}
+        disabled={loading}
+      >
+        {#if reportRun}Rerun{:else}Run{/if} Report
+      </button>
+      <button
+        class="w3-button w3-green w3-margin-top"
+        on:click={checkAllStatuses}
+        disabled={loading || displayData.length === 0 || loginDataLoading}
+        title="Check Google for login data for the currently filtered machines."
+      >
+        Get Login Data
+      </button>
 
-    {#if loginDataLoading}
+      {#if loginDataLoading}
       <div class="progress-bar-container w3-margin-top">
         <div
           class="progress-bar"
@@ -274,20 +289,22 @@
             : 0}%
         </div>
       </div>
-    {/if}
+      {/if}
 
-    {#if loading}
-      <Loader working={true} text="Loading data" />
-    {:else}
-      <!-- Single ReportTable for all tabs -->
-      <ReportTable
-        bind:this={reportTable}
-        data={displayData}
-        loginDataReady={displayData.length && !!loginDataProgress}
-        {columns}
-        {headers}
-        {filename}
-      />
+      {#if loading}
+        <Loader working={true} text="Loading data" />
+      {:else}
+        <!-- Single ReportTable for all tabs -->
+        <ReportTable
+          bind:this={reportTable}
+          data={displayData}
+          loginDataReady={displayData.length && !!loginDataProgress}
+          {columns}
+          {headers}
+          {filename}
+          openAssetLinksInNewTab={true}
+        />
+      {/if}
     {/if}
   </div>
 </div>

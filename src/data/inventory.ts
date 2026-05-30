@@ -180,6 +180,10 @@ export async function getNonLoanedChromebooks() {
   return await fetchReport({ chromebookOnly: true, notLoaned: true });
 }
 
+export async function getAllChromebooks() {
+  return await fetchReport({ chromebookOnly: true });
+}
+
 // Update asset function
 export async function updateAsset(id: string, fields: any) {
   try {

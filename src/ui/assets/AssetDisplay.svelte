@@ -3,6 +3,7 @@
   import { l } from "@utils/util";
   export let asset: Asset | null = null;
   export let showOwner: boolean = false;
+  export let openInNewTab: boolean = false;
   $: assetTag = (asset && asset["Asset Tag"]) || "";
 </script>
 
@@ -16,9 +17,15 @@
       class:w3-red={/^A[0-9][0-9][0-9][0-9]/.test(assetTag)}
       class:w3-black={/^[0-9][0-9][0-9]$/.test(assetTag)}
     >
-      <a href={`/asset/${assetTag}`} on:click={l(`/asset/${assetTag}`)}
-        >{assetTag}</a
-      >
+      {#if openInNewTab}
+        <a href={`/asset/${assetTag}`} target="_blank" rel="noreferrer"
+          >{assetTag}</a
+        >
+      {:else}
+        <a href={`/asset/${assetTag}`} on:click={l(`/asset/${assetTag}`)}
+          >{assetTag}</a
+        >
+      {/if}
     </div>
     <div class="column">
       <div class="model limit w3-small">
