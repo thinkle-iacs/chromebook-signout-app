@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Asset } from "@data/inventory";
   import { l } from "@utils/util";
+  import EmailDisplay from "@people/components/EmailDisplay.svelte";
   export let asset: Asset | null = null;
   export let showOwner: boolean = false;
   export let openInNewTab: boolean = false;
@@ -49,9 +50,9 @@
         <div class="w3-small">
           {#if asset["Email (from Student (Current))"]}
             Currently signed out to
-            <b class:inactive={asset["Student Status"]?.[0] === "Inactive"}
-              >{asset["Email (from Student (Current))"]}</b
-            >
+            <b class:inactive={asset["Student Status"]?.[0] === "Inactive"}>
+              <EmailDisplay email={asset["Email (from Student (Current))"]} />
+            </b>
             {#if asset["YOG (from Student (Current))"]}
               ({asset["YOG (from Student (Current))"]})
             {/if}

@@ -11,27 +11,22 @@
         value = value.join(";");
       }
       const text = value !== undefined && value !== null ? String(value) : "";
-      if (/[",\n\r]/.test(text)) {
-        return `"${text.replace(/"/g, '""')}"`;
-      }
-      return text;
+      return `"${text.replace(/"/g, '""')}"`;
     }
 
-    // Build CSV content
     const csvHeaders = headers.length ? headers : Object.keys(items[0]);
-    const csvRows = items.map(
-      (item) =>
-        csvHeaders
-          .map((header) => csvCell(item[header]))
-          .join(",") // Join fields with ","
+    const csvRows = items.map((item) =>
+      csvHeaders.map((header) => csvCell(item[header])).join(","),
     );
 
     const csvContent = [csvHeaders.map(csvCell).join(","), ...csvRows].join(
-      "\n"
+      "\r\n",
     );
 
-    // Create a downloadable link
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    // BOM ensures Google Sheets detects UTF-8 encoding
+    const blob = new Blob(["﻿" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = filename;

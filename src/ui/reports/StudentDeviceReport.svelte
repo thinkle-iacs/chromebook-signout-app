@@ -3,10 +3,10 @@
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import Loader from "@components/Loader.svelte";
   import DataExporter from "./DataExporter.svelte";
+  import EmailDisplay from "@people/components/EmailDisplay.svelte";
   import { logger } from "@utils/log";
   import {
     buildStudentDeviceReport,
-    flattenStudentDeviceReport,
     type StudentDeviceReportMachine,
     type StudentDeviceReportRow,
   } from "@data/studentDeviceReport";
@@ -19,13 +19,6 @@
     | "currentLoanCount"
     | "lastUsedMachineCount"
     | "problemCount";
-
-  type SummaryFilter =
-    | "all"
-    | "attention"
-    | "loginMismatch"
-    | "excludeCheckedInAfterUse"
-    | "checkedInAfterUseOnly";
 
   type DisplayRow = {
     key: string;
@@ -43,9 +36,33 @@
   let error = "";
   let errorDetails = "";
   let progress = { completed: 0, total: 0 };
+  const STATUS_ORDER = [
+    "checkedInAfterGoogleUse",
+    "checkedInUnknown",
+    "signedOutToStaff",
+    "signedOutToOther",
+    "unknown",
+    "checkedInAfterUse",
+    "checkedInSameDay",
+    "normal",
+    "noMachine",
+  ] as const;
+
+  const STATUS_LABELS: Record<string, string> = {
+    normal: "Signed out to latest user",
+    signedOutToOther: "Signed out to different student",
+    signedOutToStaff: "Signed out to staff",
+    checkedInAfterUse: "Checked in after Google activity",
+    checkedInSameDay: "Checked in same day as Google activity",
+    checkedInAfterGoogleUse: "Google activity after check-in",
+    checkedInUnknown: "Checked in; no check-in date found",
+    unknown: "Not found in inventory",
+    noMachine: "No Google last-used machines",
+  };
+
   let sortColumn: SortColumn = "lastUsedMachineCount";
   let sortDirection: "asc" | "desc" = "desc";
-  let summaryFilter: SummaryFilter = "all";
+  let selectedStatuses: Set<string> = new Set();
   let expandedMachines = {};
   let tableScrollEl: HTMLDivElement | null = null;
   let topScrollEl: HTMLDivElement | null = null;
@@ -65,13 +82,15 @@
       (inputMode === "list" && parsedEmails.length));
   $: sortedRows = sortRows(rows, sortColumn, sortDirection);
   $: allDisplayRows = flattenDisplayRows(sortedRows);
+  $: availableStatuses = getAvailableStatuses(rows);
+  $: selectedStatuses = new Set(availableStatuses);
   $: displayRows = filterAndSortDisplayRows(
     allDisplayRows,
-    summaryFilter,
+    selectedStatuses,
     sortColumn,
     sortDirection,
   );
-  $: exportRows = flattenStudentDeviceReport(sortedRows);
+  $: exportRows = exportFromDisplayRows(displayRows);
   $: filename = [
     inputMode === "yog" ? selectedYOG || "students" : "student-list",
     selectedStudentStatus || "all-statuses",
@@ -270,41 +289,90 @@
     return ranks[machine.status] ?? 98;
   }
 
-  function matchesSummaryFilter(displayRow: DisplayRow, filter: SummaryFilter) {
-    const status = displayRow.machine?.status;
-
-    if (filter === "all") return true;
-    if (!status) return filter === "excludeCheckedInAfterUse";
-
-    if (filter === "attention") {
-      return !["normal", "checkedInAfterUse", "checkedInSameDay"].includes(
-        status,
-      );
+  function getAvailableStatuses(reportRows: StudentDeviceReportRow[]): string[] {
+    const found = new Set<string>();
+    for (const row of reportRows) {
+      if (!row.machines.length) {
+        found.add("noMachine");
+      } else {
+        for (const machine of row.machines) {
+          found.add(machine.status);
+        }
+      }
     }
+    return STATUS_ORDER.filter((s) => found.has(s));
+  }
 
-    if (filter === "loginMismatch") {
-      return ["signedOutToOther", "signedOutToStaff"].includes(status);
+  function toggleStatus(status: string) {
+    const next = new Set(selectedStatuses);
+    if (next.has(status)) {
+      next.delete(status);
+    } else {
+      next.add(status);
     }
+    selectedStatuses = next;
+  }
 
-    if (filter === "excludeCheckedInAfterUse") {
-      return status !== "checkedInAfterUse";
-    }
+  function selectAllStatuses() {
+    selectedStatuses = new Set(availableStatuses);
+  }
 
-    if (filter === "checkedInAfterUseOnly") {
-      return status === "checkedInAfterUse";
-    }
+  function clearAllStatuses() {
+    selectedStatuses = new Set();
+  }
 
-    return true;
+  function exportFromDisplayRows(dRows: DisplayRow[]): Record<string, any>[] {
+    return dRows.map(({ row, machine, machineIndex }) => {
+      const recentUsersStr = machine
+        ? (machine.googleData?.recentUsers || [])
+            .map((u) => u?.email)
+            .filter(Boolean)
+            .join(";")
+        : "";
+      const lastActiveMs =
+        machine?.googleData?.activeTimeRanges?.slice(-1)[0]?.activeTime ?? null;
+      return {
+        Student: row.student.Email,
+        Name: row.student.Name,
+        YOG: row.student.YOG,
+        Status: row.student.Status,
+        "Machine Number": machine ? machineIndex + 1 : "",
+        "Machine Count": row.lastUsedMachineCount,
+        "Asset Tag": machine?.assetTag || "",
+        Serial: machine?.serial || "",
+        "Last Activity Date": machine?.lastUsed || "",
+        "Last Activity Duration": machine ? formatDuration(lastActiveMs) : "",
+        "Recent Users": recentUsersStr,
+        "Checkout Status": machine
+          ? machine.currentOwner
+            ? `Signed out to ${machine.currentOwner}`
+            : machine.checkInTime
+              ? `Checked in ${machine.checkInTime}`
+              : machine.status === "unknown"
+                ? "Not found in inventory"
+                : "Checked in; no check-in date found"
+          : "No Google last-used machines",
+        "Checkout Time": machine?.checkoutTime || "",
+        "Check-In Time": machine?.checkInTime || "",
+        Summary: machine?.statusLabel || "No Google last-used machines",
+      };
+    });
+  }
+
+  function matchesStatusFilter(displayRow: DisplayRow, selected: Set<string>) {
+    if (selected.size === 0) return false;
+    const status = displayRow.machine?.status ?? "noMachine";
+    return selected.has(status);
   }
 
   function filterAndSortDisplayRows(
     reportRows: DisplayRow[],
-    filter: SummaryFilter,
+    selected: Set<string>,
     column: SortColumn,
     direction: "asc" | "desc",
   ) {
     const filtered = reportRows.filter((displayRow) =>
-      matchesSummaryFilter(displayRow, filter),
+      matchesStatusFilter(displayRow, selected),
     );
 
     if (column !== "summary") {
@@ -429,7 +497,7 @@
         (email) => !lastUserLower || email.toLowerCase() !== lastUserLower,
       );
     if (!nextUsers.length) return "No other recent users listed";
-    return `Next recent: ${nextUsers.join(", ")}`;
+    return `Next recent: ${nextUsers.map(shortEmail).join(", ")}`;
   }
 
   function toggleExpanded(key: string) {
@@ -442,7 +510,7 @@
   function formatCheckoutStatus(machine: StudentDeviceReportMachine | null) {
     if (!machine) return "";
     if (machine.currentOwner) {
-      return `Signed out to ${machine.currentOwner}${
+      return `Signed out to ${shortEmail(machine.currentOwner)}${
         machine.checkoutTime
           ? ` on ${formatDateTime(machine.checkoutTime)}`
           : ""
@@ -456,6 +524,17 @@
     }
     return "Checked in; no check-in date found";
   }
+
+  function shortEmail(email: string | null | undefined) {
+    if (!email) return "";
+    const at = email.indexOf("@");
+    return at > 0 ? email.slice(0, at) : email;
+  }
+
+  const now = new Date();
+  const seniorGradYear =
+    now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear();
+  const currentEighthYOG = seniorGradYear + 4;
 
   function formatCount(displayRow: DisplayRow) {
     if (!displayRow.machine) {
@@ -492,7 +571,7 @@
         <input
           class="w3-input w3-border"
           type="text"
-          placeholder="2030"
+          placeholder="e.g. {currentEighthYOG} for current 8th graders"
           bind:value={selectedYOG}
         />
       </label>
@@ -523,19 +602,6 @@
         <option value="">All</option>
         <option value="Active">Active</option>
         <option value="Inactive">Inactive</option>
-      </select>
-    </label>
-
-    <label>
-      Summary Filter
-      <select class="w3-select w3-border" bind:value={summaryFilter}>
-        <option value="all">All</option>
-        <option value="attention">Needs Attention</option>
-        <option value="loginMismatch">Login Mismatch Only</option>
-        <option value="excludeCheckedInAfterUse">
-          Exclude Checked In After Use
-        </option>
-        <option value="checkedInAfterUseOnly">Checked In After Use Only</option>
       </select>
     </label>
 
@@ -571,6 +637,34 @@
         />
       {/if}
     </div>
+
+    {#if rows.length && availableStatuses.length}
+      <div class="status-filter-section">
+        <div class="status-filter-header">
+          <strong>Filter by status:</strong>
+          <button
+            class="w3-button w3-tiny w3-border"
+            on:click={selectAllStatuses}
+          >All</button>
+          <button
+            class="w3-button w3-tiny w3-border"
+            on:click={clearAllStatuses}
+          >None</button>
+        </div>
+        <div class="status-checkboxes">
+          {#each availableStatuses as status}
+            <label class="status-checkbox-label">
+              <input
+                type="checkbox"
+                checked={selectedStatuses.has(status)}
+                on:change={() => toggleStatus(status)}
+              />
+              {STATUS_LABELS[status] || status}
+            </label>
+          {/each}
+        </div>
+      </div>
+    {/if}
   </div>
 
   {#if error}
@@ -650,7 +744,7 @@
             {#each displayRows as displayRow (displayRow.key)}
               <tr class:has-warning={isWarningMachine(displayRow.machine)}>
                 <td>
-                  <b>{displayRow.row.student.Email}</b>
+                  <b><EmailDisplay email={displayRow.row.student.Email} /></b>
                   <div class="w3-small">{displayRow.row.student.Name}</div>
                   <div class="w3-small">YOG {displayRow.row.student.YOG}</div>
                 </td>
@@ -912,5 +1006,28 @@
     white-space: pre-wrap;
     margin: 6px 0 0;
     font-size: 12px;
+  }
+  .status-filter-section {
+    width: 100%;
+    padding: 8px 0 4px;
+  }
+  .status-filter-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .status-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  .status-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: normal;
+    cursor: pointer;
+    min-width: unset;
   }
 </style>
