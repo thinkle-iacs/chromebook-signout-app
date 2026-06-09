@@ -158,7 +158,7 @@ function checkedInClassification(
 
   return {
     status: "checkedInSameDay",
-    statusLabel: "Checked in same day as Google activity",
+    statusLabel: "Checked in same day as Google activity; order unknown",
     currentOwner: "",
     checkoutTime: null,
     checkInTime: latestHistory.Time,
@@ -272,9 +272,7 @@ function indexLatestHistory(entries: SignoutHistoryEntry[]) {
 }
 
 function isProblemMachine(machine: StudentDeviceReportMachine) {
-  return !["normal", "checkedInAfterUse", "checkedInSameDay"].includes(
-    machine.status,
-  );
+  return !["normal", "checkedInAfterUse"].includes(machine.status);
 }
 
 async function runWithConcurrency<T>(
@@ -313,6 +311,7 @@ export function flattenStudentDeviceReport(
         "Asset Tag": "",
         Serial: "",
         "Last Activity Date": "",
+        "Google Last Sync": "",
         "Last Activity Duration": "",
         "Recent Users": "",
         "Checkout Status": "",
@@ -334,6 +333,7 @@ export function flattenStudentDeviceReport(
         "Asset Tag": machine.assetTag,
         Serial: machine.serial,
         "Last Activity Date": machine.lastUsed || "",
+        "Google Last Sync": machine.googleData.lastSync || "",
         "Last Activity Duration": formatDuration(
           getLastActiveTime(machine.googleData),
         ),

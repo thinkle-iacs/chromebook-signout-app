@@ -53,7 +53,7 @@
     signedOutToOther: "Signed out to different student",
     signedOutToStaff: "Signed out to staff",
     checkedInAfterUse: "Checked in after Google activity",
-    checkedInSameDay: "Checked in same day as Google activity",
+    checkedInSameDay: "Checked in same day as Google activity; order unknown",
     checkedInAfterGoogleUse: "Google activity after check-in",
     checkedInUnknown: "Checked in; no check-in date found",
     unknown: "Not found in inventory",
@@ -341,6 +341,7 @@
         "Asset Tag": machine?.assetTag || "",
         Serial: machine?.serial || "",
         "Last Activity Date": machine?.lastUsed || "",
+        "Google Last Sync": machine?.googleData?.lastSync || "",
         "Last Activity Duration": machine ? formatDuration(lastActiveMs) : "",
         "Recent Users": recentUsersStr,
         "Checkout Status": machine
@@ -627,6 +628,7 @@
             "Asset Tag",
             "Serial",
             "Last Activity Date",
+            "Google Last Sync",
             "Last Activity Duration",
             "Recent Users",
             "Checkout Status",
@@ -796,6 +798,13 @@
                       {activitySummary(displayRow.machine) ||
                         formatDate(displayRow.machine.lastUsed)}
                     </div>
+                    {#if displayRow.machine.googleData?.lastSync}
+                      <div class="w3-small">
+                        Last sync: {formatDateTime(
+                          displayRow.machine.googleData.lastSync,
+                        )}
+                      </div>
+                    {/if}
                     <div class="w3-small">
                       {recentUserSummary(displayRow.machine)}
                       <button
@@ -980,20 +989,20 @@
     background: #dff3df;
     color: #1b5e20;
   }
-  .status-checkedInAfterUse,
-  .status-checkedInSameDay {
+  .status-checkedInAfterUse {
     background: #dff3df;
     color: #1b5e20;
+  }
+  .status-checkedInSameDay,
+  .status-checkedInUnknown {
+    background: #fff4c2;
+    color: #7a5600;
   }
   .status-signedOutToOther,
   .status-signedOutToStaff,
   .status-checkedInAfterGoogleUse {
     background: #ffd6d6;
     color: #8b0000;
-  }
-  .status-checkedInUnknown {
-    background: #fff4c2;
-    color: #7a5600;
   }
   .status-unknown {
     background: #eeeeee;
