@@ -339,6 +339,7 @@
         "Machine Number": machine ? machineIndex + 1 : "",
         "Machine Count": row.lastUsedMachineCount,
         "Asset Tag": machine?.assetTag || "",
+        Purpose: machine?.purpose || "",
         Serial: machine?.serial || "",
         "Last Activity Date": machine?.lastUsed || "",
         "Google Last Sync": machine?.googleData?.lastSync || "",
@@ -626,6 +627,7 @@
             "Machine Number",
             "Machine Count",
             "Asset Tag",
+            "Purpose",
             "Serial",
             "Last Activity Date",
             "Google Last Sync",
@@ -736,6 +738,7 @@
               <th on:click={() => setSort("student")}>Student</th>
               <th on:click={() => setSort("status")}>Status</th>
               <th>Machine</th>
+              <th>Purpose</th>
               <th>Last Activity</th>
               <th>Checkout Status</th>
               <th on:click={() => setSort("summary")}>Summary</th>
@@ -792,6 +795,13 @@
                     >
                   {/if}
                 </td>
+                <td class="purpose-cell">
+                  {#if displayRow.machine?.purpose}
+                    <span class="purpose-pill purpose-{displayRow.machine.purpose.toLowerCase().replace(/\s+/g, '-')}"
+                      >{displayRow.machine.purpose}</span
+                    >
+                  {/if}
+                </td>
                 <td>
                   {#if displayRow.machine}
                     <div>
@@ -832,7 +842,7 @@
               </tr>
               {#if expandedMachines[displayRow.key] && displayRow.machine}
                 <tr class="expanded-row">
-                  <td colspan="7">
+                  <td colspan="8">
                     <div class="expanded-grid">
                       <div>
                         <h4>Recent Users</h4>
@@ -1007,6 +1017,33 @@
   .status-unknown {
     background: #eeeeee;
     color: #424242;
+  }
+  .purpose-cell {
+    white-space: nowrap;
+  }
+  .purpose-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #eeeeee;
+    color: #424242;
+  }
+  .purpose-pill.purpose-mcas {
+    background: #111;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+  }
+  .purpose-pill.purpose-daily-loaner {
+    background: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #90caf9;
+  }
+  .purpose-pill.purpose-staff-spare {
+    background: #fff3e0;
+    color: #bf360c;
+    border: 1px solid #ffcc80;
   }
   .error-details {
     margin-top: 8px;

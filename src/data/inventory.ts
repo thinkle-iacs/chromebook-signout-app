@@ -4,6 +4,36 @@ import { Staff } from "./staff";
 
 export const assetStore = writable({});
 
+export type MachinePurpose =
+  | "Student Loan"
+  | "Daily Loaner"
+  | "Staff Spare"
+  | "Staff Tablet"
+  | "MCAS"
+  | "Tech"
+  | "Shelved"
+  | "Printer"
+  | "Phone"
+  | "Security"
+  | "Temp"
+  | "UNKNOWN"
+  | (string & {});
+
+export const ALL_PURPOSES: MachinePurpose[] = [
+  "Student Loan",
+  "Daily Loaner",
+  "Staff Spare",
+  "Staff Tablet",
+  "MCAS",
+  "Tech",
+  "Shelved",
+  "Printer",
+  "Phone",
+  "Security",
+  "Temp",
+  "UNKNOWN",
+];
+
 export type Asset = {
   "Asset Tag": string;
   Category: string;
@@ -13,7 +43,7 @@ export type Asset = {
   "Year of Purchase": string;
   "MAC-Wireless": string;
   _id: string;
-  Purpose: string;
+  Purpose: MachinePurpose;
   "Staff User": string;
   "Email (from Student (Current))": string;
   "YOG (from Student (Current))"; // Ensure YOG is included in the fields

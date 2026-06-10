@@ -15,6 +15,7 @@
   import { fade } from "svelte/transition";
   import LookupStaff from "@people/staff/LookupStaff.svelte";
   import Reports from "./reports/Reports.svelte";
+  import PurposeManager from "@assets/PurposeManager.svelte";
   import TicketBrowser from "./tickets/TicketBrowser.svelte";
   import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
   import Invoices from "@contracts/Invoices.svelte";
@@ -118,6 +119,11 @@
         mode: "it",
       };
       title = IT_NAME;
+    });
+    router("/it/purposes/", (ctx) => {
+      page = PurposeManager;
+      params = {};
+      title = "Purpose Manager";
     });
     router("/reports/", (ctx) => {
       page = Reports;
@@ -249,6 +255,13 @@
         class:w3-blue={title == IT_NAME}
         href="/it/"
         on:click={l("/it/")}>IT Tool</a
+      >
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == PurposeManager}
+        class:w3-blue={page == PurposeManager}
+        href="/it/purposes/"
+        on:click={l("/it/purposes/")}>Purpose Manager</a
       >
     {/if}
   </nav>

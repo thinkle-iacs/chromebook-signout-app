@@ -23,6 +23,7 @@ export type StudentDeviceReportMachine = {
   serial: string;
   assetTag: string;
   model: string;
+  purpose: string | null;
   lastUsed: string | null;
   lastUser: string;
   status: StudentDeviceMachineStatus;
@@ -427,6 +428,7 @@ export async function buildStudentDeviceReport({
             serial: device.serialNumber,
             assetTag,
             model: asset?.Model || device.model || "",
+            purpose: asset?.Purpose || null,
             lastUsed,
             lastUser: device.recentUsers?.[0]?.email || "",
             asset,
