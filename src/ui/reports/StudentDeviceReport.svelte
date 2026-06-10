@@ -10,6 +10,8 @@
     type StudentDeviceReportMachine,
     type StudentDeviceReportRow,
   } from "@data/studentDeviceReport";
+  import { INACTIVE_PURPOSES } from "@data/inventory";
+  import PurposeBadge from "@assets/PurposeBadge.svelte";
 
   type SortColumn =
     | "student"
@@ -63,6 +65,7 @@
   let sortColumn: SortColumn = "lastUsedMachineCount";
   let sortDirection: "asc" | "desc" = "desc";
   let selectedStatuses: Set<string> = new Set();
+  let hideRetired = true;
   let expandedMachines = {};
   let tableScrollEl: HTMLDivElement | null = null;
   let topScrollEl: HTMLDivElement | null = null;
@@ -87,6 +90,7 @@
   $: displayRows = filterAndSortDisplayRows(
     allDisplayRows,
     selectedStatuses,
+    hideRetired,
     sortColumn,
     sortDirection,
   );
@@ -339,6 +343,7 @@
         "Machine Number": machine ? machineIndex + 1 : "",
         "Machine Count": row.lastUsedMachineCount,
         "Asset Tag": machine?.assetTag || "",
+        Purpose: machine?.purpose || "",
         Serial: machine?.serial || "",
         "Last Activity Date": machine?.lastUsed || "",
         "Google Last Sync": machine?.googleData?.lastSync || "",
@@ -369,12 +374,15 @@
   function filterAndSortDisplayRows(
     reportRows: DisplayRow[],
     selected: Set<string>,
+    hideInactive: boolean,
     column: SortColumn,
     direction: "asc" | "desc",
   ) {
-    const filtered = reportRows.filter((displayRow) =>
-      matchesStatusFilter(displayRow, selected),
-    );
+    const filtered = reportRows.filter((displayRow) => {
+      if (!matchesStatusFilter(displayRow, selected)) return false;
+      if (hideInactive && displayRow.machine?.purpose && INACTIVE_PURPOSES.includes(displayRow.machine.purpose)) return false;
+      return true;
+    });
 
     if (column !== "summary") {
       return filtered;
@@ -626,6 +634,7 @@
             "Machine Number",
             "Machine Count",
             "Asset Tag",
+            "Purpose",
             "Serial",
             "Last Activity Date",
             "Google Last Sync",
@@ -639,6 +648,13 @@
         />
       {/if}
     </div>
+
+    {#if rows.length}
+      <label class="retired-toggle">
+        <input type="checkbox" bind:checked={hideRetired} />
+        Hide Disposed/Retired machines
+      </label>
+    {/if}
 
     {#if rows.length && availableStatuses.length}
       <div class="status-filter-section">
@@ -736,6 +752,7 @@
               <th on:click={() => setSort("student")}>Student</th>
               <th on:click={() => setSort("status")}>Status</th>
               <th>Machine</th>
+              <th>Purpose</th>
               <th>Last Activity</th>
               <th>Checkout Status</th>
               <th on:click={() => setSort("summary")}>Summary</th>
@@ -792,6 +809,9 @@
                     >
                   {/if}
                 </td>
+                <td class="purpose-cell">
+                  <PurposeBadge purpose={displayRow.machine?.purpose} showFallback={true} />
+                </td>
                 <td>
                   {#if displayRow.machine}
                     <div>
@@ -832,7 +852,7 @@
               </tr>
               {#if expandedMachines[displayRow.key] && displayRow.machine}
                 <tr class="expanded-row">
-                  <td colspan="7">
+                  <td colspan="8">
                     <div class="expanded-grid">
                       <div>
                         <h4>Recent Users</h4>
@@ -1008,6 +1028,9 @@
     background: #eeeeee;
     color: #424242;
   }
+  .purpose-cell {
+    white-space: nowrap;
+  }
   .error-details {
     margin-top: 8px;
   }
@@ -1015,6 +1038,14 @@
     white-space: pre-wrap;
     margin: 6px 0 0;
     font-size: 12px;
+  }
+  .retired-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: normal;
+    cursor: pointer;
+    min-width: unset;
   }
   .status-filter-section {
     width: 100%;

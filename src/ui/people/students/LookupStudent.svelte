@@ -8,6 +8,7 @@
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import SignoutHistoryTable from "@history/SignoutHistoryTable.svelte";
   import { validateStudent, studentName } from "@utils/validators";
+  import { l } from "@utils/util";
   import FormField from "@components/FormField.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
   import NameDropdown from "@people/components/NameDropdown.svelte";
@@ -163,8 +164,18 @@
               {loansLoaded ? "No current loans" : "Fetching..."}
             </p>
           {:else}
-            {#each current as asset}
-              <AssetDisplay {asset} />
+            {#each current as asset (asset["Asset Tag"])}
+              <div class="current-loan">
+                <AssetDisplay {asset} />
+                <a
+                  class="w3-small"
+                  href={`/checkout/lost/${asset["Asset Tag"]}`}
+                  on:click={l(`/checkout/lost/${asset["Asset Tag"]}`)}
+                  title="Open the check-in screen with this device pre-filled and 'Mark as Lost' selected"
+                >
+                  Device missing? Mark as lost &amp; bill family…
+                </a>
+              </div>
             {:else}
               No current loans
             {/each}
@@ -209,5 +220,11 @@
   }
   input {
     width: min(100vh - 32px, 800px);
+  }
+  .current-loan {
+    margin-bottom: 8px;
+  }
+  .current-loan a {
+    margin-left: 8px;
   }
 </style>

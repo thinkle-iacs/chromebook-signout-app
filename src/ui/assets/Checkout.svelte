@@ -12,7 +12,7 @@
   import SimpleForm from "@components/SimpleForm.svelte";
   import type { Student } from "@data/students";
   import type { Staff } from "@data/staff";
-  import { getCurrentLoansForStudent } from "@data/inventory";
+  import { getCurrentLoansForStudent, updateAsset } from "@data/inventory";
   import type { Asset } from "@data/inventory";
   import { l, withLoadingIndicator } from "@utils/util";
   import type { CheckoutStatus } from "@data/signout";
@@ -41,6 +41,19 @@
   import CheckoutTicketLink from "@ui/tickets/components/CheckoutTicketLink.svelte";
   import { logger } from "@utils/log";
   import Loader from "@components/Loader.svelte";
+  import {
+    billForLostDevice,
+    getBillableStudentId,
+    findLostBillingTicket,
+    cancelLostDeviceBilling,
+    DEFAULT_REPLACEMENT_COST,
+  } from "@data/lostDeviceBilling";
+  import { showToast } from "@components/toastStore";
+
+  // Set via the /checkout/lost/:tag route to land here with the asset
+  // pre-filled and "Mark as Lost" selected (e.g. from student lookup).
+  export let lostTag: string = "";
+
   let status: CheckoutStatus = "Out";
   let notes = "";
   let studentNotes = "";
@@ -59,6 +72,10 @@
   });
 
   onMount(async () => {
+    if (lostTag) {
+      $assetTags = [lostTag];
+      status = "Lost";
+    }
     logger.logVerbose("Fetch contacts!");
     await getContacts();
     logger.logVerbose($contactStore);
@@ -177,18 +194,134 @@
     }
   }
 
+  let billLostReplacement = false;
+  let lostReplacementCost = DEFAULT_REPLACEMENT_COST;
+
+  function currentStudentEmail(asset) {
+    const email = asset && asset["Email (from Student (Current))"];
+    return (Array.isArray(email) ? email.join(", ") : email) || "";
+  }
+
+  // --- Recovery: checking in a device that was marked Lost ---
+  let cancelLostBilling = true;
+  let lostBillingTickets = {}; // asset tag -> Ticket | null (null = none found)
+  let lostBillingLookups = new Set();
+
+  $: returnedLostAssets =
+    (status == "Returned" &&
+      (assets || []).filter((a) => a && a.Status === "Lost")) ||
+    [];
+  $: if (status == "Returned") lookupLostBillingTickets(assets);
+
+  async function lookupLostBillingTickets(assets) {
+    for (let asset of assets || []) {
+      if (!asset || asset.Status !== "Lost") continue;
+      const tag = asset["Asset Tag"];
+      if (lostBillingLookups.has(tag)) continue;
+      lostBillingLookups.add(tag);
+      try {
+        const ticket = await findLostBillingTicket(tag);
+        lostBillingTickets = { ...lostBillingTickets, [tag]: ticket };
+      } catch (e) {
+        logger.logError("Failed to look up lost-billing ticket:", e);
+        lostBillingLookups.delete(tag); // allow retry
+      }
+    }
+  }
+  $: billableLostAssets = (assets || []).filter(
+    (asset) => asset && getBillableStudentId(asset)
+  );
+
+  async function billLostAsset(asset) {
+    $checkoutStatus = `Sending invoice for ${asset["Asset Tag"]}`;
+    try {
+      const { ticket } = await billForLostDevice(asset, {
+        cost: lostReplacementCost,
+        note: notes,
+      });
+      showToast(
+        `Asked business office to invoice family for ${asset["Asset Tag"]}`,
+        "success"
+      );
+      return ticket;
+    } catch (e) {
+      logger.logError("Lost-device billing failed:", e);
+      showToast(`Invoice failed for ${asset["Asset Tag"]}: ${e.message}`, "error");
+      return null;
+    } finally {
+      $checkoutStatus = "";
+    }
+  }
+
   async function checkOut() {
     getNote();
     logger.logVerbose("Updated note:", notes);
     let success: boolean = false;
     let verb = statusToVerb[status] || "Updating";
+    let billing = status == "Lost" && billLostReplacement;
     if (assets) {
       let count = 0;
       for (let asset of assets) {
         count++;
+        // Bill first so the signout note can record the ticket number.
+        let assetNotes = notes;
+        if (billing && asset) {
+          if (getBillableStudentId(asset)) {
+            const ticket = await billLostAsset(asset);
+            if (ticket) {
+              assetNotes =
+                (notes ? notes + " " : "") +
+                `Billed family $${lostReplacementCost} for replacement` +
+                (ticket.Number ? ` (Ticket #${ticket.Number}).` : ".");
+            }
+          } else {
+            showToast(
+              `${asset["Asset Tag"]}: no current student, so no invoice was sent`,
+              "info"
+            );
+          }
+        }
+        // Recovered lost device: queue an invoice cancellation notice
+        if (
+          status == "Returned" &&
+          cancelLostBilling &&
+          asset?.Status === "Lost" &&
+          lostBillingTickets[asset["Asset Tag"]]
+        ) {
+          const billingTicket = lostBillingTickets[asset["Asset Tag"]];
+          $checkoutStatus = `Sending cancellation for ${asset["Asset Tag"]}`;
+          try {
+            await cancelLostDeviceBilling(billingTicket, { note: notes });
+            assetNotes =
+              (notes ? notes + " " : "") +
+              `Recovered — billing cancellation sent (Ticket #${billingTicket.Number}).`;
+            showToast(
+              `Asked business office to cancel invoice for ${asset["Asset Tag"]}`,
+              "success"
+            );
+          } catch (e) {
+            logger.logError("Billing cancellation failed:", e);
+            showToast(
+              `Cancellation failed for ${asset["Asset Tag"]}: ${e.message}`,
+              "error"
+            );
+          }
+          $checkoutStatus = "";
+        }
         $checkoutStatus = `${verb} ${count} of ${assets.length}`;
-        success = await doCheckout(asset, notes, daily);
+        success = await doCheckout(asset, assetNotes, daily);
         $checkoutStatus = "";
+        if (success && asset) {
+          if (status == "Lost") {
+            await updateAsset(asset._id, { Status: "Lost" });
+          } else if (
+            (status == "Out" || status == "Returned") &&
+            asset.Status == "Lost"
+          ) {
+            // Lost device turned up again — clear the Lost flag
+            await updateAsset(asset._id, { Status: "Active" });
+          }
+        }
       }
     }
     /* if (charger) {
@@ -204,6 +337,7 @@
       $studentName = "";
       $assetTags = [];
       notes = "";
+      billLostReplacement = false;
       $screenNote = null;
       $keyboardNote = null;
       $powerNote = null;
@@ -504,6 +638,80 @@ Hinge bolts:New screws needed for display hinges*/
             {/if}
           </div>
         {/each}
+      </div>
+    {/if}
+    {#if status == "Lost"}
+      <div in:fly|local={{ y: -30 }} out:fade|local class="row">
+        <FormField name="Billing">
+          <label class:bold={billLostReplacement}>
+            <input type="checkbox" bind:checked={billLostReplacement} />
+            Bill family for replacement
+          </label>
+          {#if billLostReplacement}
+            <label style="margin-left: 16px;">
+              Replacement cost ($):
+              <input
+                type="number"
+                min="0"
+                bind:value={lostReplacementCost}
+                class="w3-input w3-border"
+                style="width: 7em; display: inline-block; margin-left: 8px;"
+              />
+            </label>
+            <div class="w3-small w3-text-gray" style="margin-top: 4px;">
+              {#if billableLostAssets.length}
+                We'll create a closed "Lost" ticket and ask the business office
+                to invoice
+                {billableLostAssets
+                  .map(
+                    (a) =>
+                      `${currentStudentEmail(a) || "the current student"} for ${
+                        a["Asset Tag"]
+                      }`
+                  )
+                  .join("; ")}.
+              {:else}
+                None of these devices have a current student, so there is no
+                one to invoice. Sign the device out to the student first if you
+                need to bill them.
+              {/if}
+            </div>
+          {/if}
+        </FormField>
+      </div>
+    {/if}
+    {#if status == "Returned" && returnedLostAssets.length}
+      <div in:fly|local={{ y: -30 }} out:fade|local class="row">
+        <FormField name="Recovery">
+          <div>
+            {#each returnedLostAssets as asset (asset["Asset Tag"])}
+              {#if lostBillingTickets[asset["Asset Tag"]] === undefined}
+                <div class="w3-small w3-text-gray">
+                  {asset["Asset Tag"]} was marked lost — checking for invoices…
+                </div>
+              {:else if lostBillingTickets[asset["Asset Tag"]]}
+                <div class="w3-small">
+                  <b>{asset["Asset Tag"]}</b> was marked lost and the family was
+                  billed ${lostBillingTickets[asset["Asset Tag"]][
+                    "Repair Cost"
+                  ] || "?"} (Ticket #{lostBillingTickets[asset["Asset Tag"]]
+                    .Number}).
+                </div>
+              {:else}
+                <div class="w3-small w3-text-gray">
+                  {asset["Asset Tag"]} was marked lost; no invoice found, so
+                  it will simply be checked back in.
+                </div>
+              {/if}
+            {/each}
+            {#if returnedLostAssets.some((a) => lostBillingTickets[a["Asset Tag"]])}
+              <label class:bold={cancelLostBilling}>
+                <input type="checkbox" bind:checked={cancelLostBilling} />
+                Ask business office to cancel the invoice
+              </label>
+            {/if}
+          </div>
+        </FormField>
       </div>
     {/if}
     {#if status == "Returned"}

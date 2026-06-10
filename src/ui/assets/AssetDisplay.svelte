@@ -2,21 +2,26 @@
   import type { Asset } from "@data/inventory";
   import { l } from "@utils/util";
   import EmailDisplay from "@people/components/EmailDisplay.svelte";
+  import PurposeBadge from "@assets/PurposeBadge.svelte";
   export let asset: Asset | null = null;
   export let showOwner: boolean = false;
   export let openInNewTab: boolean = false;
   $: assetTag = (asset && asset["Asset Tag"]) || "";
+  $: purpose = asset?.Purpose || null;
+  $: isRetired = purpose === "Disposed" || purpose === "Retired";
+  $: isLost = asset?.Status === "Lost";
 </script>
 
 {#if !asset || !assetTag}
   <div class="w3-small w3-text-gray">(Unknown Asset)</div>
 {:else}
-  <div class="w3-container row">
+  <div class="w3-container row" class:retired={isRetired}>
     <div
       class="tag w3-round-xlarge"
       class:w3-indigo={/^[0-9][0-9][0-9][0-9]$/.test(assetTag)}
       class:w3-red={/^A[0-9][0-9][0-9][0-9]/.test(assetTag)}
       class:w3-black={/^[0-9][0-9][0-9]$/.test(assetTag)}
+      class:tag-retired={isRetired}
     >
       {#if openInNewTab}
         <a href={`/asset/${assetTag}`} target="_blank" rel="noreferrer"
@@ -34,6 +39,10 @@
         {#if asset["Year of Purchase"]}
           ({asset["Year of Purchase"]})
         {/if}
+        <PurposeBadge {purpose} compact={true} />
+        {#if isLost}
+          <span class="w3-tag w3-red w3-round lost-badge">LOST</span>
+        {/if}
       </div>
       <div class="limit w3-tiny">
         {#if asset["Charger Type"]}
@@ -49,7 +58,7 @@
       {#if showOwner}
         <div class="w3-small">
           {#if asset["Email (from Student (Current))"]}
-            Currently signed out to
+            {isLost ? "Lost — last signed out to" : "Currently signed out to"}
             <b class:inactive={asset["Student Status"]?.[0] === "Inactive"}>
               <EmailDisplay email={asset["Email (from Student (Current))"]} />
             </b>
@@ -107,5 +116,17 @@
   .inactive {
     text-decoration: line-through;
     color: #9e9e9e;
+  }
+  .retired {
+    opacity: 0.5;
+  }
+  .tag-retired {
+    border: 2px dashed currentColor !important;
+    background: transparent !important;
+  }
+  .lost-badge {
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-left: 4px;
   }
 </style>

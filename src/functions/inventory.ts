@@ -115,6 +115,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
             "Asset Tag",
             "Category",
             "Device Type",
+            "Status",
             "Make",
             "Model",
             "Serial",

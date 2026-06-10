@@ -55,6 +55,8 @@ export async function handler(event: APIGatewayEvent, context: Context) {
       "Date Created",
       "Send Email",
       "Email Sent",
+      "Cancellation",
+      "Note",
       "Ticket Block",
       "Contact Info",
       "Device Asset Tag (from Ticket)",

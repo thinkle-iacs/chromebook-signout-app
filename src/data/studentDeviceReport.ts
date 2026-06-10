@@ -1,4 +1,4 @@
-import type { Asset } from "./inventory";
+import type { Asset, MachinePurpose } from "./inventory";
 import { getAllChromebooks } from "./inventory";
 import { getDevicesForUser, type ChromebookInfo } from "./google";
 import type { Student } from "./students";
@@ -23,6 +23,7 @@ export type StudentDeviceReportMachine = {
   serial: string;
   assetTag: string;
   model: string;
+  purpose: MachinePurpose | null;
   lastUsed: string | null;
   lastUser: string;
   status: StudentDeviceMachineStatus;
@@ -427,6 +428,7 @@ export async function buildStudentDeviceReport({
             serial: device.serialNumber,
             assetTag,
             model: asset?.Model || device.model || "",
+            purpose: asset?.Purpose || null,
             lastUsed,
             lastUser: device.recentUsers?.[0]?.email || "",
             asset,

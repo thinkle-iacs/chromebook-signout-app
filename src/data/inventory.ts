@@ -4,19 +4,56 @@ import { Staff } from "./staff";
 
 export const assetStore = writable({});
 
+export type MachinePurpose =
+  | "Student Loan"
+  | "Daily Loaner"
+  | "Staff Spare"
+  | "Staff Tablet"
+  | "MCAS"
+  | "Tech"
+  | "Shelved"
+  | "Printer"
+  | "Phone"
+  | "Security"
+  | "Temp"
+  | "Disposed"
+  | "Retired"
+  | "UNKNOWN"
+  | (string & {});
+
+export const ALL_PURPOSES: MachinePurpose[] = [
+  "Student Loan",
+  "Daily Loaner",
+  "Staff Spare",
+  "Staff Tablet",
+  "MCAS",
+  "Tech",
+  "Shelved",
+  "Printer",
+  "Phone",
+  "Security",
+  "Temp",
+  "Disposed",
+  "Retired",
+  "UNKNOWN",
+];
+
+export const INACTIVE_PURPOSES: MachinePurpose[] = ["Disposed", "Retired"];
+
 export type Asset = {
   "Asset Tag": string;
   Category: string;
+  Status?: string; // device status, e.g. "Active", "In Repair", "Lost"
   Make: string;
   Model: string;
   Serial: string;
   "Year of Purchase": string;
   "MAC-Wireless": string;
   _id: string;
-  Purpose: string;
+  Purpose: MachinePurpose;
   "Staff User": string;
   "Email (from Student (Current))": string;
-  "YOG (from Student (Current))"; // Ensure YOG is included in the fields
+  "YOG (from Student (Current))": string;
   "Student (Current)": string;
   "Device Type": string;
   Location: string;
