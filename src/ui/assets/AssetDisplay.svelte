@@ -7,17 +7,19 @@
   export let openInNewTab: boolean = false;
   $: assetTag = (asset && asset["Asset Tag"]) || "";
   $: purpose = asset?.Purpose || null;
+  $: isRetired = purpose === "Disposed" || purpose === "Retired";
 </script>
 
 {#if !asset || !assetTag}
   <div class="w3-small w3-text-gray">(Unknown Asset)</div>
 {:else}
-  <div class="w3-container row">
+  <div class="w3-container row" class:retired={isRetired}>
     <div
       class="tag w3-round-xlarge"
       class:w3-indigo={/^[0-9][0-9][0-9][0-9]$/.test(assetTag)}
       class:w3-red={/^A[0-9][0-9][0-9][0-9]/.test(assetTag)}
       class:w3-black={/^[0-9][0-9][0-9]$/.test(assetTag)}
+      class:tag-retired={isRetired}
     >
       {#if openInNewTab}
         <a href={`/asset/${assetTag}`} target="_blank" rel="noreferrer"
@@ -43,6 +45,10 @@
           <span class="purpose-badge purpose-spare">Spare</span>
         {:else if purpose === "Temp"}
           <span class="purpose-badge purpose-temp">Temp</span>
+        {:else if purpose === "Disposed"}
+          <span class="purpose-badge purpose-retired">Disposed</span>
+        {:else if purpose === "Retired"}
+          <span class="purpose-badge purpose-retired">Retired</span>
         {/if}
       </div>
       <div class="limit w3-tiny">
@@ -147,5 +153,18 @@
     background: #f5f5f5;
     color: #616161;
     border: 1px solid #bdbdbd;
+  }
+  .purpose-retired {
+    background: #eeeeee;
+    color: #9e9e9e;
+    border: 1px solid #bdbdbd;
+    text-decoration: line-through;
+  }
+  .retired {
+    opacity: 0.5;
+  }
+  .tag-retired {
+    border: 2px dashed currentColor !important;
+    background: transparent !important;
   }
 </style>

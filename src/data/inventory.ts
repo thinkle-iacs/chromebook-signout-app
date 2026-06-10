@@ -16,6 +16,8 @@ export type MachinePurpose =
   | "Phone"
   | "Security"
   | "Temp"
+  | "Disposed"
+  | "Retired"
   | "UNKNOWN"
   | (string & {});
 
@@ -31,8 +33,12 @@ export const ALL_PURPOSES: MachinePurpose[] = [
   "Phone",
   "Security",
   "Temp",
+  "Disposed",
+  "Retired",
   "UNKNOWN",
 ];
+
+export const INACTIVE_PURPOSES: MachinePurpose[] = ["Disposed", "Retired"];
 
 export type Asset = {
   "Asset Tag": string;

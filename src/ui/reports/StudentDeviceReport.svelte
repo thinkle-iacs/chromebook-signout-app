@@ -10,6 +10,7 @@
     type StudentDeviceReportMachine,
     type StudentDeviceReportRow,
   } from "@data/studentDeviceReport";
+  import { INACTIVE_PURPOSES } from "@data/inventory";
 
   type SortColumn =
     | "student"
@@ -63,6 +64,7 @@
   let sortColumn: SortColumn = "lastUsedMachineCount";
   let sortDirection: "asc" | "desc" = "desc";
   let selectedStatuses: Set<string> = new Set();
+  let hideRetired = true;
   let expandedMachines = {};
   let tableScrollEl: HTMLDivElement | null = null;
   let topScrollEl: HTMLDivElement | null = null;
@@ -87,6 +89,7 @@
   $: displayRows = filterAndSortDisplayRows(
     allDisplayRows,
     selectedStatuses,
+    hideRetired,
     sortColumn,
     sortDirection,
   );
@@ -370,12 +373,15 @@
   function filterAndSortDisplayRows(
     reportRows: DisplayRow[],
     selected: Set<string>,
+    hideInactive: boolean,
     column: SortColumn,
     direction: "asc" | "desc",
   ) {
-    const filtered = reportRows.filter((displayRow) =>
-      matchesStatusFilter(displayRow, selected),
-    );
+    const filtered = reportRows.filter((displayRow) => {
+      if (!matchesStatusFilter(displayRow, selected)) return false;
+      if (hideInactive && displayRow.machine?.purpose && INACTIVE_PURPOSES.includes(displayRow.machine.purpose)) return false;
+      return true;
+    });
 
     if (column !== "summary") {
       return filtered;
@@ -641,6 +647,13 @@
         />
       {/if}
     </div>
+
+    {#if rows.length}
+      <label class="retired-toggle">
+        <input type="checkbox" bind:checked={hideRetired} />
+        Hide Disposed/Retired machines
+      </label>
+    {/if}
 
     {#if rows.length && availableStatuses.length}
       <div class="status-filter-section">
@@ -1057,6 +1070,14 @@
     white-space: pre-wrap;
     margin: 6px 0 0;
     font-size: 12px;
+  }
+  .retired-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: normal;
+    cursor: pointer;
+    min-width: unset;
   }
   .status-filter-section {
     width: 100%;
