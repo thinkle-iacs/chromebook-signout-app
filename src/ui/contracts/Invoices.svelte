@@ -214,8 +214,7 @@
     <label>
       Search:
       <input
-        class="w3-input w3-border w3-small"
-        style="max-width: 220px; display:inline-block"
+        class="w3-input w3-border w3-small search-input"
         bind:value={search}
         placeholder="Email, asset tag, or ticket #"
       />
@@ -345,6 +344,10 @@
   }
   .filter-bar label {
     white-space: nowrap;
+  }
+  .search-input {
+    width: 240px;
+    display: inline-block;
   }
   .cost-input {
     width: 5.5em;
