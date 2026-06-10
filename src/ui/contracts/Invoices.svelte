@@ -70,6 +70,7 @@
           <th>Student Email</th>
           <th>Asset Tag</th>
           <th>Date Created</th>
+          <th>Type</th>
           <th>Ticket Info</th>
           <th>Repair Cost</th>
           <th>Contacts</th>
@@ -90,8 +91,17 @@
             <td class="date-created" title={r.fields["Date Created"]}
               >{formatDate(r.fields["Date Created"])}</td
             >
+            <td>
+              {#if r.fields["Cancellation"]}
+                <span class="w3-tag w3-red w3-small">Cancellation</span>
+              {:else}
+                Invoice
+              {/if}
+            </td>
             <td style="white-space: pre-wrap;"
-              >{fmtMultiline(r.fields["Ticket Block"])}</td
+              >{fmtMultiline(r.fields["Ticket Block"])}{#if r.fields["Note"]}
+                <div class="w3-text-red w3-small">{r.fields["Note"]}</div>
+              {/if}</td
             >
             <td>{formatCurrency(r.fields["Repair Cost (from Ticket)"])}</td>
             <td style="white-space: pre-wrap;"

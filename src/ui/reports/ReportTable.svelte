@@ -5,6 +5,13 @@
   import DataExporter from "./DataExporter.svelte";
   import BulkMessageSender from "@notifications/BulkMessageSender.svelte";
   import { signoutAsset } from "@data/signout";
+  import { updateAsset } from "@data/inventory";
+  import {
+    billForLostDevice,
+    getBillableStudentId,
+    DEFAULT_REPLACEMENT_COST,
+  } from "@data/lostDeviceBilling";
+  import { showToast } from "@components/toastStore";
 
   export let data;
   export let columns = [];
@@ -321,9 +328,18 @@
 
   let showLostConfirm = false;
   let lostNote = "";
+  let billForReplacement = false;
+  let replacementCost = DEFAULT_REPLACEMENT_COST;
+
+  $: billableSelectedCount = [...selectedAssetTags].filter((tag) => {
+    const asset = data.find((row) => row["Asset Tag"] === tag);
+    return asset && getBillableStudentId(asset);
+  }).length;
 
   function openLostConfirm() {
     lostNote = "";
+    billForReplacement = false;
+    replacementCost = DEFAULT_REPLACEMENT_COST;
     showLostConfirm = true;
   }
   function closeLostConfirm() {
@@ -335,15 +351,52 @@
     updateStatusError = "";
     try {
       const tags = [...selectedAssetTags];
+      const billingErrors = [];
+      let billedCount = 0;
       await Promise.all(
         tags.map(async (tag) => {
           const asset = data.find((row) => row["Asset Tag"] === tag);
           if (!asset) throw new Error(`Asset not found: ${tag}`);
-          await signoutAsset(null, null, asset, lostNote, "Lost", false);
+          // Bill first so the signout note can record the ticket number.
+          let note = lostNote;
+          if (billForReplacement) {
+            if (!getBillableStudentId(asset)) {
+              billingErrors.push(`${tag}: no current student to bill`);
+            } else {
+              try {
+                const { ticket } = await billForLostDevice(asset, {
+                  cost: replacementCost,
+                  note: lostNote,
+                });
+                note =
+                  (lostNote ? lostNote + " " : "") +
+                  `Billed family $${replacementCost} for replacement` +
+                  (ticket.Number ? ` (Ticket #${ticket.Number}).` : ".");
+                billedCount++;
+              } catch (e) {
+                billingErrors.push(`${tag}: ${e.message}`);
+              }
+            }
+          }
+          await signoutAsset(null, null, asset, note, "Lost", false);
+          await updateAsset(asset._id, { Status: "Lost" });
         }),
       );
-      selectedAssetTags = new Set();
-      closeLostConfirm();
+      if (billingErrors.length) {
+        updateStatusError = `Marked as lost, but some invoices could not be sent — ${billingErrors.join("; ")}`;
+        if (billedCount) {
+          showToast(`Queued ${billedCount} invoice(s)`, "info");
+        }
+      } else {
+        showToast(
+          billForReplacement
+            ? `Marked ${tags.length} device(s) lost and queued ${billedCount} invoice(s) for the business office`
+            : `Marked ${tags.length} device(s) lost`,
+          "success",
+        );
+        selectedAssetTags = new Set();
+        closeLostConfirm();
+      }
     } catch (e) {
       updateStatusError = e.message || "Failed to update status.";
     } finally {
@@ -743,13 +796,51 @@
           bind:value={lostNote}
           placeholder="Add a note (optional)"
         ></textarea>
+        <div class="w3-margin-top">
+          <label>
+            <input
+              type="checkbox"
+              class="w3-check"
+              bind:checked={billForReplacement}
+              disabled={isUpdatingStatus}
+            />
+            Bill family for replacement
+          </label>
+          {#if billForReplacement}
+            <div class="w3-margin-top">
+              <label for="replacement-cost">Replacement cost ($):</label>
+              <input
+                id="replacement-cost"
+                type="number"
+                min="0"
+                class="w3-input w3-border"
+                bind:value={replacementCost}
+                disabled={isUpdatingStatus}
+              />
+            </div>
+            <p class="w3-small w3-text-gray">
+              {billableSelectedCount} of {selectedAssetTags.size} selected device(s)
+              have a current student and can be billed. For each, we'll create a
+              closed "Lost" ticket with the replacement cost and ask the business
+              office to send an invoice to the family.
+            </p>
+          {/if}
+        </div>
         <div class="w3-bar w3-margin-top">
           <button
             class="w3-button w3-orange w3-bar-item"
             on:click={confirmMarkSelectedAsLost}
-            disabled={isUpdatingStatus}
+            disabled={isUpdatingStatus ||
+              (billForReplacement &&
+                (!replacementCost || replacementCost <= 0))}
           >
-            {isUpdatingStatus ? "Marking as Lost..." : "Confirm"}
+            {isUpdatingStatus
+              ? billForReplacement
+                ? "Marking lost & sending invoices..."
+                : "Marking as Lost..."
+              : billForReplacement
+                ? "Confirm & Send Invoice(s)"
+                : "Confirm"}
           </button>
         </div>
         {#if updateStatusError}
@@ -820,6 +911,12 @@
     overflow: auto;
     display: flex;
     flex-direction: column;
+  }
+  .modal-content.lost-confirm-modal {
+    width: auto;
+    height: auto;
+    max-height: 90vh;
+    border-radius: 8px;
   }
   .modal-bulk-message .modal-content {
     width: 100vw;

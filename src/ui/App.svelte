@@ -110,6 +110,12 @@
       page = Checkout;
       title = "IACS Chromebook Signout";
     });
+    router("/checkout/lost/:tag", (ctx) => {
+      params = { lostTag: ctx.params.tag };
+      page = Checkout;
+      update += 1; // remount so the prefilled tag/status apply
+      title = "IACS Chromebook Signout";
+    });
     router("/history/", (ctx) => {
       page = History;
       title = "IACS Chromebook Signout History";

@@ -5,6 +5,8 @@ export type Invoice = {
   Ticket?: string[];
   "Send Email"?: boolean;
   Student?: string[];
+  Cancellation?: boolean;
+  Note?: string;
 };
 
 export type InvoiceResult = {
@@ -22,6 +24,8 @@ export type InvoiceFields = {
   "Date Created"?: string;
   "Send Email"?: boolean;
   "Email Sent"?: boolean;
+  Cancellation?: boolean;
+  Note?: string;
   "Ticket Block"?: string[];
   "Contact Info"?: string[];
   "Device Asset Tag (from Ticket)"?: string[];

@@ -9,6 +9,7 @@
   $: assetTag = (asset && asset["Asset Tag"]) || "";
   $: purpose = asset?.Purpose || null;
   $: isRetired = purpose === "Disposed" || purpose === "Retired";
+  $: isLost = asset?.Status === "Lost";
 </script>
 
 {#if !asset || !assetTag}
@@ -39,6 +40,9 @@
           ({asset["Year of Purchase"]})
         {/if}
         <PurposeBadge {purpose} compact={true} />
+        {#if isLost}
+          <span class="w3-tag w3-red w3-round lost-badge">LOST</span>
+        {/if}
       </div>
       <div class="limit w3-tiny">
         {#if asset["Charger Type"]}
@@ -54,7 +58,7 @@
       {#if showOwner}
         <div class="w3-small">
           {#if asset["Email (from Student (Current))"]}
-            Currently signed out to
+            {isLost ? "Lost — last signed out to" : "Currently signed out to"}
             <b class:inactive={asset["Student Status"]?.[0] === "Inactive"}>
               <EmailDisplay email={asset["Email (from Student (Current))"]} />
             </b>
@@ -119,5 +123,10 @@
   .tag-retired {
     border: 2px dashed currentColor !important;
     background: transparent !important;
+  }
+  .lost-badge {
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-left: 4px;
   }
 </style>

@@ -43,6 +43,7 @@ export const INACTIVE_PURPOSES: MachinePurpose[] = ["Disposed", "Retired"];
 export type Asset = {
   "Asset Tag": string;
   Category: string;
+  Status?: string; // device status, e.g. "Active", "In Repair", "Lost"
   Make: string;
   Model: string;
   Serial: string;
