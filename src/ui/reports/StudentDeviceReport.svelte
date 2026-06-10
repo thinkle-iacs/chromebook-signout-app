@@ -11,6 +11,7 @@
     type StudentDeviceReportRow,
   } from "@data/studentDeviceReport";
   import { INACTIVE_PURPOSES } from "@data/inventory";
+  import PurposeBadge from "@assets/PurposeBadge.svelte";
 
   type SortColumn =
     | "student"
@@ -809,11 +810,7 @@
                   {/if}
                 </td>
                 <td class="purpose-cell">
-                  {#if displayRow.machine?.purpose}
-                    <span class="purpose-pill purpose-{displayRow.machine.purpose.toLowerCase().replace(/\s+/g, '-')}"
-                      >{displayRow.machine.purpose}</span
-                    >
-                  {/if}
+                  <PurposeBadge purpose={displayRow.machine?.purpose} showFallback={true} />
                 </td>
                 <td>
                   {#if displayRow.machine}
@@ -1033,35 +1030,6 @@
   }
   .purpose-cell {
     white-space: nowrap;
-  }
-  .purpose-pill {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: #eeeeee;
-    color: #424242;
-  }
-  .purpose-pill.purpose-mcas {
-    background: #111;
-    color: #ff4444;
-    border: 1px solid #ff4444;
-  }
-  .purpose-pill.purpose-daily-loaner {
-    background: #e3f2fd;
-    color: #0d47a1;
-    border: 1px solid #90caf9;
-  }
-  .purpose-pill.purpose-staff-spare {
-    background: #fff3e0;
-    color: #bf360c;
-    border: 1px solid #ffcc80;
-  }
-  .purpose-pill.purpose-temp {
-    background: #f5f5f5;
-    color: #616161;
-    border: 1px solid #bdbdbd;
   }
   .error-details {
     margin-top: 8px;

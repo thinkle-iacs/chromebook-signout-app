@@ -9,8 +9,11 @@
     type MachinePurpose,
   } from "@data/inventory";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
+  import PurposeBadge from "@assets/PurposeBadge.svelte";
   import Loader from "@components/Loader.svelte";
   import { logger } from "@utils/log";
+
+  export let isIt = false;
 
   type LoadMode = "purpose" | "tags" | "all";
 
@@ -132,8 +135,11 @@
     let succeeded = 0;
     let failed = 0;
 
-    await Promise.allSettled(
-      targets.map(async (asset) => {
+    const CONCURRENCY = 5;
+    let nextIndex = 0;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, targets.length) }, async () => {
+      while (nextIndex < targets.length) {
+        const asset = targets[nextIndex++];
         try {
           await updateAsset(asset._id, { Purpose: targetPurpose });
           asset.Purpose = targetPurpose;
@@ -142,8 +148,9 @@
           logger.logError("PurposeManager update failed for", asset["Asset Tag"], err);
           failed += 1;
         }
-      }),
-    );
+      }
+    });
+    await Promise.all(workers);
 
     assets = [...assets];
     selectedIds = new Set();
@@ -153,6 +160,11 @@
 </script>
 
 <section class="purpose-manager">
+  {#if !isIt}
+    <div class="w3-panel w3-pale-red w3-border">
+      Access denied. This tool is for IT staff only.
+    </div>
+  {:else}
   <h2>Purpose Manager</h2>
 
   <div class="load-panel w3-panel w3-light-grey w3-border">
@@ -312,17 +324,8 @@
               </td>
               <td><AssetDisplay {asset} openInNewTab={true} /></td>
               <td>
-                {#if asset.Purpose === "MCAS"}
-                  <span class="purpose-badge purpose-mcas">MCAS</span>
-                {:else if asset.Purpose === "Daily Loaner"}
-                  <span class="purpose-badge purpose-daily">Daily Loaner</span>
-                {:else if asset.Purpose === "Staff Spare"}
-                  <span class="purpose-badge purpose-spare">Staff Spare</span>
-                {:else if asset.Purpose === "Temp"}
-                  <span class="purpose-badge purpose-temp">Temp</span>
-                {:else}
-                  {asset.Purpose || "—"}
-                {/if}
+                <PurposeBadge purpose={asset.Purpose} showFallback={true} />
+                {#if !asset.Purpose}—{/if}
               </td>
               <td class="w3-small">{asset["Year of Purchase"] || "—"}</td>
               <td class="w3-small">
@@ -335,6 +338,7 @@
         </tbody>
       </table>
     </div>
+  {/if}
   {/if}
 </section>
 
@@ -410,32 +414,5 @@
   }
   tr.selected {
     background: #e8f5e9 !important;
-  }
-  .purpose-badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 3px;
-  }
-  .purpose-mcas {
-    background: #111;
-    color: #ff4444;
-    border: 1px solid #ff4444;
-  }
-  .purpose-daily {
-    background: #e3f2fd;
-    color: #0d47a1;
-    border: 1px solid #90caf9;
-  }
-  .purpose-spare {
-    background: #fff3e0;
-    color: #bf360c;
-    border: 1px solid #ffcc80;
-  }
-  .purpose-temp {
-    background: #f5f5f5;
-    color: #616161;
-    border: 1px solid #bdbdbd;
   }
 </style>

@@ -1,4 +1,4 @@
-import type { Asset } from "./inventory";
+import type { Asset, MachinePurpose } from "./inventory";
 import { getAllChromebooks } from "./inventory";
 import { getDevicesForUser, type ChromebookInfo } from "./google";
 import type { Student } from "./students";
@@ -23,7 +23,7 @@ export type StudentDeviceReportMachine = {
   serial: string;
   assetTag: string;
   model: string;
-  purpose: string | null;
+  purpose: MachinePurpose | null;
   lastUsed: string | null;
   lastUser: string;
   status: StudentDeviceMachineStatus;

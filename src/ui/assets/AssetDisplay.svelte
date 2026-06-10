@@ -2,6 +2,7 @@
   import type { Asset } from "@data/inventory";
   import { l } from "@utils/util";
   import EmailDisplay from "@people/components/EmailDisplay.svelte";
+  import PurposeBadge from "@assets/PurposeBadge.svelte";
   export let asset: Asset | null = null;
   export let showOwner: boolean = false;
   export let openInNewTab: boolean = false;
@@ -37,19 +38,7 @@
         {#if asset["Year of Purchase"]}
           ({asset["Year of Purchase"]})
         {/if}
-        {#if purpose === "MCAS"}
-          <span class="purpose-badge purpose-mcas">MCAS</span>
-        {:else if purpose === "Daily Loaner"}
-          <span class="purpose-badge purpose-daily">DL</span>
-        {:else if purpose === "Staff Spare"}
-          <span class="purpose-badge purpose-spare">Spare</span>
-        {:else if purpose === "Temp"}
-          <span class="purpose-badge purpose-temp">Temp</span>
-        {:else if purpose === "Disposed"}
-          <span class="purpose-badge purpose-retired">Disposed</span>
-        {:else if purpose === "Retired"}
-          <span class="purpose-badge purpose-retired">Retired</span>
-        {/if}
+        <PurposeBadge {purpose} compact={true} />
       </div>
       <div class="limit w3-tiny">
         {#if asset["Charger Type"]}
@@ -123,42 +112,6 @@
   .inactive {
     text-decoration: line-through;
     color: #9e9e9e;
-  }
-  .purpose-badge {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 1px 4px;
-    border-radius: 3px;
-    vertical-align: middle;
-    margin-left: 4px;
-    letter-spacing: 0.03em;
-  }
-  .purpose-mcas {
-    background: #111;
-    color: #ff4444;
-    border: 1px solid #ff4444;
-  }
-  .purpose-daily {
-    background: #e3f2fd;
-    color: #0d47a1;
-    border: 1px solid #90caf9;
-  }
-  .purpose-spare {
-    background: #fff3e0;
-    color: #bf360c;
-    border: 1px solid #ffcc80;
-  }
-  .purpose-temp {
-    background: #f5f5f5;
-    color: #616161;
-    border: 1px solid #bdbdbd;
-  }
-  .purpose-retired {
-    background: #eeeeee;
-    color: #9e9e9e;
-    border: 1px solid #bdbdbd;
-    text-decoration: line-through;
   }
   .retired {
     opacity: 0.5;

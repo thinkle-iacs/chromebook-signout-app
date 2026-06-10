@@ -46,6 +46,7 @@
   let params: {
     name?: string;
     tag?: string;
+    isIt?: boolean;
   } = {};
 
   const SIGNOUT_TITLE = "IACS Chromebook Signout";
@@ -122,7 +123,7 @@
     });
     router("/it/purposes/", (ctx) => {
       page = PurposeManager;
-      params = {};
+      params = { isIt };
       title = "Purpose Manager";
     });
     router("/reports/", (ctx) => {
