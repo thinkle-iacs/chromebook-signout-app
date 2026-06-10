@@ -41,6 +41,8 @@
           <span class="purpose-badge purpose-daily">DL</span>
         {:else if purpose === "Staff Spare"}
           <span class="purpose-badge purpose-spare">Spare</span>
+        {:else if purpose === "Temp"}
+          <span class="purpose-badge purpose-temp">Temp</span>
         {/if}
       </div>
       <div class="limit w3-tiny">
@@ -140,5 +142,10 @@
     background: #fff3e0;
     color: #bf360c;
     border: 1px solid #ffcc80;
+  }
+  .purpose-temp {
+    background: #f5f5f5;
+    color: #616161;
+    border: 1px solid #bdbdbd;
   }
 </style>

@@ -1045,6 +1045,11 @@
     color: #bf360c;
     border: 1px solid #ffcc80;
   }
+  .purpose-pill.purpose-temp {
+    background: #f5f5f5;
+    color: #616161;
+    border: 1px solid #bdbdbd;
+  }
   .error-details {
     margin-top: 8px;
   }
