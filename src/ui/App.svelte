@@ -129,7 +129,7 @@
     });
     router("/it/purposes/", (ctx) => {
       page = PurposeManager;
-      params = { isIt };
+      params = {};
       title = "Purpose Manager";
     });
     router("/reports/", (ctx) => {
@@ -299,7 +299,9 @@
       <LogIn />
     {:else if page}
       {#key update}
-        <svelte:component this={page} {...params} />
+        <!-- isIt is passed live (not via params) so pages gated on IT
+             access update when the login session resolves after mount -->
+        <svelte:component this={page} {...params} {isIt} />
       {/key}
     {:else}
       Weird, nobody's home
