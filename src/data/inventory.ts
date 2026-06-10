@@ -52,7 +52,7 @@ export type Asset = {
   Purpose: MachinePurpose;
   "Staff User": string;
   "Email (from Student (Current))": string;
-  "YOG (from Student (Current))"; // Ensure YOG is included in the fields
+  "YOG (from Student (Current))": string;
   "Student (Current)": string;
   "Device Type": string;
   Location: string;
