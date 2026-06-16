@@ -17,6 +17,7 @@
   import { l, withLoadingIndicator } from "@utils/util";
   import type { CheckoutStatus } from "@data/signout";
   import { signoutAsset } from "@data/signout";
+  import { getRepairingAssetTags } from "@data/signoutHistory";
   import { addStudentNote, getStudent } from "@data/students";
   import { assetStore } from "@data/inventory";
   import { staffStore } from "@data/staff";
@@ -78,6 +79,8 @@
     studentName: false,
   });
 
+  let repairingTags: Set<string> = new Set();
+
   onMount(async () => {
     if (lostTag) {
       $assetTags = [lostTag];
@@ -86,6 +89,13 @@
     logger.logVerbose("Fetch contacts!");
     await getContacts();
     logger.logVerbose($contactStore);
+    // So a scanned device that's in for repair shows "IN REPAIR" rather than
+    // reading as a normal loan — avoids re-issuing a device we already hold.
+    try {
+      repairingTags = await getRepairingAssetTags();
+    } catch (e) {
+      logger.logError("Failed to load in-repair devices:", e);
+    }
   });
 
   let validators = () => ({
@@ -797,7 +807,13 @@ Hinge bolts:New screws needed for display hinges*/
         {#each assets as asset, i}
           <div in:fade|local out:fade|local>
             {#if asset}
-              <AssetDisplay {asset} showOwner={true} />
+              <AssetDisplay
+                {asset}
+                showOwner={true}
+                signoutStatus={repairingTags.has(asset["Asset Tag"])
+                  ? "Repairing"
+                  : ""}
+              />
             {:else if $validating.assetTag}
               <Loader working={true} text="Finding asset..." />
             {:else if $assetTags[i].length > 3}

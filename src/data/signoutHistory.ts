@@ -35,12 +35,14 @@ export async function lookupSignoutHistory({
   staff,
   isLatest,
   onlyOut,
+  status,
 }: {
   asset?: Asset;
   student?: Student;
   staff?: Staff;
   isLatest?: boolean;
   onlyOut?: boolean;
+  status?: string;
 } = {}): Promise<SignoutHistoryEntry[]> {
   let params: Record<string, string> = { mode: "signoutHistory" };
   if (asset) {
@@ -55,6 +57,9 @@ export async function lookupSignoutHistory({
   if (isLatest) {
     params.isLatest = "true";
   }
+  if (status) {
+    params.status = status;
+  }
   if (staff) {
     params.staffId = staff._id;
   }
@@ -62,6 +67,33 @@ export async function lookupSignoutHistory({
   let response = await fetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
   return json.map((item) => ({ ...item.fields, _id: item.id }));
+}
+
+// Cache of asset tags whose latest signout record is "Repairing" — i.e. the
+// device is physically in our hands for repair even though it stays assigned
+// to its student. One bulk query powers the "IN REPAIR" indicator across the
+// asset lookup, student loans, reports, and check-in scan.
+let repairingTagsCache: Set<string> | null = null;
+
+export async function getRepairingAssetTags(
+  force = false
+): Promise<Set<string>> {
+  if (repairingTagsCache && !force) return repairingTagsCache;
+  const records = await lookupSignoutHistory({
+    isLatest: true,
+    status: "Repairing",
+  });
+  const tags = new Set<string>();
+  for (const r of records) {
+    const tag = r["Asset Tag (from Asset)"]?.[0];
+    if (tag) tags.add(tag);
+  }
+  repairingTagsCache = tags;
+  return tags;
+}
+
+export function clearRepairingTagsCache() {
+  repairingTagsCache = null;
 }
 
 export let fetching = writable(false);

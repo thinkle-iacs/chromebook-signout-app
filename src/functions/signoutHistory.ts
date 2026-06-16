@@ -2,7 +2,7 @@ import type { APIGatewayEvent, Context } from "aws-lambda";
 import { signoutHistoryBase } from "./Airtable";
 
 export async function handler(event: APIGatewayEvent, context: Context) {
-  const { assetTag, lasid, staffId, isLatest, onlyOut } =
+  const { assetTag, lasid, staffId, isLatest, onlyOut, status } =
     event.queryStringParameters;
   let filterByFormula = "";
   if (assetTag) {
@@ -16,6 +16,14 @@ export async function handler(event: APIGatewayEvent, context: Context) {
   }
   if (onlyOut) {
     let andPart = '{Status}="Out"';
+    if (filterByFormula) {
+      filterByFormula = `and(${filterByFormula},${andPart})`;
+    } else {
+      filterByFormula = andPart;
+    }
+  }
+  if (status) {
+    let andPart = `{Status}="${status}"`;
     if (filterByFormula) {
       filterByFormula = `and(${filterByFormula},${andPart})`;
     } else {

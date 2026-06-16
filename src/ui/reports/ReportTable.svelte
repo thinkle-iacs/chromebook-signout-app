@@ -17,6 +17,11 @@
   export let columns = [];
   export let filename = "data.csv";
   export let openAssetLinksInNewTab = false;
+  // Asset tags currently in for repair (in our hands, latest signout =
+  // "Repairing"). Used to flag rows and offer a repair-status filter.
+  export let repairingTags = new Set();
+  // "all" | "exclude" (hide in-repair) | "only" (just in-repair)
+  let repairFilter = "all";
   // sortColumn is now a property name (string)
   let sortColumn = columns[0] || "";
   let sortDirection = "asc";
@@ -230,6 +235,11 @@
       !selectedPurposes.has(row.Purpose)
     )
       return false;
+    if (repairFilter !== "all") {
+      const inRepair = repairingTags.has(row["Asset Tag"]);
+      if (repairFilter === "exclude" && inRepair) return false;
+      if (repairFilter === "only" && !inRepair) return false;
+    }
     return true;
   });
 
@@ -460,6 +470,22 @@
         {/if}
       </div>
     </div>
+    {#if repairingTags.size}
+      <label
+        class="w3-bar-item"
+        title="Devices in for repair are physically in our hands, though still assigned to their student."
+        >In repair:
+        <select
+          bind:value={repairFilter}
+          class="w3-select w3-border"
+          style="width:auto;display:inline-block;margin-left:4px;"
+        >
+          <option value="all">Include</option>
+          <option value="exclude">Exclude (in our hands)</option>
+          <option value="only">Only in-repair</option>
+        </select>
+      </label>
+    {/if}
     <div class="dropdown-filter" style="position:relative;">
       <button
         class="w3-button w3-border w3-bar-item"
@@ -724,6 +750,9 @@
                   <AssetDisplay
                     asset={row}
                     openInNewTab={openAssetLinksInNewTab}
+                    signoutStatus={repairingTags.has(row["Asset Tag"])
+                      ? "Repairing"
+                      : ""}
                   />
                 {:else}
                   {row[column]}
