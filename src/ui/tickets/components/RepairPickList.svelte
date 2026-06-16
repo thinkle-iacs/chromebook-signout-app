@@ -22,10 +22,26 @@
 
   export let onSelect: (items: RepairItem[]) => void = () => {};
   export let disabled: boolean = false;
+  // Labels already on the ticket (e.g. parsed from saved notes) so the
+  // checkboxes reflect existing repair items when a ticket is reopened.
+  export let initialLabels: string[] = [];
 
   let selectedItems: boolean[] = new Array(items.length).fill(false);
   let expanded = false;
   let containerEl: HTMLElement;
+
+  // Initialize (or re-initialize) checkboxes from initialLabels whenever they
+  // change to a new set — i.e. a different ticket loads or one is saved. Guard
+  // on a sorted signature so the user's in-progress toggles aren't clobbered,
+  // and do NOT call onSelect here (these items are already on the ticket).
+  let lastInitSig: string | null = null;
+  $: {
+    const sig = [...initialLabels].sort().join("|");
+    if (sig !== lastInitSig) {
+      lastInitSig = sig;
+      selectedItems = items.map((it) => initialLabels.includes(it.label));
+    }
+  }
 
   function handleSelectionChange() {
     onSelect(items.filter((_, index) => selectedItems[index]));

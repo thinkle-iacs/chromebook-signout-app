@@ -177,6 +177,14 @@
     const current = (mergedTicket as any)["Repair Cost"];
   }
 
+  // Repair labels already saved on the ticket, so the pick-list pre-checks
+  // them. Sourced from the saved `ticket` (not the draft) so it stays stable
+  // while the user toggles items and only changes when a ticket loads/saves.
+  $: savedRepairLabels = ((ticket as any)?.Notes || "")
+    .split(/\r?\n/)
+    .filter((line: string) => line.startsWith("Repair Item:"))
+    .map((line: string) => line.replace(/^Repair Item:\s*/, "").trim());
+
   function handleRepairPick(items: { label: string; amount: number }[]) {
     // Calculate total cost from all selected items
     const totalCost = items.reduce((sum, item) => sum + item.amount, 0);
@@ -259,7 +267,11 @@
       {saving ? "Saving..." : "Save"}
     </button>
     <div style="display:flex;align-items:start;gap:8px" class="w3-small">
-      <RepairPickList onSelect={handleRepairPick} disabled={saving} />
+      <RepairPickList
+        onSelect={handleRepairPick}
+        initialLabels={savedRepairLabels}
+        disabled={saving}
+      />
       <div>
         <label for="repair-cost-input" class="w3-text-blue"
           ><b>Repair Cost</b></label
