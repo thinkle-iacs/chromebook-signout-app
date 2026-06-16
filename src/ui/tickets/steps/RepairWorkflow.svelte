@@ -177,15 +177,31 @@
     const current = (mergedTicket as any)["Repair Cost"];
   }
 
-  function handleRepairPick(item: { label: string; amount: number }) {
-    handleChange({ "Repair Cost": item.amount as any });
+  function handleRepairPick(items: { label: string; amount: number }[]) {
+    // Calculate total cost from all selected items
+    const totalCost = items.reduce((sum, item) => sum + item.amount, 0);
+    handleChange({ "Repair Cost": totalCost as any });
+    
+    // Update notes with all selected items
     const existingNotes = (mergedTicket.Notes || "").trim();
-    const line = `Repair Item: ${item.label}`;
+    const existingLines = existingNotes.split(/\r?\n/);
+    
+    // Remove existing repair item lines to avoid duplicates
+    const nonRepairLines = existingLines.filter(line => 
+      !line.startsWith("Repair Item:"));
+    
+    // Add new repair item lines
+    const repairLines = items.map(item => `Repair Item: ${item.label}`);
+    
     let newNotes: string;
-    if (!existingNotes) newNotes = line;
-    else if (!existingNotes.split(/\r?\n/).includes(line))
-      newNotes = existingNotes + "\n" + line;
-    else newNotes = existingNotes; // avoid duplicate
+    if (nonRepairLines.length === 1 && nonRepairLines[0] === "") {
+      // No existing notes
+      newNotes = repairLines.join("\n");
+    } else {
+      // Combine existing notes with repair items
+      newNotes = [...nonRepairLines, ...repairLines].join("\n");
+    }
+    
     handleChange({ Notes: newNotes });
   }
 </script>
