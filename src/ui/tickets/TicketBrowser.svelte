@@ -118,12 +118,18 @@
   });
 
   async function openDraftForDevice(tag: string) {
-    let asset: any = get(assetStore)[tag];
+    // assetStore is keyed by the canonical (uppercase) Asset Tag, but the URL
+    // param may be any case, so normalize before the store lookup.
+    const canonical = (tag || "").toUpperCase();
+    let asset: any = get(assetStore)[canonical] || get(assetStore)[tag];
     if (!asset) {
       try {
-        // searchForAsset populates assetStore (keyed by Asset Tag); read back
-        await searchForAsset(tag);
-        asset = get(assetStore)[tag] || null;
+        const results = await searchForAsset(tag);
+        // searchForAsset also indexes the store by record id, which avoids
+        // any remaining case mismatch on the Asset Tag.
+        const rec = results && results[0];
+        asset =
+          (rec && get(assetStore)[rec.id]) || get(assetStore)[canonical] || null;
       } catch (e) {
         // fall through — we'll still open a draft, just without the device
       }

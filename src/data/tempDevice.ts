@@ -1,4 +1,3 @@
-import { logger } from "@utils/log";
 import { get } from "svelte/store";
 import { user } from "./user";
 import {
@@ -26,34 +25,30 @@ function tempTagOf(ticket: Ticket): string | undefined {
 /**
  * Open tickets that currently list `assetTag` as their Temporary Device.
  * Used on check-in to offer to unlink a temp loaner being returned.
+ *
+ * Throws on fetch failure so callers can distinguish "lookup failed, retry"
+ * from "no matching tickets" rather than treating both as an empty result.
  */
 export async function getOpenTicketsWithTempDevice(
   assetTag: string
 ): Promise<Ticket[]> {
-  try {
-    const tickets = await getTicketsForAsset(assetTag);
-    return tickets.filter((t) => isOpen(t) && tempTagOf(t) === assetTag);
-  } catch (e) {
-    logger.logError("Failed to look up tickets with temp device:", e);
-    return [];
-  }
+  const tickets = await getTicketsForAsset(assetTag);
+  return tickets.filter((t) => isOpen(t) && tempTagOf(t) === assetTag);
 }
 
 /**
  * Open tickets belonging to a student — used on check-out to offer to link a
  * freshly loaned device as that ticket's temporary device.
+ *
+ * Throws on fetch failure (see note above); returns [] only when the student
+ * genuinely has no email or no open tickets.
  */
 export async function getOpenTicketsForStudentObj(
   student: Student
 ): Promise<Ticket[]> {
   if (!student?.Email) return [];
-  try {
-    const tickets = await getTicketsForStudent(student.Email);
-    return tickets.filter(isOpen);
-  } catch (e) {
-    logger.logError("Failed to look up open tickets for student:", e);
-    return [];
-  }
+  const tickets = await getTicketsForStudent(student.Email);
+  return tickets.filter(isOpen);
 }
 
 function appendHistory(

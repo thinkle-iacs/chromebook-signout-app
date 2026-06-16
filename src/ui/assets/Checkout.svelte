@@ -300,11 +300,18 @@
     selectedTempTicketId = "";
     linkTempForCheckout = false;
     linkTempTouched = false;
-    const tickets = await getOpenTicketsForStudentObj(student);
-    // Guard against a later student selection winning the race
-    if (student._id !== lastTicketStudentId) return;
-    studentOpenTickets = tickets;
-    if (tickets.length) selectedTempTicketId = tickets[0]._id;
+    try {
+      const tickets = await getOpenTicketsForStudentObj(student);
+      // Guard against a later student selection winning the race
+      if (student._id !== lastTicketStudentId) return;
+      studentOpenTickets = tickets;
+      if (tickets.length) selectedTempTicketId = tickets[0]._id;
+    } catch (e) {
+      logger.logError("Failed to load student open tickets:", e);
+      // Clear the guard so a later interaction retries instead of being
+      // stuck with no checkbox until the page is refreshed.
+      if (student._id === lastTicketStudentId) lastTicketStudentId = null;
+    }
   }
 
   // Default the link on for a Temp-purpose loaner, but only until the user
