@@ -15,10 +15,12 @@
   import { fade } from "svelte/transition";
   import LookupStaff from "@people/staff/LookupStaff.svelte";
   import Reports from "./reports/Reports.svelte";
+  import PurposeManager from "@assets/PurposeManager.svelte";
   import TicketBrowser from "./tickets/TicketBrowser.svelte";
   import TicketNumberPage from "./tickets/TicketNumberPage.svelte";
   import Invoices from "@contracts/Invoices.svelte";
   import Toast from "@components/Toast.svelte";
+  import ConfirmDialog from "@ui/components/ConfirmDialog.svelte";
   import { toastStore } from "@components/toastStore";
   import { testRoutes } from "./tests/test-routes";
 
@@ -44,6 +46,7 @@
   let params: {
     name?: string;
     tag?: string;
+    isIt?: boolean;
   } = {};
 
   const SIGNOUT_TITLE = "IACS Chromebook Signout";
@@ -107,6 +110,12 @@
       page = Checkout;
       title = "IACS Chromebook Signout";
     });
+    router("/checkout/lost/:tag", (ctx) => {
+      params = { lostTag: ctx.params.tag };
+      page = Checkout;
+      update += 1; // remount so the prefilled tag/status apply
+      title = "IACS Chromebook Signout";
+    });
     router("/history/", (ctx) => {
       page = History;
       title = "IACS Chromebook Signout History";
@@ -117,6 +126,11 @@
         mode: "it",
       };
       title = IT_NAME;
+    });
+    router("/it/purposes/", (ctx) => {
+      page = PurposeManager;
+      params = {};
+      title = "Purpose Manager";
     });
     router("/reports/", (ctx) => {
       page = Reports;
@@ -249,6 +263,13 @@
         href="/it/"
         on:click={l("/it/")}>IT Tool</a
       >
+      <a
+        class="w3-bar-item w3-button"
+        class:active={page == PurposeManager}
+        class:w3-blue={page == PurposeManager}
+        href="/it/purposes/"
+        on:click={l("/it/purposes/")}>Purpose Manager</a
+      >
     {/if}
   </nav>
   <main>
@@ -278,7 +299,9 @@
       <LogIn />
     {:else if page}
       {#key update}
-        <svelte:component this={page} {...params} />
+        <!-- isIt is passed live (not via params) so pages gated on IT
+             access update when the login session resolves after mount -->
+        <svelte:component this={page} {...params} {isIt} />
       {/key}
     {:else}
       Weird, nobody's home
@@ -301,6 +324,7 @@
     timeout={toast.timeout || 3500}
   />
 {/if}
+<ConfirmDialog />
 
 <style>
   header {

@@ -12,6 +12,7 @@
   } from "@data/notifications";
   import { messagesStore } from "@data/messages";
   import { logger } from "@utils/log";
+  import { parseMarkdown } from "@utils/util";
 
   export let notification: Notification;
 
@@ -63,7 +64,7 @@
         {#if notification.Recipient3}<h4>CC: {notification.Recipient3}</h4>{/if}
         {#if notification.Recipient4}<h4>CC: {notification.Recipient4}</h4>{/if}
         {#if notification.Recipient5}<h4>CC: {notification.Recipient5}</h4>{/if}
-        <div>{@html notification.message.Body}</div>
+        <div>{@html parseMarkdown(notification.message.Body)}</div>
         <div>
           {#if notification.ExtraText}{@html notification.ExtraText}{/if}
         </div>

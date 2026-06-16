@@ -240,8 +240,34 @@
     }
   }
   let statusFilter: "Out" | "Returned" | "Lost" = null;
+  let yogFilter: number | null = null;
 
-  let filters = [filterByStatus];
+  function getGradeLabel(yog: number): string {
+    const now = new Date();
+    // School year rolls over in July (month index 6)
+    const schoolYear = now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear();
+    const grade = 12 - (yog - schoolYear);
+    if (grade < 9) return `Grade ${grade}`;
+    if (grade > 12) return "Alumni";
+    return `Grade ${grade}`;
+  }
+
+  function normalizeYOG(yog: any): number | null {
+    if (yog == null) return null;
+    return Array.isArray(yog) ? yog[0] : yog;
+  }
+
+  const filterByYOG = (e) => yogFilter === null || normalizeYOG(e.YOG) === yogFilter;
+
+  $: availableYOGs = [
+    ...new Set(
+      historyWeCareAbout
+        .map((e) => normalizeYOG(e.YOG))
+        .filter((y) => y != null)
+    ),
+  ].sort();
+
+  let filters = [filterByStatus, filterByYOG];
   let sorters = [];
 
   function applyFilters(force1, force2, force3, statusFilter) {
@@ -259,7 +285,7 @@
     sortedEntries = sortedEntries;
   }
 
-  $: applyFilters(historyWeCareAbout, filters, sorters, statusFilter);
+  $: applyFilters(historyWeCareAbout, filters, sorters, statusFilter, yogFilter);
 </script>
 
 <div class="w3-container">
@@ -298,6 +324,17 @@
             <option value={"Returned"}>Returned</option>
             <option value={"Lost"}>Lost</option>
             <option value={null}>All</option>
+          </select>
+          <label for="yog-input" class="w3-margin-left">Class:</label>
+          <select
+            id="yog-input"
+            class="w3-input w3-cell w3-border"
+            bind:value={yogFilter}
+          >
+            <option value={null}>All</option>
+            {#each availableYOGs as yog}
+              <option value={yog}>Class of {yog} ({getGradeLabel(yog)})</option>
+            {/each}
           </select>
         {/if}
       </div>
@@ -357,8 +394,9 @@
       <button
         class="w3-button w3-border"
         on:click={() => {
-          filters = [filterByStatus];
+          filters = [filterByStatus, filterByYOG];
           statusFilter = null;
+          yogFilter = null;
         }}>All</button
       >
       {#if filters.indexOf(hideModeFilter) > -1}
@@ -431,7 +469,7 @@
             >{historyEntry["Email (from Students)"] ||
               historyEntry["Email (from Staff)"]}
             {#if historyEntry.YOG}
-              ({historyEntry.YOG})
+              ({historyEntry.YOG}, {getGradeLabel(historyEntry.YOG)})
             {/if}
           </td>
           <td>{LASID}</td>

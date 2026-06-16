@@ -1,19 +1,97 @@
 <script>
+  import { onDestroy, onMount, tick } from "svelte";
   import { logger } from "@utils/log";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import DataExporter from "./DataExporter.svelte";
   import BulkMessageSender from "@notifications/BulkMessageSender.svelte";
   import { signoutAsset } from "@data/signout";
+  import { updateAsset } from "@data/inventory";
+  import {
+    billForLostDevice,
+    getBillableStudentId,
+    DEFAULT_REPLACEMENT_COST,
+  } from "@data/lostDeviceBilling";
+  import { showToast } from "@components/toastStore";
 
   export let data;
   export let columns = [];
   export let filename = "data.csv";
+  export let openAssetLinksInNewTab = false;
   // sortColumn is now a property name (string)
   let sortColumn = columns[0] || "";
   let sortDirection = "asc";
   export let headers = [];
 
   let sortedData = [];
+  let tableScrollEl;
+  let topScrollEl;
+  let reportTableEl;
+  let topScrollWidth = 0;
+  let showTopScroll = false;
+  let resizeObserver;
+
+  function syncScrollMetrics() {
+    if (!tableScrollEl || !reportTableEl) return;
+    topScrollWidth = reportTableEl.scrollWidth;
+    showTopScroll = reportTableEl.scrollWidth > tableScrollEl.clientWidth + 1;
+    if (topScrollEl && topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
+      topScrollEl.scrollLeft = tableScrollEl.scrollLeft;
+    }
+  }
+
+  function handleTopScroll() {
+    if (!tableScrollEl || !topScrollEl) return;
+    if (tableScrollEl.scrollLeft !== topScrollEl.scrollLeft) {
+      tableScrollEl.scrollLeft = topScrollEl.scrollLeft;
+    }
+  }
+
+  function handleTableScroll() {
+    if (!tableScrollEl || !topScrollEl) return;
+    if (topScrollEl.scrollLeft !== tableScrollEl.scrollLeft) {
+      topScrollEl.scrollLeft = tableScrollEl.scrollLeft;
+    }
+  }
+
+  let syncPending = false;
+  async function scheduleSyncMetrics() {
+    if (syncPending) return;
+    syncPending = true;
+    await tick();
+    syncPending = false;
+    syncScrollMetrics();
+  }
+
+  $: filteredData.length,
+    columns.length,
+    headers.length,
+    haveGoogleData,
+    scheduleSyncMetrics();
+
+  onMount(() => {
+    const onResize = () => syncScrollMetrics();
+    window.addEventListener("resize", onResize);
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => syncScrollMetrics());
+      if (reportTableEl) {
+        resizeObserver.observe(reportTableEl);
+      }
+    }
+    scheduleSyncMetrics();
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  });
+
+  onDestroy(() => {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
+  });
 
   function isStale(lastUsed) {
     const thirtyDaysAgo = new Date();
@@ -29,6 +107,16 @@
       }
       if (a[sortProp] === undefined || b[sortProp] === undefined) {
         return 0; // Handle undefined values gracefully
+      }
+      // Special case: sort lastUsed as a date
+      if (sortProp === "lastUsed") {
+        const aDate = new Date(a[sortProp]);
+        const bDate = new Date(b[sortProp]);
+        if (direction === "asc") {
+          return aDate - bDate;
+        } else {
+          return bDate - aDate;
+        }
       }
       if (direction === "asc") {
         if (a[sortProp] < b[sortProp]) return -1;
@@ -64,7 +152,61 @@
   // Filter state
   let filterMismatched = FILTER_ANY; // "all" | true | false
   let filterStale = FILTER_ANY; // "all" | true | false
-  let filterModel = "";
+
+  // Derive unique model and purpose values from data
+  $: uniqueModels = [
+    ...new Set(data.map((r) => r.Model).filter(Boolean)),
+  ].sort();
+  $: uniquePurposes = [
+    ...new Set(data.map((r) => r.Purpose).filter(Boolean)),
+  ].sort();
+
+  // Multi-select filter state
+  let selectedModels = new Set();
+  let selectedPurposes = new Set();
+  let prevModelKey = "";
+  let prevPurposeKey = "";
+
+  // Reset selections when the set of available values changes
+  $: {
+    const modelKey = uniqueModels.join("|");
+    if (modelKey !== prevModelKey) {
+      selectedModels = new Set(uniqueModels);
+      prevModelKey = modelKey;
+    }
+  }
+  $: {
+    const purposeKey = uniquePurposes.join("|");
+    if (purposeKey !== prevPurposeKey) {
+      selectedPurposes = new Set(uniquePurposes);
+      prevPurposeKey = purposeKey;
+    }
+  }
+
+  let showModelDropdown = false;
+  let showPurposeDropdown = false;
+
+  function toggleModel(model) {
+    if (selectedModels.has(model)) {
+      selectedModels.delete(model);
+    } else {
+      selectedModels.add(model);
+    }
+    selectedModels = new Set(selectedModels);
+  }
+  function togglePurpose(purpose) {
+    if (selectedPurposes.has(purpose)) {
+      selectedPurposes.delete(purpose);
+    } else {
+      selectedPurposes.add(purpose);
+    }
+    selectedPurposes = new Set(selectedPurposes);
+  }
+
+  // Expose filtered data for parent to read imperatively
+  export function getFilteredData() {
+    return filteredData;
+  }
 
   // Derived filtered data
   $: filteredData = sortedData.filter((row) => {
@@ -79,8 +221,13 @@
       if (filterStale === FILTER_FALSE && isStale(row.lastUsed)) return false;
     }
     if (
-      filterModel &&
-      !(row.Model || "").toLowerCase().includes(filterModel.toLowerCase())
+      selectedModels.size < uniqueModels.length &&
+      !selectedModels.has(row.Model)
+    )
+      return false;
+    if (
+      selectedPurposes.size < uniquePurposes.length &&
+      !selectedPurposes.has(row.Purpose)
     )
       return false;
     return true;
@@ -96,7 +243,7 @@
   function selectGoodAssets() {
     // Select assets that are NOT mismatched and NOT stale
     const goodRows = filteredData.filter(
-      (row) => row.lastUserMatch !== false && !isStale(row.lastUsed)
+      (row) => row.lastUserMatch !== false && !isStale(row.lastUsed),
     );
     selectedAssetTags = new Set(goodRows.map((row) => row["Asset Tag"]));
   }
@@ -113,7 +260,7 @@
   $: {
     // Expand _ASSET into ASSET_COLUMNS for exportColumns
     let baseColumns = columns.flatMap((col) =>
-      col === "_ASSET" ? ASSET_COLUMNS : [col]
+      col === "_ASSET" ? ASSET_COLUMNS : [col],
     );
     if (includeGoogleDataInExport) {
       exportColumns = [
@@ -169,7 +316,7 @@
           const asset = data.find((row) => row["Asset Tag"] === tag);
           if (!asset) throw new Error(`Asset not found: ${tag}`);
           await signoutAsset(null, null, asset, "", "Lost", false);
-        })
+        }),
       );
       selectedAssetTags = new Set();
     } catch (e) {
@@ -181,9 +328,18 @@
 
   let showLostConfirm = false;
   let lostNote = "";
+  let billForReplacement = false;
+  let replacementCost = DEFAULT_REPLACEMENT_COST;
+
+  $: billableSelectedCount = [...selectedAssetTags].filter((tag) => {
+    const asset = data.find((row) => row["Asset Tag"] === tag);
+    return asset && getBillableStudentId(asset);
+  }).length;
 
   function openLostConfirm() {
     lostNote = "";
+    billForReplacement = false;
+    replacementCost = DEFAULT_REPLACEMENT_COST;
     showLostConfirm = true;
   }
   function closeLostConfirm() {
@@ -195,15 +351,52 @@
     updateStatusError = "";
     try {
       const tags = [...selectedAssetTags];
+      const billingErrors = [];
+      let billedCount = 0;
       await Promise.all(
         tags.map(async (tag) => {
           const asset = data.find((row) => row["Asset Tag"] === tag);
           if (!asset) throw new Error(`Asset not found: ${tag}`);
-          await signoutAsset(null, null, asset, lostNote, "Lost", false);
-        })
+          // Bill first so the signout note can record the ticket number.
+          let note = lostNote;
+          if (billForReplacement) {
+            if (!getBillableStudentId(asset)) {
+              billingErrors.push(`${tag}: no current student to bill`);
+            } else {
+              try {
+                const { ticket } = await billForLostDevice(asset, {
+                  cost: replacementCost,
+                  note: lostNote,
+                });
+                note =
+                  (lostNote ? lostNote + " " : "") +
+                  `Billed family $${replacementCost} for replacement` +
+                  (ticket.Number ? ` (Ticket #${ticket.Number}).` : ".");
+                billedCount++;
+              } catch (e) {
+                billingErrors.push(`${tag}: ${e.message}`);
+              }
+            }
+          }
+          await signoutAsset(null, null, asset, note, "Lost", false);
+          await updateAsset(asset._id, { Status: "Lost" });
+        }),
       );
-      selectedAssetTags = new Set();
-      closeLostConfirm();
+      if (billingErrors.length) {
+        updateStatusError = `Marked as lost, but some invoices could not be sent — ${billingErrors.join("; ")}`;
+        if (billedCount) {
+          showToast(`Queued ${billedCount} invoice(s)`, "info");
+        }
+      } else {
+        showToast(
+          billForReplacement
+            ? `Marked ${tags.length} device(s) lost and queued ${billedCount} invoice(s) for the business office`
+            : `Marked ${tags.length} device(s) lost`,
+          "success",
+        );
+        selectedAssetTags = new Set();
+        closeLostConfirm();
+      }
     } catch (e) {
       updateStatusError = e.message || "Failed to update status.";
     } finally {
@@ -211,78 +404,183 @@
     }
   }
 
-  // Add state for report/run buttons
-  let reportRun = false;
-  let loginDataReady = false;
-
-  function handleRunReport() {
-    reportRun = true;
-    loginDataReady = false;
-    // ...existing logic for running the report...
-  }
-  function handleGetLoginData() {
-    loginDataReady = true;
-    // ...existing logic for getting login data...
-  }
+  export let loginDataReady = false;
 </script>
 
 <!-- Filter controls -->
-<div
-  class="w3-padding w3-bar"
-  style="align-items:center;display:flex;gap:0.5em;"
->
-  <label class="w3-bar-item"
-    >Mismatched:
-    <select
-      bind:value={filterMismatched}
-      on:change={(e) => setFilterMismatched(e.target.value)}
-      class="w3-select w3-border"
-      style="width:auto;display:inline-block;margin-left:4px;"
+{#if data.length}
+  <div class="w3-padding filter-bar">
+    <div
+      style="
+        display:grid; 
+        grid-template-areas: 'input1 input2' 'note note'; 
+        grid-gap: 0.5em;
+        "
     >
-      <option value={FILTER_ANY}>All</option>
-      <option value={FILTER_TRUE}>Yes</option>
-      <option value={FILTER_FALSE}>No</option>
-    </select>
-  </label>
-  <label class="w3-bar-item"
-    >Stale:
-    <select
-      bind:value={filterStale}
-      on:change={(e) => setFilterStale(e.target.value)}
-      class="w3-select w3-border"
-      style="width:auto;display:inline-block;margin-left:4px;"
-    >
-      <option value={FILTER_ANY}>All</option>
-      <option value={FILTER_TRUE}>Yes</option>
-      <option value={FILTER_FALSE}>No</option>
-    </select>
-  </label>
-  <label class="w3-bar-item">
-    Model:
-    <input
-      type="text"
-      bind:value={filterModel}
-      class="w3-input w3-border"
-      style="display:inline-block;width:auto;margin-left:4px;"
-    />
-  </label>
-  {#if haveGoogleData}
-    <label class="w3-bar-item">
-      <input
-        type="checkbox"
-        class="w3-check"
-        bind:checked={includeGoogleDataInExport}
-      />
-      Include Google Data in Export
-    </label>
-  {/if}
-  <button
-    class="w3-button w3-bar-item"
-    style="margin-left:1em;"
-    on:click={selectGoodAssets}>Select Good Assets</button
-  >
-</div>
+      <label
+        class="w3-bar-item"
+        tooltip="Whether the last user matches the current primary user of the asset"
+        >Mismatched:
+        <select
+          disabled={!loginDataReady}
+          bind:value={filterMismatched}
+          on:change={(e) => setFilterMismatched(e.target.value)}
+          class="w3-select w3-border"
+          style="width:auto;display:inline-block;margin-left:4px;"
+        >
+          <option value={FILTER_ANY}>All</option>
+          <option value={FILTER_TRUE}>Yes</option>
+          <option value={FILTER_FALSE}>No</option>
+        </select>
+      </label>
+      <label class="w3-bar-item"
+        >Stale:
+        <select
+          disabled={!loginDataReady}
+          bind:value={filterStale}
+          on:change={(e) => setFilterStale(e.target.value)}
+          class="w3-select w3-border"
+          style="width:auto;display:inline-block;margin-left:4px;"
+        >
+          <option value={FILTER_ANY}>All</option>
+          <option value={FILTER_TRUE}>Yes</option>
+          <option value={FILTER_FALSE}>No</option>
+        </select>
+      </label>
 
+      <div
+        class="w3-text-gray w3-small"
+        style="grid-area: note; padding: 0px 16px; font-style: italic;"
+      >
+        {#if !loginDataReady}
+          Run "Get Login Data" to filter by login status.
+        {:else}
+          Mismatched: machine not signed out to its last user.
+          <br />Stale: not used in last 30 days.
+        {/if}
+      </div>
+    </div>
+    <div class="dropdown-filter" style="position:relative;">
+      <button
+        class="w3-button w3-border w3-bar-item"
+        on:click={() => (showModelDropdown = !showModelDropdown)}
+      >
+        Model: {selectedModels.size === uniqueModels.length
+          ? "All"
+          : `${selectedModels.size}/${uniqueModels.length}`}
+        &#9662;
+      </button>
+      {#if showModelDropdown}
+        <div class="filter-dropdown w3-card-4 w3-white">
+          <div
+            class="w3-bar w3-border-bottom"
+            style="display:flex;gap:4px;padding:4px;"
+          >
+            <button
+              class="w3-button w3-tiny w3-light-grey"
+              on:click={() => {
+                selectedModels = new Set(uniqueModels);
+              }}>All</button
+            >
+            <button
+              class="w3-button w3-tiny w3-light-grey"
+              on:click={() => {
+                selectedModels = new Set();
+              }}>None</button
+            >
+          </div>
+          <div style="max-height:250px;overflow-y:auto;padding:4px 8px;">
+            {#each uniqueModels as model}
+              <label
+                class="w3-block"
+                style="cursor:pointer;white-space:nowrap;padding:2px 0;"
+              >
+                <input
+                  type="checkbox"
+                  class="w3-check"
+                  checked={selectedModels.has(model)}
+                  on:change={() => toggleModel(model)}
+                />
+                {model}
+              </label>
+            {/each}
+          </div>
+          <button
+            class="w3-button w3-block w3-border-top w3-small"
+            on:click={() => (showModelDropdown = false)}>Done</button
+          >
+        </div>
+      {/if}
+    </div>
+    <div class="dropdown-filter" style="position:relative;">
+      <button
+        class="w3-button w3-border w3-bar-item"
+        on:click={() => (showPurposeDropdown = !showPurposeDropdown)}
+      >
+        Purpose: {selectedPurposes.size === uniquePurposes.length
+          ? "All"
+          : `${selectedPurposes.size}/${uniquePurposes.length}`}
+        &#9662;
+      </button>
+      {#if showPurposeDropdown}
+        <div class="filter-dropdown w3-card-4 w3-white">
+          <div
+            class="w3-bar w3-border-bottom"
+            style="display:flex;gap:4px;padding:4px;"
+          >
+            <button
+              class="w3-button w3-tiny w3-light-grey"
+              on:click={() => {
+                selectedPurposes = new Set(uniquePurposes);
+              }}>All</button
+            >
+            <button
+              class="w3-button w3-tiny w3-light-grey"
+              on:click={() => {
+                selectedPurposes = new Set();
+              }}>None</button
+            >
+          </div>
+          <div style="max-height:250px;overflow-y:auto;padding:4px 8px;">
+            {#each uniquePurposes as purpose}
+              <label
+                class="w3-block"
+                style="cursor:pointer;white-space:nowrap;padding:2px 0;"
+              >
+                <input
+                  type="checkbox"
+                  class="w3-check"
+                  checked={selectedPurposes.has(purpose)}
+                  on:change={() => togglePurpose(purpose)}
+                />
+                {purpose}
+              </label>
+            {/each}
+          </div>
+          <button
+            class="w3-button w3-block w3-border-top w3-small"
+            on:click={() => (showPurposeDropdown = false)}>Done</button
+          >
+        </div>
+      {/if}
+    </div>
+    {#if haveGoogleData}
+      <label class="w3-bar-item">
+        <input
+          type="checkbox"
+          class="w3-check"
+          bind:checked={includeGoogleDataInExport}
+        />
+        Include Google Data in Export
+      </label>
+    {/if}
+    <button
+      class="w3-button w3-bar-item"
+      style="margin-left:1em;"
+      on:click={selectGoodAssets}>Select Good Assets</button
+    >
+  </div>
+{/if}
 <div class="w3-responsive">
   <p>Showing <b>{filteredData.length}</b> records</p>
 
@@ -329,124 +627,149 @@
     </div>
   {/if}
 
-  <table class="w3-table w3-bordered w3-striped">
-    <thead>
-      <tr>
-        <th>
-          <input
-            type="checkbox"
-            checked={selectedAssetTags.size === filteredData.length &&
-              filteredData.length > 0}
-            indeterminate={selectedAssetTags.size > 0 &&
-              selectedAssetTags.size < filteredData.length}
-            on:change={toggleSelectAll}
-          />
-        </th>
-        {#each headers as header, i}
-          <th
-            on:click={() => {
-              const colProp = columns[i];
-              if (sortColumn === colProp) {
-                sortDirection = sortDirection === "asc" ? "desc" : "asc";
-              } else {
-                sortColumn = colProp;
-                sortDirection = "asc";
-              }
-            }}
-          >
-            {header}
-          </th>
-        {/each}
-        {#if haveGoogleData}
-          <th
-            on:click={() => {
-              if (sortColumn === "lastUserMatch") {
-                sortDirection = sortDirection === "asc" ? "desc" : "asc";
-              } else {
-                sortColumn = "lastUserMatch";
-                sortDirection = "asc";
-              }
-            }}
-            style="cursor:pointer"
-          >
-            Last User?
-          </th>
-          <th
-            on:click={() => {
-              if (sortColumn === "lastUsed") {
-                sortDirection = sortDirection === "asc" ? "desc" : "asc";
-              } else {
-                sortColumn = "lastUsed";
-                sortDirection = "asc";
-              }
-            }}
-            style="cursor:pointer"
-          >
-            Last Used
-          </th>
-        {/if}
-      </tr>
-    </thead>
-    <tbody>
-      {#each filteredData as row (row.Serial)}
-        <tr
-          class:highlight-stale={haveGoogleData && isStale(row.lastUsed)}
-          class:highlight-wrong-user={haveGoogleData && !row.lastUserMatch}
-        >
-          <td>
+  {#if showTopScroll}
+    <div
+      class="top-scrollbar"
+      bind:this={topScrollEl}
+      on:scroll={handleTopScroll}
+    >
+      <div
+        class="top-scrollbar-content"
+        style={`width: ${topScrollWidth}px;`}
+      ></div>
+    </div>
+  {/if}
+  <div
+    class="report-table-scroll"
+    bind:this={tableScrollEl}
+    on:scroll={handleTableScroll}
+  >
+    <table
+      bind:this={reportTableEl}
+      class="w3-table w3-bordered w3-striped report-table-grid"
+    >
+      <thead>
+        <tr>
+          <th>
             <input
               type="checkbox"
-              checked={selectedAssetTags.has(row["Asset Tag"])}
-              on:change={() => toggleSelectRow(row)}
+              checked={selectedAssetTags.size === filteredData.length &&
+                filteredData.length > 0}
+              indeterminate={selectedAssetTags.size > 0 &&
+                selectedAssetTags.size < filteredData.length}
+              on:change={toggleSelectAll}
             />
-          </td>
-          {#each columns as column, i (i)}
-            <td>
-              {#if column == "_ASSET"}
-                <AssetDisplay asset={row} />
-              {:else}
-                {row[column]}
-              {/if}
-            </td>
+          </th>
+          {#each headers as header, i}
+            <th
+              on:click={() => {
+                const colProp = columns[i];
+                if (sortColumn === colProp) {
+                  sortDirection = sortDirection === "asc" ? "desc" : "asc";
+                } else {
+                  sortColumn = colProp;
+                  sortDirection = "asc";
+                }
+              }}
+            >
+              {header}
+            </th>
           {/each}
           {#if haveGoogleData}
-            <td class="user">
-              {row.recentUsers[0]}
-              <button
-                class="w3-button w3-small"
-                on:click={() => {
-                  expandedUsers[row.Serial] = !expandedUsers[row.Serial];
-                }}>+</button
-              >
-              {#if expandedUsers[row.Serial]}
-                <ul>
-                  {#each row.recentUsers.slice(1) as user}
-                    <li>{user}</li>
-                  {/each}
-                </ul>
-              {/if}
-            </td>
-            <td class="session">
-              {row.lastUsed}<button
-                class="w3-button w3-small"
-                on:click={() => {
-                  expandedSessions[row.Serial] = !expandedSessions[row.Serial];
-                }}>+</button
-              >
-
-              {#if expandedSessions[row.Serial]}
-                <ul>
-                  {#each row.sessions as session}
-                    <li>{session}</li>
-                  {/each}
-                </ul>
-              {/if}
-            </td>
+            <th
+              on:click={() => {
+                if (sortColumn === "lastUserMatch") {
+                  sortDirection = sortDirection === "asc" ? "desc" : "asc";
+                } else {
+                  sortColumn = "lastUserMatch";
+                  sortDirection = "asc";
+                }
+              }}
+              style="cursor:pointer"
+            >
+              Last User?
+            </th>
+            <th
+              on:click={() => {
+                if (sortColumn === "lastUsed") {
+                  sortDirection = sortDirection === "asc" ? "desc" : "asc";
+                } else {
+                  sortColumn = "lastUsed";
+                  sortDirection = "asc";
+                }
+              }}
+              style="cursor:pointer"
+            >
+              Last Used
+            </th>
           {/if}
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each filteredData as row (row.Serial)}
+          <tr
+            class:highlight-stale={haveGoogleData && isStale(row.lastUsed)}
+            class:highlight-wrong-user={haveGoogleData && !row.lastUserMatch}
+          >
+            <td>
+              <input
+                type="checkbox"
+                checked={selectedAssetTags.has(row["Asset Tag"])}
+                on:change={() => toggleSelectRow(row)}
+              />
+            </td>
+            {#each columns as column, i (i)}
+              <td>
+                {#if column == "_ASSET"}
+                  <AssetDisplay
+                    asset={row}
+                    openInNewTab={openAssetLinksInNewTab}
+                  />
+                {:else}
+                  {row[column]}
+                {/if}
+              </td>
+            {/each}
+            {#if haveGoogleData}
+              <td class="user">
+                {row.recentUsers[0]}
+                <button
+                  class="w3-button w3-small"
+                  on:click={() => {
+                    expandedUsers[row.Serial] = !expandedUsers[row.Serial];
+                  }}>+</button
+                >
+                {#if expandedUsers[row.Serial]}
+                  <ul>
+                    {#each row.recentUsers.slice(1) as user}
+                      <li>{user}</li>
+                    {/each}
+                  </ul>
+                {/if}
+              </td>
+              <td class="session">
+                {row.lastUsed}<button
+                  class="w3-button w3-small"
+                  on:click={() => {
+                    expandedSessions[row.Serial] =
+                      !expandedSessions[row.Serial];
+                  }}>+</button
+                >
+
+                {#if expandedSessions[row.Serial]}
+                  <ul>
+                    {#each row.sessions as session}
+                      <li>{session}</li>
+                    {/each}
+                  </ul>
+                {/if}
+              </td>
+            {/if}
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 
   {#if showLostConfirm}
     <div
@@ -473,13 +796,51 @@
           bind:value={lostNote}
           placeholder="Add a note (optional)"
         ></textarea>
+        <div class="w3-margin-top">
+          <label>
+            <input
+              type="checkbox"
+              class="w3-check"
+              bind:checked={billForReplacement}
+              disabled={isUpdatingStatus}
+            />
+            Bill family for replacement
+          </label>
+          {#if billForReplacement}
+            <div class="w3-margin-top">
+              <label for="replacement-cost">Replacement cost ($):</label>
+              <input
+                id="replacement-cost"
+                type="number"
+                min="0"
+                class="w3-input w3-border"
+                bind:value={replacementCost}
+                disabled={isUpdatingStatus}
+              />
+            </div>
+            <p class="w3-small w3-text-gray">
+              {billableSelectedCount} of {selectedAssetTags.size} selected device(s)
+              have a current student and can be billed. For each, we'll create a
+              closed "Lost" ticket with the replacement cost and ask the business
+              office to send an invoice to the family.
+            </p>
+          {/if}
+        </div>
         <div class="w3-bar w3-margin-top">
           <button
             class="w3-button w3-orange w3-bar-item"
             on:click={confirmMarkSelectedAsLost}
-            disabled={isUpdatingStatus}
+            disabled={isUpdatingStatus ||
+              (billForReplacement &&
+                (!replacementCost || replacementCost <= 0))}
           >
-            {isUpdatingStatus ? "Marking as Lost..." : "Confirm"}
+            {isUpdatingStatus
+              ? billForReplacement
+                ? "Marking lost & sending invoices..."
+                : "Marking as Lost..."
+              : billForReplacement
+                ? "Confirm & Send Invoice(s)"
+                : "Confirm"}
           </button>
         </div>
         {#if updateStatusError}
@@ -551,6 +912,12 @@
     display: flex;
     flex-direction: column;
   }
+  .modal-content.lost-confirm-modal {
+    width: auto;
+    height: auto;
+    max-height: 90vh;
+    border-radius: 8px;
+  }
   .modal-bulk-message .modal-content {
     width: 100vw;
     height: 100vh;
@@ -562,6 +929,29 @@
   }
   .data-exporter-wrap :global(button.w3-button) {
     margin-top: 0;
+  }
+  .report-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .top-scrollbar {
+    position: sticky;
+    top: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-bottom: 6px;
+    padding: 6px 0 4px;
+    background: #fff;
+    z-index: 20;
+    border-bottom: 1px solid #e0e0e0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .top-scrollbar-content {
+    height: 1px;
+  }
+  .report-table-grid {
+    min-width: 920px;
+    table-layout: auto;
   }
   .lost-confirm-modal {
     position: relative;
@@ -582,5 +972,23 @@
   }
   .close-modal-btn:hover {
     color: #c6093b;
+  }
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+  .dropdown-filter {
+    display: inline-block;
+    position: relative;
+  }
+  .filter-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    min-width: 220px;
+    background: #fff;
   }
 </style>

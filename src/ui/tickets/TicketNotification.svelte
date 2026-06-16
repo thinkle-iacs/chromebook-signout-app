@@ -16,6 +16,7 @@
     "BringMachineForRepairNoLoan",
     "BringMachineForRepairLoanReady",
     "RepairComplete",
+    "RepairCompleteTech",
     "TicketUpdate",
   ];
 

@@ -16,6 +16,7 @@
   import { showToast } from "@ui/components/toastStore";
   import { createNotifications as apiCreateNotifications } from "@data/notifications";
   import { signoutAsset as apiSignoutAsset } from "@data/signout";
+  import { confirmWithUser } from "@ui/components/confirmDialogStore";
 
   // ---- props ----
   export let ticket: Ticket;
@@ -266,6 +267,29 @@
 
   async function jumpTo(step: FlowStep) {
     if (!canJumpTo(step)) return;
+
+    // Confirm before directly updating ticket status when we are on steps that
+    // usually involve checking out etc...
+
+    if (step === "Have Device") {
+      if (
+        !(await confirmWithUser(
+          `Are you sure you want to mark this ticket as 'Have Device' without checking the device in? Normally you would want to click "Check in device for repair..." below`
+        ))
+      ) {
+        return;
+      }
+    }
+    if (ticket["Ticket Status"] === "Ready for Pickup") {
+      if (
+        !(await confirmWithUser(
+          `Are you sure you want to change the status from 'Ready for Pickup' to '${step}'? Normally you would want to click "Close" below which will also sign out the device etc.`
+        ))
+      ) {
+        return;
+      }
+    }
+
     await updateTicket({ "Ticket Status": step as any }, {
       action: "timeline_jump",
       status: step,

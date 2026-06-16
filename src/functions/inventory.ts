@@ -104,50 +104,57 @@ export async function handler(event: APIGatewayEvent, context: Context) {
   console.log("Query with filter:", filterByFormula);
 
   let allRecords = [];
-  let offset = 0;
   let totalRecordsFetched = 0;
 
-  // Fetch all records using pagination
-  do {
-    const query = inventoryBase.select({
-      filterByFormula,
-      fields: [
-        "Asset Tag",
-        "Category",
-        "Device Type",
-        "Make",
-        "Model",
-        "Serial",
-        "MAC-Wireless",
-        "Location",
-        "Staff User",
-        "Purpose",
-        "Year of Purchase",
-        "Student (Current)",
-        "Email (from Student (Current))",
-        "YOG (from Student (Current))", // Ensure YOG is included in the fields
-        "Full Name (from User)",
-        "SignoutRecordNumber",
-        "Charger Type",
-        "Staff Email",
-        "LASID",
-        "Student Status",
-        // NEW lookup fields for ticket integration
-        "Ticket Numbers",
-        "Temp Ticket Numbers",
-      ],
-      offset, // Pass the offset for pagination
+  try {
+    await new Promise<void>((resolve, reject) => {
+      inventoryBase
+        .select({
+          filterByFormula,
+          fields: [
+            "Asset Tag",
+            "Category",
+            "Device Type",
+            "Status",
+            "Make",
+            "Model",
+            "Serial",
+            "MAC-Wireless",
+            "Location",
+            "Staff User",
+            "Purpose",
+            "Year of Purchase",
+            "Student (Current)",
+            "Email (from Student (Current))",
+            "YOG (from Student (Current))",
+            "Full Name (from User)",
+            "SignoutRecordNumber",
+            "Charger Type",
+            "Staff Email",
+            "LASID",
+            "Student Status",
+            "Ticket Numbers",
+            "Temp Ticket Numbers",
+          ],
+        })
+        .eachPage(
+          (records, fetchNextPage) => {
+            allRecords = allRecords.concat(records);
+            totalRecordsFetched += records.length;
+            if (totalRecordsFetched > 2000) {
+              reject(new Error("TOO_MANY_RECORDS"));
+              return;
+            }
+            fetchNextPage();
+          },
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          },
+        );
     });
-
-    const result = await query.firstPage();
-    allRecords = allRecords.concat(result); // Append the current batch of records
-    // Airtable SDK exposes offset on the result set via _offset (undocumented) or through eachPage; guard safely
-    // @ts-ignore - access internal property if present
-    offset = query._offset || 0;
-    totalRecordsFetched += result.length;
-
-    // Sanity check: Stop fetching if more than 2000 records are retrieved
-    if (totalRecordsFetched > 2000) {
+  } catch (err) {
+    if (err.message === "TOO_MANY_RECORDS") {
       console.warn("Sanity check triggered: Too many records fetched.");
       return {
         statusCode: 400,
@@ -156,7 +163,8 @@ export async function handler(event: APIGatewayEvent, context: Context) {
         }),
       };
     }
-  } while (offset); // Continue until there is no offset
+    throw err;
+  }
 
   console.log(`Total records fetched: ${totalRecordsFetched}`);
 
