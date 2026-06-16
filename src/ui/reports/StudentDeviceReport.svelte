@@ -12,6 +12,9 @@
   } from "@data/studentDeviceReport";
   import { INACTIVE_PURPOSES } from "@data/inventory";
   import PurposeBadge from "@assets/PurposeBadge.svelte";
+  import { getRepairingAssetTags } from "@data/signoutHistory";
+
+  let repairingTags: Set<string> = new Set();
 
   type SortColumn =
     | "student"
@@ -422,6 +425,7 @@
     progress = { completed: 0, total: 0 };
 
     try {
+      repairingTags = await getRepairingAssetTags(true);
       rows = await buildStudentDeviceReport({
         yog: inputMode === "yog" ? selectedYOG.trim() : undefined,
         emails: inputMode === "list" ? parsedEmails : undefined,
@@ -793,6 +797,11 @@
                           asset={displayRow.machine.asset}
                           openInNewTab={true}
                           showOwner={true}
+                          signoutStatus={repairingTags.has(
+                            displayRow.machine.assetTag,
+                          )
+                            ? "Repairing"
+                            : ""}
                         />
                       {:else}
                         <div>

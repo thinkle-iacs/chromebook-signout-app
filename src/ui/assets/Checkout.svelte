@@ -736,7 +736,12 @@ Hinge bolts:New screws needed for display hinges*/
             <div in:fade|local class="w3-deep-orange w3-card w3-container">
               <h3>Student already has loans out:</h3>
               {#each currentLoans as loan}
-                <AssetDisplay asset={loan} />
+                <AssetDisplay
+                  asset={loan}
+                  signoutStatus={repairingTags.has(loan["Asset Tag"])
+                    ? "Repairing"
+                    : ""}
+                />
               {/each}
             </div>
           {/if}

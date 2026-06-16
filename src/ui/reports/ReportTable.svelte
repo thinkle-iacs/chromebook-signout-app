@@ -608,7 +608,18 @@
   </div>
 {/if}
 <div class="w3-responsive">
-  <p>Showing <b>{filteredData.length}</b> records</p>
+  <p>
+    Showing <b>{filteredData.length}</b> records
+    {#if repairingTags.size}
+      {@const shownInRepair = filteredData.filter((r) =>
+        repairingTags.has(r["Asset Tag"]),
+      ).length}
+      <span class="w3-text-amber"
+        >· {shownInRepair} in repair (of {repairingTags.size} total in our
+        hands)</span
+      >
+    {/if}
+  </p>
 
   <div
     class="w3-bar w3-center w3-margin-bottom"
