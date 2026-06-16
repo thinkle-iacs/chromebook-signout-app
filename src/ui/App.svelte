@@ -138,7 +138,14 @@
     });
 
     router("/tickets/", (ctx) => {
+      params = {};
       page = TicketBrowser;
+      title = "Ticket Browser";
+    });
+    router("/tickets/new/device/:tag", (ctx) => {
+      params = { newDeviceTag: ctx.params.tag };
+      page = TicketBrowser;
+      update += 1; // remount so the draft is created from the new tag
       title = "Ticket Browser";
     });
     router("/invoices/", (ctx) => {

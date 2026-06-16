@@ -1,12 +1,18 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { get } from "svelte/store";
   import { getTickets, ticketsStore, type Ticket } from "@data/tickets";
+  import { assetStore, searchForAsset } from "@data/inventory";
   import AssetDisplay from "@assets/AssetDisplay.svelte";
   import StudentTag from "@people/students/StudentTag.svelte";
   import TicketWorkflow from "./TicketWorkflow.svelte";
   import type { HistoryEntry } from "./history";
   import { showToast } from "@ui/components/toastStore";
   import Loader from "@components/Loader.svelte";
+
+  // When set (via /tickets/new/device/:tag) open a fresh draft ticket with
+  // this device already assigned, e.g. from the check-in screen.
+  export let newDeviceTag: string = "";
 
   let loading = true;
   let error: string | null = null;
@@ -106,7 +112,30 @@
       error = err.message || "Failed to load tickets";
       loading = false;
     }
+    if (newDeviceTag) {
+      await openDraftForDevice(newDeviceTag);
+    }
   });
+
+  async function openDraftForDevice(tag: string) {
+    // assetStore is keyed by the canonical (uppercase) Asset Tag, but the URL
+    // param may be any case, so normalize before the store lookup.
+    const canonical = (tag || "").toUpperCase();
+    let asset: any = get(assetStore)[canonical] || get(assetStore)[tag];
+    if (!asset) {
+      try {
+        const results = await searchForAsset(tag);
+        // searchForAsset also indexes the store by record id, which avoids
+        // any remaining case mismatch on the Asset Tag.
+        const rec = results && results[0];
+        asset =
+          (rec && get(assetStore)[rec.id]) || get(assetStore)[canonical] || null;
+      } catch (e) {
+        // fall through — we'll still open a draft, just without the device
+      }
+    }
+    createTempTicket(asset);
+  }
 
   function showTicketDetail(ticket: Ticket) {
     selectedTicket = ticket;
@@ -134,7 +163,7 @@
 
   let currentTempTicketId: string | null = null;
 
-  function createTempTicket() {
+  function createTempTicket(device: any = null) {
     const tempId = `TEMP-${Date.now()}`;
     const created = new Date().toISOString();
     const temp: any = {
@@ -146,13 +175,23 @@
       History: JSON.stringify({ entries: [] }),
     };
 
+    // Pre-assign the device when opened from a check-in shortcut
+    if (device && device._id) {
+      temp.Device = [device._id];
+      temp.FormAsset = device["Asset Tag"] || "";
+      temp._linked = { Device: device };
+    }
+
     // push into local store for immediate visibility
     ticketsStore.update(($s: any) => {
       $s[tempId] = temp;
       return $s;
     });
     currentTempTicketId = tempId;
-    showToast("Draft ticket created", "info");
+    showToast(
+      device ? `Draft ticket for ${device["Asset Tag"]}` : "Draft ticket created",
+      "info"
+    );
     showTicketDetail(temp);
   }
 
@@ -240,7 +279,7 @@
   >
     <h2>Tickets</h2>
     <div style="display:flex; gap:8px;">
-      <button class="w3-button w3-green" on:click={createTempTicket}>
+      <button class="w3-button w3-green" on:click={() => createTempTicket()}>
         New
       </button>
     </div>

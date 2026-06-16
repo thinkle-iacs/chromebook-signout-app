@@ -49,6 +49,13 @@
     DEFAULT_REPLACEMENT_COST,
   } from "@data/lostDeviceBilling";
   import { showToast } from "@components/toastStore";
+  import {
+    getOpenTicketsWithTempDevice,
+    getOpenTicketsForStudentObj,
+    unlinkTempDevice,
+    linkTempDevice,
+  } from "@data/tempDevice";
+  import type { Ticket } from "@data/tickets";
 
   // Set via the /checkout/lost/:tag route to land here with the asset
   // pre-filled and "Mark as Lost" selected (e.g. from student lookup).
@@ -232,6 +239,100 @@
     (asset) => asset && getBillableStudentId(asset)
   );
 
+  // --- Temp device swap: checking IN a device that's a temp on a ticket ---
+  // tag -> open Ticket that lists it as Temporary Device (or null if none)
+  let tempTicketsByTag: Record<string, Ticket | null> = {};
+  let tempTicketLookups = new Set<string>();
+  // tag -> whether to unlink (default true)
+  let unlinkTempByTag: Record<string, boolean> = {};
+
+  $: returnedTempAssets =
+    (status == "Returned" &&
+      (assets || []).filter(
+        (a) => a && tempTicketsByTag[a["Asset Tag"]]
+      )) ||
+    [];
+  $: if (status == "Returned") lookupTempTickets(assets);
+
+  async function lookupTempTickets(assets) {
+    for (let asset of assets || []) {
+      if (!asset) continue;
+      const tag = asset["Asset Tag"];
+      if (tempTicketLookups.has(tag)) continue;
+      tempTicketLookups.add(tag);
+      try {
+        const tickets = await getOpenTicketsWithTempDevice(tag);
+        tempTicketsByTag = { ...tempTicketsByTag, [tag]: tickets[0] || null };
+        if (tickets[0] && unlinkTempByTag[tag] === undefined) {
+          unlinkTempByTag = { ...unlinkTempByTag, [tag]: true };
+        }
+      } catch (e) {
+        logger.logError("Failed to look up temp-device tickets:", e);
+        tempTicketLookups.delete(tag); // allow retry
+      }
+    }
+  }
+
+  // --- Temp device swap: checking OUT a loaner to a student with a ticket ---
+  let studentOpenTickets: Ticket[] = [];
+  let lastTicketStudentId: string | null = null;
+  let linkTempForCheckout = false;
+  let linkTempTouched = false; // user overrode the default — stop auto-setting
+  let lastCheckoutTag = "";
+  let selectedTempTicketId = "";
+  // Only offer linking on a single-device checkout (a ticket has one temp).
+  $: checkoutAsset =
+    status == "Out" && studentMode && (assets || []).length === 1
+      ? assets[0]
+      : null;
+
+  $: if (status == "Out" && studentMode && student) {
+    loadStudentOpenTickets(student);
+  } else if (!student) {
+    studentOpenTickets = [];
+    lastTicketStudentId = null;
+  }
+
+  async function loadStudentOpenTickets(student) {
+    if (student._id === lastTicketStudentId) return;
+    lastTicketStudentId = student._id;
+    studentOpenTickets = [];
+    selectedTempTicketId = "";
+    linkTempForCheckout = false;
+    linkTempTouched = false;
+    try {
+      const tickets = await getOpenTicketsForStudentObj(student);
+      // Guard against a later student selection winning the race
+      if (student._id !== lastTicketStudentId) return;
+      studentOpenTickets = tickets;
+      if (tickets.length) selectedTempTicketId = tickets[0]._id;
+    } catch (e) {
+      logger.logError("Failed to load student open tickets:", e);
+      // Clear the guard so a later interaction retries instead of being
+      // stuck with no checkbox until the page is refreshed.
+      if (student._id === lastTicketStudentId) lastTicketStudentId = null;
+    }
+  }
+
+  // Default the link on for a Temp-purpose loaner, but only until the user
+  // overrides it; re-derive when the checkout device changes.
+  $: if (checkoutAsset && checkoutAsset["Asset Tag"] !== lastCheckoutTag) {
+    lastCheckoutTag = checkoutAsset["Asset Tag"];
+    linkTempTouched = false;
+  }
+  $: if (checkoutAsset && studentOpenTickets.length && !linkTempTouched) {
+    linkTempForCheckout = checkoutAsset.Purpose === "Temp";
+  }
+
+  // Distinct asset tags just checked back in, for the "open a ticket" shortcut.
+  $: recentReturnedTags = [
+    ...new Set(
+      checkedOut
+        .filter((r) => r.status === "Returned" && r.asset)
+        .map((r) => r.asset["Asset Tag"])
+    ),
+  ];
+
   async function billLostAsset(asset) {
     $checkoutStatus = `Sending invoice for ${asset["Asset Tag"]}`;
     try {
@@ -322,6 +423,62 @@
             await updateAsset(asset._id, { Status: "Active" });
           }
         }
+        // Temp swap: returned a loaner that's a temp on a ticket -> unlink it
+        if (
+          success &&
+          asset &&
+          status == "Returned" &&
+          unlinkTempByTag[asset["Asset Tag"]] &&
+          tempTicketsByTag[asset["Asset Tag"]]
+        ) {
+          const t = tempTicketsByTag[asset["Asset Tag"]];
+          $checkoutStatus = `Updating Ticket #${t.Number}`;
+          try {
+            await unlinkTempDevice(t, asset["Asset Tag"]);
+            showToast(
+              `Removed ${asset["Asset Tag"]} as temp device on Ticket #${t.Number}`,
+              "success"
+            );
+          } catch (e) {
+            logger.logError("Failed to unlink temp device:", e);
+            showToast(
+              `Couldn't update Ticket #${t.Number}: ${e.message}`,
+              "error"
+            );
+          }
+          $checkoutStatus = "";
+        }
+        // Temp swap: loaned a device to a ticket-holder -> link it as temp
+        if (
+          success &&
+          asset &&
+          status == "Out" &&
+          linkTempForCheckout &&
+          selectedTempTicketId &&
+          checkoutAsset &&
+          asset["Asset Tag"] === checkoutAsset["Asset Tag"]
+        ) {
+          const t = studentOpenTickets.find(
+            (x) => x._id === selectedTempTicketId
+          );
+          if (t) {
+            $checkoutStatus = `Linking to Ticket #${t.Number}`;
+            try {
+              await linkTempDevice(t, asset);
+              showToast(
+                `Linked ${asset["Asset Tag"]} as temp device on Ticket #${t.Number}`,
+                "success"
+              );
+            } catch (e) {
+              logger.logError("Failed to link temp device:", e);
+              showToast(
+                `Couldn't update Ticket #${t.Number}: ${e.message}`,
+                "error"
+              );
+            }
+            $checkoutStatus = "";
+          }
+        }
       }
     }
     /* if (charger) {
@@ -338,6 +495,16 @@
       $assetTags = [];
       notes = "";
       billLostReplacement = false;
+      // Reset temp-swap state for the next transaction
+      tempTicketsByTag = {};
+      tempTicketLookups = new Set();
+      unlinkTempByTag = {};
+      studentOpenTickets = [];
+      lastTicketStudentId = null;
+      linkTempForCheckout = false;
+      linkTempTouched = false;
+      lastCheckoutTag = "";
+      selectedTempTicketId = "";
       $screenNote = null;
       $keyboardNote = null;
       $powerNote = null;
@@ -714,6 +881,62 @@ Hinge bolts:New screws needed for display hinges*/
         </FormField>
       </div>
     {/if}
+    {#if status == "Returned" && returnedTempAssets.length}
+      <div in:fly|local={{ y: -30 }} out:fade|local class="row">
+        <FormField name="Temp Device">
+          <div>
+            {#each returnedTempAssets as asset (asset["Asset Tag"])}
+              {@const t = tempTicketsByTag[asset["Asset Tag"]]}
+              {#if t}
+                <label class:bold={unlinkTempByTag[asset["Asset Tag"]]}>
+                  <input
+                    type="checkbox"
+                    bind:checked={unlinkTempByTag[asset["Asset Tag"]]}
+                  />
+                  Remove <b>{asset["Asset Tag"]}</b> as the temp device on
+                  Ticket #{t.Number}
+                </label>
+              {/if}
+            {/each}
+          </div>
+        </FormField>
+      </div>
+    {/if}
+    {#if checkoutAsset && studentOpenTickets.length}
+      <div in:fly|local={{ y: -30 }} out:fade|local class="row">
+        <FormField name="Temp Device">
+          <div>
+            <label class:bold={linkTempForCheckout}>
+              <input
+                type="checkbox"
+                bind:checked={linkTempForCheckout}
+                on:change={() => (linkTempTouched = true)}
+              />
+              Link <b>{checkoutAsset["Asset Tag"]}</b> as the temp device for
+              {#if studentOpenTickets.length === 1}
+                Ticket #{studentOpenTickets[0].Number}
+              {:else}
+                ticket:
+              {/if}
+            </label>
+            {#if studentOpenTickets.length > 1}
+              <select
+                class="w3-select w3-border"
+                style="width:auto; display:inline-block; margin-left:8px;"
+                bind:value={selectedTempTicketId}
+                disabled={!linkTempForCheckout}
+              >
+                {#each studentOpenTickets as t (t._id)}
+                  <option value={t._id}>
+                    #{t.Number} — {t["Ticket Status"]}
+                  </option>
+                {/each}
+              </select>
+            {/if}
+          </div>
+        </FormField>
+      </div>
+    {/if}
     {#if status == "Returned"}
       <div in:fly|local={{ y: -30 }} out:fade|local class="row">
         <FormField name="Machine Notes">
@@ -853,6 +1076,20 @@ Hinge bolts:New screws needed for display hinges*/
   </SimpleForm>
 </article>
 <article class="w3-container">
+  {#if recentReturnedTags.length}
+    <div class="w3-margin-bottom">
+      <span class="w3-small w3-text-gray">Need to open a ticket?</span>
+      {#each recentReturnedTags as tag (tag)}
+        <a
+          class="w3-button w3-small w3-border w3-round w3-margin-left"
+          href={`/tickets/new/device/${tag}`}
+          on:click={l(`/tickets/new/device/${tag}`)}
+        >
+          Open a ticket about {tag}
+        </a>
+      {/each}
+    </div>
+  {/if}
   {#if checkedOut.length}
     Send Message:
     <MessageSender signoutItem={checkedOut[0]} />
