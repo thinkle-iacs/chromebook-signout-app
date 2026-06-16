@@ -6,10 +6,15 @@
   export let asset: Asset | null = null;
   export let showOwner: boolean = false;
   export let openInNewTab: boolean = false;
+  // Latest signout-record status (e.g. "Out", "Repairing") when the caller has
+  // it. Lets us show "repairing for" instead of "signed out to" for a device
+  // that's on the repair bench but still assigned to its student.
+  export let signoutStatus: string = "";
   $: assetTag = (asset && asset["Asset Tag"]) || "";
   $: purpose = asset?.Purpose || null;
   $: isRetired = purpose === "Disposed" || purpose === "Retired";
   $: isLost = asset?.Status === "Lost";
+  $: isRepairing = signoutStatus === "Repairing" && !isLost;
 </script>
 
 {#if !asset || !assetTag}
@@ -42,6 +47,8 @@
         <PurposeBadge {purpose} compact={true} />
         {#if isLost}
           <span class="w3-tag w3-red w3-round lost-badge">LOST</span>
+        {:else if isRepairing}
+          <span class="w3-tag w3-amber w3-round repair-badge">IN REPAIR</span>
         {/if}
       </div>
       <div class="limit w3-tiny">
@@ -58,7 +65,13 @@
       {#if showOwner}
         <div class="w3-small">
           {#if asset["Email (from Student (Current))"]}
-            {isLost ? "Lost — last signed out to" : "Currently signed out to"}
+            {#if isLost}
+              Lost — last signed out to
+            {:else if isRepairing}
+              Currently <em class="repairing-word">repairing</em> for
+            {:else}
+              Currently signed out to
+            {/if}
             <b class:inactive={asset["Student Status"]?.[0] === "Inactive"}>
               <EmailDisplay email={asset["Email (from Student (Current))"]} />
             </b>
@@ -124,9 +137,14 @@
     border: 2px dashed currentColor !important;
     background: transparent !important;
   }
-  .lost-badge {
+  .lost-badge,
+  .repair-badge {
     font-size: 0.8em;
     font-weight: bold;
     margin-left: 4px;
+  }
+  .repairing-word {
+    font-style: italic;
+    font-weight: bold;
   }
 </style>
