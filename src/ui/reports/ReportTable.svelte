@@ -225,12 +225,18 @@
       if (filterStale === FILTER_TRUE && !isStale(row.lastUsed)) return false;
       if (filterStale === FILTER_FALSE && isStale(row.lastUsed)) return false;
     }
+    // Only filter when SOME (not all, not zero) are selected. size === 0 is
+    // the transient pre-init state (and a deliberate "None" click) — treating
+    // it as "no filter" stops the table rendering empty until a filter is
+    // touched.
     if (
+      selectedModels.size > 0 &&
       selectedModels.size < uniqueModels.length &&
       !selectedModels.has(row.Model)
     )
       return false;
     if (
+      selectedPurposes.size > 0 &&
       selectedPurposes.size < uniquePurposes.length &&
       !selectedPurposes.has(row.Purpose)
     )
