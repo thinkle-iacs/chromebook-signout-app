@@ -104,8 +104,8 @@
     return new Date(lastUsed) < thirtyDaysAgo;
   }
   function resortData(data, direction, prop) {
-    sortedData = [...data]; // Create a copy...
-    sortedData.sort((a, b) => {
+    const sorted = [...data]; // Create a copy...
+    sorted.sort((a, b) => {
       let sortProp = prop;
       if (prop === "_ASSET") {
         sortProp = "Asset Tag";
@@ -132,9 +132,14 @@
       }
       return 0;
     });
+    return sorted;
   }
 
-  $: resortData(data, sortDirection, sortColumn);
+  // Derived (not a side-effect assignment) so Svelte orders the chain
+  // data -> sortedData -> filteredData and recomputes filteredData when the
+  // report data first arrives — otherwise the table stays empty until some
+  // other state change forces a re-flush.
+  $: sortedData = resortData(data, sortDirection, sortColumn);
 
   let haveGoogleData = false;
   $: {
