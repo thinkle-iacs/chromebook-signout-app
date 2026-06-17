@@ -69,6 +69,8 @@
   let sortDirection: "asc" | "desc" = "desc";
   let selectedStatuses: Set<string> = new Set();
   let hideRetired = true;
+  // "all" | "exclude" (hide in-repair) | "only"
+  let repairFilter: "all" | "exclude" | "only" = "all";
   let expandedMachines = {};
   let tableScrollEl: HTMLDivElement | null = null;
   let topScrollEl: HTMLDivElement | null = null;
@@ -96,6 +98,8 @@
     hideRetired,
     sortColumn,
     sortDirection,
+    repairFilter,
+    repairingTags,
   );
   $: exportRows = exportFromDisplayRows(displayRows);
   $: filename = [
@@ -380,10 +384,20 @@
     hideInactive: boolean,
     column: SortColumn,
     direction: "asc" | "desc",
+    repair: "all" | "exclude" | "only" = "all",
+    repairing: Set<string> = new Set(),
   ) {
     const filtered = reportRows.filter((displayRow) => {
       if (!matchesStatusFilter(displayRow, selected)) return false;
       if (hideInactive && displayRow.machine?.purpose && INACTIVE_PURPOSES.includes(displayRow.machine.purpose)) return false;
+      if (repair !== "all") {
+        const inRepair = !!(
+          displayRow.machine?.assetTag &&
+          repairing.has(displayRow.machine.assetTag)
+        );
+        if (repair === "exclude" && inRepair) return false;
+        if (repair === "only" && !inRepair) return false;
+      }
       return true;
     });
 
@@ -657,6 +671,20 @@
       <label class="retired-toggle">
         <input type="checkbox" bind:checked={hideRetired} />
         Hide Disposed/Retired machines
+      </label>
+    {/if}
+
+    {#if rows.length && repairingTags.size}
+      <label
+        class="retired-toggle"
+        title="Devices in for repair are physically in our hands, though still assigned to their student."
+      >
+        In repair:
+        <select bind:value={repairFilter}>
+          <option value="all">Include</option>
+          <option value="exclude">Exclude (in our hands)</option>
+          <option value="only">Only in-repair</option>
+        </select>
       </label>
     {/if}
 
