@@ -96,6 +96,31 @@ export function clearRepairingTagsCache() {
   repairingTagsCache = null;
 }
 
+// Map of asset tag -> its latest signout status ("Out", "Repairing",
+// "Returned", "Lost", ...). The most recent signout record is the source of
+// truth for who holds a device and whether it's actually out with a student
+// vs. in our hands. One bulk query; used by the loan report to distinguish
+// "actually out" from "in for repair" regardless of Purpose.
+let latestStatusCache: Map<string, string> | null = null;
+
+export async function getLatestSignoutStatusByTag(
+  force = false
+): Promise<Map<string, string>> {
+  if (latestStatusCache && !force) return latestStatusCache;
+  const records = await lookupSignoutHistory({ isLatest: true });
+  const map = new Map<string, string>();
+  for (const r of records) {
+    const tag = r["Asset Tag (from Asset)"]?.[0];
+    if (tag) map.set(tag, r.Status);
+  }
+  latestStatusCache = map;
+  return map;
+}
+
+export function clearLatestStatusCache() {
+  latestStatusCache = null;
+}
+
 export let fetching = writable(false);
 export let fullHistory: Writable<SignoutHistoryEntry[]> = writable([]);
 

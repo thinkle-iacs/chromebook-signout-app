@@ -17,11 +17,11 @@
   export let columns = [];
   export let filename = "data.csv";
   export let openAssetLinksInNewTab = false;
-  // Asset tags currently in for repair (in our hands, latest signout =
-  // "Repairing"). Used to flag rows and offer a repair-status filter.
-  export let repairingTags = new Set();
-  // "all" | "exclude" (hide in-repair) | "only" (just in-repair)
-  let repairFilter = "all";
+  // Map of asset tag -> latest checkout status ("Out", "Repairing", ...).
+  // The last checkout is the source of truth for who actually holds a device.
+  export let statusByTag = new Map();
+  // "all" | "out" (actually out with a student) | "repair" (in our hands)
+  let checkoutFilter = "all";
   // sortColumn is now a property name (string)
   let sortColumn = columns[0] || "";
   let sortDirection = "asc";
@@ -235,10 +235,10 @@
       !selectedPurposes.has(row.Purpose)
     )
       return false;
-    if (repairFilter !== "all") {
-      const inRepair = repairingTags.has(row["Asset Tag"]);
-      if (repairFilter === "exclude" && inRepair) return false;
-      if (repairFilter === "only" && !inRepair) return false;
+    if (checkoutFilter !== "all") {
+      const st = statusByTag.get(row["Asset Tag"]);
+      if (checkoutFilter === "out" && st !== "Out") return false;
+      if (checkoutFilter === "repair" && st !== "Repairing") return false;
     }
     return true;
   });
@@ -470,19 +470,19 @@
         {/if}
       </div>
     </div>
-    {#if repairingTags.size}
+    {#if statusByTag.size}
       <label
         class="w3-bar-item"
-        title="Devices in for repair are physically in our hands, though still assigned to their student."
-        >In repair:
+        title="Based on each device's last checkout action — the source of truth for who actually holds it. 'In for repair' means it's in our hands though still assigned to the student."
+        >Show:
         <select
-          bind:value={repairFilter}
+          bind:value={checkoutFilter}
           class="w3-select w3-border"
           style="width:auto;display:inline-block;margin-left:4px;"
         >
-          <option value="all">Include</option>
-          <option value="exclude">Exclude (in our hands)</option>
-          <option value="only">Only in-repair</option>
+          <option value="all">All assigned</option>
+          <option value="out">Actually out (with student)</option>
+          <option value="repair">In for repair (in our hands)</option>
         </select>
       </label>
     {/if}
@@ -610,13 +610,18 @@
 <div class="w3-responsive">
   <p>
     Showing <b>{filteredData.length}</b> records
-    {#if repairingTags.size}
-      {@const shownInRepair = filteredData.filter((r) =>
-        repairingTags.has(r["Asset Tag"]),
+    {#if statusByTag.size}
+      {@const shownOut = filteredData.filter(
+        (r) => statusByTag.get(r["Asset Tag"]) === "Out",
       ).length}
-      <span class="w3-text-amber"
-        >· {shownInRepair} in repair (of {repairingTags.size} total in our
-        hands)</span
+      {@const shownRepair = filteredData.filter(
+        (r) => statusByTag.get(r["Asset Tag"]) === "Repairing",
+      ).length}
+      <span class="w3-small w3-text-grey"
+        >· <b>{shownOut}</b> actually out
+        {#if shownRepair}· <span class="w3-text-amber"
+            ><b>{shownRepair}</b> in for repair (in our hands)</span
+          >{/if}</span
       >
     {/if}
   </p>
@@ -761,9 +766,7 @@
                   <AssetDisplay
                     asset={row}
                     openInNewTab={openAssetLinksInNewTab}
-                    signoutStatus={repairingTags.has(row["Asset Tag"])
-                      ? "Repairing"
-                      : ""}
+                    signoutStatus={statusByTag.get(row["Asset Tag"]) || ""}
                   />
                 {:else}
                   {row[column]}
