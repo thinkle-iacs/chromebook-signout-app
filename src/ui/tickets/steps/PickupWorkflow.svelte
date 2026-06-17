@@ -253,16 +253,25 @@
         <p class="w3-small w3-text-gray" style="margin-top:0;">
           Confirm what should happen to the devices when this ticket closes:
         </p>
-        {#if mainTag}
+        {#if linkedDeviceId}
           <label class="w3-small" style="display:block;margin-bottom:8px;">
-            <input type="checkbox" bind:checked={checkOutRepaired} />
-            Check out repaired device <b>{mainTag}</b> to <b>{studentName}</b>
+            <input
+              type="checkbox"
+              bind:checked={checkOutRepaired}
+              disabled={processing}
+            />
+            Check out repaired device <b>{mainTag || "device"}</b> to
+            <b>{studentName}</b>
           </label>
         {/if}
-        {#if tempTag}
+        {#if linkedTempId}
           <label class="w3-small" style="display:block;margin-bottom:8px;">
-            <input type="checkbox" bind:checked={checkInTemp} />
-            Check in temporary device <b>{tempTag}</b>
+            <input
+              type="checkbox"
+              bind:checked={checkInTemp}
+              disabled={processing}
+            />
+            Check in temporary device <b>{tempTag || "temp device"}</b>
           </label>
         {/if}
         {#if !willCheckOut && !willCheckInTemp}
