@@ -27,6 +27,53 @@
   let sortOrder: "asc" | "desc" = "desc";
   let statusFilter: string = "";
   let priorityFilter: string = "";
+  let searchText = "";
+
+  function arr(v: any): string {
+    return Array.isArray(v) ? v.filter(Boolean).join(" ") : v || "";
+  }
+  // Searchable/sortable student text for a ticket (name + email)
+  function studentText(t: any): string {
+    return [
+      t._linked?.Student?.Name,
+      t._linked?.Student?.Email,
+      arr(t["Name (from Student)"]),
+      arr(t["Email (from Student)"]),
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+  // Primary device tag for sorting (falls back to the form's asset tag)
+  function deviceTag(t: any): string {
+    return t._linked?.Device?.["Asset Tag"] || t.FormAsset || "";
+  }
+  function tempTag(t: any): string {
+    return (
+      t._linked?.["Temporary Device"]?.["Asset Tag"] ||
+      arr(t["Asset Tag (from Temporary Device)"]) ||
+      ""
+    );
+  }
+  // Everything an omni-search should match against, lower-cased.
+  function searchHaystack(t: any): string {
+    return [
+      "#" + (t.Number ?? ""),
+      studentText(t),
+      deviceTag(t),
+      tempTag(t),
+      t["User Description"],
+      t.Notes,
+      t.PrivateNotes,
+      t.SubmittedBy,
+      t._linked?.Staff?.["Full Name"],
+      t._linked?.Staff?.Email,
+      t.Resolution,
+      t["Ticket Status"],
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
 
   // Reactive statement to update tickets array when store changes
   $: tickets = Object.values($ticketsStore);
@@ -61,6 +108,15 @@
       );
     }
 
+    // Omni search (all space-separated terms must match)
+    const terms = searchText.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length) {
+      filtered = filtered.filter((ticket) => {
+        const haystack = searchHaystack(ticket);
+        return terms.every((term) => haystack.includes(term));
+      });
+    }
+
     // Sort tickets
     filtered.sort((a, b) => {
       let aVal, bVal;
@@ -81,6 +137,14 @@
         case "Status":
           aVal = a["Ticket Status"] || "";
           bVal = b["Ticket Status"] || "";
+          break;
+        case "Student":
+          aVal = studentText(a).toLowerCase();
+          bVal = studentText(b).toLowerCase();
+          break;
+        case "Device":
+          aVal = deviceTag(a).toLowerCase();
+          bVal = deviceTag(b).toLowerCase();
           break;
         default:
           aVal = a.Number || 0;
@@ -294,6 +358,16 @@
   {:else}
     <!-- Filters and Controls -->
     <div class="w3-panel w3-light-gray w3-padding">
+      <div class="w3-margin-bottom">
+        <label class="w3-text-blue" for="ticket-search"><b>Search</b></label>
+        <input
+          id="ticket-search"
+          type="text"
+          class="w3-input w3-border w3-small"
+          bind:value={searchText}
+          placeholder="Student, device tag, ticket #, description…"
+        />
+      </div>
       <div class="w3-row-padding">
         <div class="w3-col s12 m3">
           <div class="w3-text-blue"><b>Filters</b></div>
@@ -355,6 +429,8 @@
             <option value="Created">Date Created</option>
             <option value="Priority">Priority</option>
             <option value="Status">Status</option>
+            <option value="Student">Student</option>
+            <option value="Device">Device</option>
           </select>
           <div class="w3-margin-top">
             <button
@@ -424,8 +500,24 @@
             <th>Resolution</th>
             <th>Device Status</th>
             <th>Temp</th>
-            <th>Student</th>
-            <th>Device</th>
+            <th>
+              <button class="sort-header" on:click={() => setSortBy("Student")}>
+                Student {sortBy === "Student"
+                  ? sortOrder === "asc"
+                    ? "↑"
+                    : "↓"
+                  : ""}
+              </button>
+            </th>
+            <th>
+              <button class="sort-header" on:click={() => setSortBy("Device")}>
+                Device {sortBy === "Device"
+                  ? sortOrder === "asc"
+                    ? "↑"
+                    : "↓"
+                  : ""}
+              </button>
+            </th>
             <th>Description</th>
             <th>Staff</th>
             <th>Submitted By</th>
