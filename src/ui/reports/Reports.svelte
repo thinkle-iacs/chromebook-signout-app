@@ -26,6 +26,7 @@
   import ReportTable from "./ReportTable.svelte";
   import Loader from "@components/Loader.svelte";
   import StudentDeviceReport from "./StudentDeviceReport.svelte";
+  import { getLatestSignoutStatusByTag } from "@data/signoutHistory";
 
   let activeTab:
     | "studentLoans"
@@ -44,10 +45,14 @@
   // Add filtering by Student Status
   let selectedStudentStatus: string | null = null; // New variable for Student Status
   let reportRun = false;
+  let statusByTag: Map<string, string> = new Map();
   // Ensure YOG filtering is applied when fetching student loans
   async function fetchData() {
     loading = true;
     reportRun = false;
+    // Latest checkout status per device — the source of truth for who holds
+    // each machine (actually out vs. in our hands for repair).
+    statusByTag = await getLatestSignoutStatusByTag(true);
     if (activeTab === "studentLoans") {
       studentLoans = await normalizeAssets(
         await getStudentLoans(true, selectedYOG, selectedStudentStatus), // Pass Student Status
@@ -302,6 +307,7 @@
           {columns}
           {headers}
           {filename}
+          {statusByTag}
           openAssetLinksInNewTab={true}
         />
       {/if}

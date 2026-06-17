@@ -203,12 +203,15 @@ export async function getStudentLoans(
   yog?: string,
   studentStatus?: string
 ) {
+  // No Purpose filter: a device in for repair has its Purpose flipped to
+  // "In for repairs", so filtering Purpose="Student Loan" would drop it from
+  // the report. "Has a current student" (studentLoan) is the real definition
+  // of a student loan; narrow by Purpose via the report's filter if needed.
   return await fetchReport({
     chromebookOnly,
     studentLoan: true,
     yog,
     studentStatus,
-    purpose: "Student Loan",
   });
 }
 

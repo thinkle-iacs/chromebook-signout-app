@@ -17,6 +17,11 @@
   export let columns = [];
   export let filename = "data.csv";
   export let openAssetLinksInNewTab = false;
+  // Map of asset tag -> latest checkout status ("Out", "Repairing", ...).
+  // The last checkout is the source of truth for who actually holds a device.
+  export let statusByTag = new Map();
+  // "all" | "out" (actually out with a student) | "repair" (in our hands)
+  let checkoutFilter = "all";
   // sortColumn is now a property name (string)
   let sortColumn = columns[0] || "";
   let sortDirection = "asc";
@@ -99,8 +104,8 @@
     return new Date(lastUsed) < thirtyDaysAgo;
   }
   function resortData(data, direction, prop) {
-    sortedData = [...data]; // Create a copy...
-    sortedData.sort((a, b) => {
+    const sorted = [...data]; // Create a copy...
+    sorted.sort((a, b) => {
       let sortProp = prop;
       if (prop === "_ASSET") {
         sortProp = "Asset Tag";
@@ -127,9 +132,14 @@
       }
       return 0;
     });
+    return sorted;
   }
 
-  $: resortData(data, sortDirection, sortColumn);
+  // Derived (not a side-effect assignment) so Svelte orders the chain
+  // data -> sortedData -> filteredData and recomputes filteredData when the
+  // report data first arrives — otherwise the table stays empty until some
+  // other state change forces a re-flush.
+  $: sortedData = resortData(data, sortDirection, sortColumn);
 
   let haveGoogleData = false;
   $: {
@@ -220,16 +230,27 @@
       if (filterStale === FILTER_TRUE && !isStale(row.lastUsed)) return false;
       if (filterStale === FILTER_FALSE && isStale(row.lastUsed)) return false;
     }
+    // Only filter when SOME (not all, not zero) are selected. size === 0 is
+    // the transient pre-init state (and a deliberate "None" click) — treating
+    // it as "no filter" stops the table rendering empty until a filter is
+    // touched.
     if (
+      selectedModels.size > 0 &&
       selectedModels.size < uniqueModels.length &&
       !selectedModels.has(row.Model)
     )
       return false;
     if (
+      selectedPurposes.size > 0 &&
       selectedPurposes.size < uniquePurposes.length &&
       !selectedPurposes.has(row.Purpose)
     )
       return false;
+    if (checkoutFilter !== "all") {
+      const st = statusByTag.get(row["Asset Tag"]);
+      if (checkoutFilter === "out" && st !== "Out") return false;
+      if (checkoutFilter === "repair" && st !== "Repairing") return false;
+    }
     return true;
   });
 
@@ -460,6 +481,22 @@
         {/if}
       </div>
     </div>
+    {#if statusByTag.size}
+      <label
+        class="w3-bar-item"
+        title="Based on each device's last checkout action — the source of truth for who actually holds it. 'In for repair' means it's in our hands though still assigned to the student."
+        >Show:
+        <select
+          bind:value={checkoutFilter}
+          class="w3-select w3-border"
+          style="width:auto;display:inline-block;margin-left:4px;"
+        >
+          <option value="all">All assigned</option>
+          <option value="out">Actually out (with student)</option>
+          <option value="repair">In for repair (in our hands)</option>
+        </select>
+      </label>
+    {/if}
     <div class="dropdown-filter" style="position:relative;">
       <button
         class="w3-button w3-border w3-bar-item"
@@ -582,7 +619,23 @@
   </div>
 {/if}
 <div class="w3-responsive">
-  <p>Showing <b>{filteredData.length}</b> records</p>
+  <p>
+    Showing <b>{filteredData.length}</b> records
+    {#if statusByTag.size}
+      {@const shownOut = filteredData.filter(
+        (r) => statusByTag.get(r["Asset Tag"]) === "Out",
+      ).length}
+      {@const shownRepair = filteredData.filter(
+        (r) => statusByTag.get(r["Asset Tag"]) === "Repairing",
+      ).length}
+      <span class="w3-small w3-text-grey"
+        >· <b>{shownOut}</b> actually out
+        {#if shownRepair}· <span class="w3-text-amber"
+            ><b>{shownRepair}</b> in for repair (in our hands)</span
+          >{/if}</span
+      >
+    {/if}
+  </p>
 
   <div
     class="w3-bar w3-center w3-margin-bottom"
@@ -724,6 +777,7 @@
                   <AssetDisplay
                     asset={row}
                     openInNewTab={openAssetLinksInNewTab}
+                    signoutStatus={statusByTag.get(row["Asset Tag"]) || ""}
                   />
                 {:else}
                   {row[column]}

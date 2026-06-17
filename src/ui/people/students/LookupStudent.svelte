@@ -14,7 +14,10 @@
   import NameDropdown from "@people/components/NameDropdown.svelte";
   import { getStudent, studentsStore } from "@data/students";
   import { getCurrentLoansForStudent } from "@data/inventory";
-  import { lookupSignoutHistory } from "@data/signoutHistory";
+  import {
+    lookupSignoutHistory,
+    getRepairingAssetTags,
+  } from "@data/signoutHistory";
   import MessageSender from "@notifications/MessageSender.svelte";
   import StudentGoogleAdminHistory from "@googleAdmin/StudentGoogleAdminHistory.svelte";
   import StudentTicketsTab from "./StudentTicketsTab.svelte";
@@ -49,11 +52,13 @@
   let loansLoaded = false;
   let loadingLoans = false;
   let lastLoansStudentId: string | null = null;
+  let repairingTags: Set<string> = new Set();
   async function ensureLoansLoaded() {
     if (!student || loansLoaded || loadingLoans) return;
     loadingLoans = true;
     try {
       current = await getCurrentLoansForStudent(student);
+      repairingTags = await getRepairingAssetTags();
       await loadSignoutHistory();
       loansLoaded = true;
     } finally {
@@ -165,16 +170,26 @@
             </p>
           {:else}
             {#each current as asset (asset["Asset Tag"])}
+              {@const inRepair = repairingTags.has(asset["Asset Tag"])}
               <div class="current-loan">
-                <AssetDisplay {asset} />
-                <a
-                  class="w3-small"
-                  href={`/checkout/lost/${asset["Asset Tag"]}`}
-                  on:click={l(`/checkout/lost/${asset["Asset Tag"]}`)}
-                  title="Open the check-in screen with this device pre-filled and 'Mark as Lost' selected"
-                >
-                  Device missing? Mark as lost &amp; bill family…
-                </a>
+                <AssetDisplay
+                  {asset}
+                  signoutStatus={inRepair ? "Repairing" : ""}
+                />
+                {#if inRepair}
+                  <span class="w3-small w3-text-amber"
+                    >In for repair — currently in our hands.</span
+                  >
+                {:else}
+                  <a
+                    class="w3-small"
+                    href={`/checkout/lost/${asset["Asset Tag"]}`}
+                    on:click={l(`/checkout/lost/${asset["Asset Tag"]}`)}
+                    title="Open the check-in screen with this device pre-filled and 'Mark as Lost' selected"
+                  >
+                    Device missing? Mark as lost &amp; bill family…
+                  </a>
+                {/if}
               </div>
             {:else}
               No current loans

@@ -63,6 +63,10 @@
     }
   }
 
+  // Status of the most recent signout record (history is sorted Num desc), so
+  // AssetDisplay can show "repairing for" vs "signed out to".
+  $: currentSignoutStatus = (history[0] && history[0].Status) || "";
+
   let googleChromebookInfo: ChromebookInfo | null;
 
   async function getGoogleInfo() {
@@ -154,7 +158,7 @@
     </FormField>
   </SimpleForm>
   {#if asset}
-    <AssetDisplay {asset} showOwner={true} />
+    <AssetDisplay {asset} showOwner={true} signoutStatus={currentSignoutStatus} />
     <div class="w3-bar w3-row w3-border-bottom w3-medium">
       <button
         class="w3-button w3-bar-item"
