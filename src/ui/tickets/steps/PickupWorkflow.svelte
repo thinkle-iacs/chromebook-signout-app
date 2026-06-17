@@ -79,13 +79,6 @@
       ? (ticket as any)["Name (from Student)"][0]
       : (ticket as any)["Name (from Student)"]) ||
     "the student";
-  $: studentStatusRaw =
-    (ticket as any)._linked?.Student?.Status ??
-    (ticket as any)["Status (from Student)"];
-  $: studentInactive =
-    (Array.isArray(studentStatusRaw) ? studentStatusRaw[0] : studentStatusRaw)
-      ?.toString()
-      .toLowerCase() === "inactive";
 
   let showConfirm = false;
   async function confirmClose() {
@@ -271,16 +264,6 @@
             <input type="checkbox" bind:checked={checkInTemp} />
             Check in temporary device <b>{tempTag}</b>
           </label>
-        {/if}
-        {#if willCheckOut && studentInactive}
-          <div
-            class="w3-panel w3-pale-yellow w3-leftbar w3-border-amber w3-small"
-            style="margin:8px 0;"
-          >
-            ⚠ <b>{studentName}</b> is marked <b>inactive</b> (likely graduated).
-            Signing <b>{mainTag}</b> out to them will show it as theirs — uncheck
-            above to return it to the pool instead.
-          </div>
         {/if}
         {#if !willCheckOut && !willCheckInTemp}
           <p class="w3-small w3-text-gray">
