@@ -57,6 +57,38 @@
     (ticket as any)["Asset Tag (from Temporary Device)"]?.[0] ||
     "";
 
+  // Linked record ids + what closing will actually do, so the confirmation
+  // button can narrate it accurately.
+  $: linkedStudentId = ((ticket as any).Student as string[] | undefined)?.[0];
+  $: linkedDeviceId = ((ticket as any).Device as string[] | undefined)?.[0];
+  $: linkedTempId = ((ticket as any)["Temporary Device"] as
+    | string[]
+    | undefined)?.[0];
+  $: willCheckOut = checkOutRepaired && !!linkedDeviceId && !!linkedStudentId;
+  $: willCheckInTemp = checkInTemp && !!linkedTempId && !!linkedStudentId;
+  $: closeActionLabel = (() => {
+    const parts: string[] = [];
+    if (willCheckOut) parts.push(`sign out ${mainTag || "device"}`);
+    if (willCheckInTemp) parts.push(`check in ${tempTag || "temp"}`);
+    return parts.length ? `Close ticket, ${parts.join(", ")}` : "Close ticket";
+  })();
+
+  $: studentName =
+    (ticket as any)._linked?.Student?.Name ||
+    (Array.isArray((ticket as any)["Name (from Student)"])
+      ? (ticket as any)["Name (from Student)"][0]
+      : (ticket as any)["Name (from Student)"]) ||
+    "the student";
+
+  let showConfirm = false;
+  async function confirmClose() {
+    try {
+      await closeTicket();
+    } finally {
+      showConfirm = false;
+    }
+  }
+
   async function closeTicket() {
     if (processing) return;
     processing = true;
@@ -201,9 +233,70 @@
   </div>
   <button
     class="w3-button w3-green"
-    on:click={closeTicket}
+    on:click={() => (showConfirm = true)}
     disabled={processing || !mergedTicket.Resolution}
   >
-    {processing ? "Processing…" : "Close Ticket"}
+    {processing ? "Processing…" : "Close Ticket…"}
   </button>
 </StickyBottomActionBar>
+
+{#if showConfirm}
+  <div class="w3-modal" style="display:block; z-index:3000;">
+    <div
+      class="w3-modal-content w3-card-4 w3-round"
+      style="max-width:480px; margin-top:8%;"
+    >
+      <header class="w3-container w3-blue">
+        <h5>Close ticket #{ticket.Number}?</h5>
+      </header>
+      <div class="w3-container w3-padding-16">
+        <p class="w3-small w3-text-gray" style="margin-top:0;">
+          Confirm what should happen to the devices when this ticket closes:
+        </p>
+        {#if linkedDeviceId}
+          <label class="w3-small" style="display:block;margin-bottom:8px;">
+            <input
+              type="checkbox"
+              bind:checked={checkOutRepaired}
+              disabled={processing}
+            />
+            Check out repaired device <b>{mainTag || "device"}</b> to
+            <b>{studentName}</b>
+          </label>
+        {/if}
+        {#if linkedTempId}
+          <label class="w3-small" style="display:block;margin-bottom:8px;">
+            <input
+              type="checkbox"
+              bind:checked={checkInTemp}
+              disabled={processing}
+            />
+            Check in temporary device <b>{tempTag || "temp device"}</b>
+          </label>
+        {/if}
+        {#if !willCheckOut && !willCheckInTemp}
+          <p class="w3-small w3-text-gray">
+            No device changes — just closing the ticket.
+          </p>
+        {/if}
+      </div>
+      <footer
+        class="w3-container w3-padding-16"
+        style="display:flex; gap:8px; justify-content:flex-end;"
+      >
+        <button
+          class="w3-button w3-light-grey"
+          on:click={() => (showConfirm = false)}
+          disabled={processing}>Cancel</button
+        >
+        <button
+          class="w3-button w3-green"
+          on:click={confirmClose}
+          disabled={processing}
+        >
+          {processing ? "Processing…" : closeActionLabel}
+        </button>
+      </footer>
+    </div>
+  </div>
+{/if}
