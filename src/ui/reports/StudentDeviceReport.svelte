@@ -36,17 +36,98 @@
       ...deviceActions,
       [serial]: { status: currentAdminStatus, inProgress: true, error: "" },
     };
-    const result = await setDeviceDisabled(asset, disabling);
-    if (result.success) {
-      deviceActions = {
-        ...deviceActions,
-        [serial]: { status: disabling ? "DISABLED" : "ACTIVE", inProgress: false, error: "" },
-      };
+    try {
+      const result = await setDeviceDisabled(asset, disabling);
+      if (result.success) {
+        deviceActions = {
+          ...deviceActions,
+          [serial]: { status: disabling ? "DISABLED" : "ACTIVE", inProgress: false, error: "" },
+        };
+      } else {
+        deviceActions = {
+          ...deviceActions,
+          [serial]: { status: currentAdminStatus, inProgress: false, error: result.errorMessage || "Action failed" },
+        };
+      }
+    } finally {
+      if (deviceActions[serial]?.inProgress) {
+        deviceActions = { ...deviceActions, [serial]: { ...deviceActions[serial], inProgress: false } };
+      }
+    }
+  }
+
+  // Batch selection state
+  let selectedSerials: Set<string> = new Set();
+  let showBatchActionConfirm = false;
+  let pendingBatchAction = "";
+  let batchActionInProgress = false;
+  let batchActionResults: { succeeded: string[]; failed: { serial: string; error: string }[]; action: string } | null = null;
+
+  $: selectableMachines = displayRows
+    .filter((dr) => dr.machine && dr.machine.serial && dr.machine.asset)
+    .map((dr) => dr.machine.serial);
+
+  function toggleSelectMachine(serial: string) {
+    if (selectedSerials.has(serial)) {
+      selectedSerials.delete(serial);
     } else {
-      deviceActions = {
-        ...deviceActions,
-        [serial]: { status: currentAdminStatus, inProgress: false, error: result.errorMessage || "Action failed" },
-      };
+      selectedSerials.add(serial);
+    }
+    selectedSerials = new Set(selectedSerials);
+  }
+
+  function toggleSelectAll() {
+    if (selectedSerials.size === selectableMachines.length) {
+      selectedSerials = new Set();
+    } else {
+      selectedSerials = new Set(selectableMachines);
+    }
+  }
+
+  function openBatchAction(action: string) {
+    pendingBatchAction = action;
+    showBatchActionConfirm = true;
+  }
+
+  async function confirmBatchDeviceAction() {
+    batchActionInProgress = true;
+    showBatchActionConfirm = false;
+    batchActionResults = null;
+    const serials = [...selectedSerials];
+    const succeeded: string[] = [];
+    const failed: { serial: string; error: string }[] = [];
+    const disabling = pendingBatchAction === "disable";
+    try {
+      await Promise.all(
+        serials.map(async (serial) => {
+          const dr = displayRows.find((d) => d.machine?.serial === serial);
+          const asset = dr?.machine?.asset;
+          if (!asset) {
+            failed.push({ serial, error: "Asset not found" });
+            return;
+          }
+          try {
+            const result = await setDeviceDisabled(asset, disabling);
+            if (result.success) {
+              succeeded.push(serial);
+              deviceActions = {
+                ...deviceActions,
+                [serial]: { status: disabling ? "DISABLED" : "ACTIVE", inProgress: false, error: "" },
+              };
+            } else {
+              failed.push({ serial, error: result.errorMessage || "Unknown error" });
+            }
+          } catch (err) {
+            failed.push({ serial, error: err instanceof Error ? err.message : "Unknown error" });
+          }
+        })
+      );
+    } finally {
+      batchActionInProgress = false;
+      batchActionResults = { succeeded, failed, action: pendingBatchAction };
+      if (failed.length === 0) {
+        selectedSerials = new Set();
+      }
     }
   }
 
@@ -780,6 +861,76 @@
       <b>{exportRows.filter((row) => row.Serial).length}</b> last-used machines
     </p>
 
+    <!-- Batch action bar -->
+    {#if selectedSerials.size > 0}
+      <div class="batch-action-bar w3-bar">
+        <span class="w3-bar-item"><b>{selectedSerials.size}</b> device(s) selected</span>
+        <button
+          class="w3-button w3-red w3-bar-item"
+          disabled={batchActionInProgress}
+          on:click={() => openBatchAction("disable")}
+        >Disable Selected</button>
+        <button
+          class="w3-button w3-green w3-bar-item"
+          disabled={batchActionInProgress}
+          on:click={() => openBatchAction("reenable")}
+        >Re-enable Selected</button>
+        <button
+          class="w3-button w3-light-grey w3-bar-item"
+          on:click={() => (selectedSerials = new Set())}
+        >Clear</button>
+      </div>
+    {/if}
+
+    <!-- Batch action confirm dialog -->
+    {#if showBatchActionConfirm}
+      <div class="modal-wrap">
+        <div class="modal-content w3-card w3-padding">
+          <h4>{pendingBatchAction === "disable" ? "Disable" : "Re-enable"} {selectedSerials.size} device(s)?</h4>
+          {#if pendingBatchAction === "disable"}
+            <p class="w3-small">Disabled devices will show a lock screen and cannot be used until re-enabled.</p>
+          {:else}
+            <p class="w3-small">This will re-enable the selected devices via the Google Admin API.</p>
+          {/if}
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button
+              class="w3-button {pendingBatchAction === 'disable' ? 'w3-red' : 'w3-green'}"
+              on:click={confirmBatchDeviceAction}
+            >Confirm {pendingBatchAction === "disable" ? "Disable" : "Re-enable"}</button>
+            <button class="w3-button w3-light-grey" on:click={() => (showBatchActionConfirm = false)}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    <!-- Batch action results -->
+    {#if batchActionResults}
+      <div class="w3-panel {batchActionResults.failed.length ? 'w3-pale-red' : 'w3-pale-green'} w3-border">
+        <p>
+          <strong>
+            {batchActionResults.action === "disable" ? "Disabled" : "Re-enabled"}
+            {batchActionResults.succeeded.length} device(s).
+          </strong>
+          {#if batchActionResults.failed.length}
+            {batchActionResults.failed.length} failed:
+          {/if}
+        </p>
+        {#if batchActionResults.failed.length}
+          <ul class="w3-ul w3-small">
+            {#each batchActionResults.failed as f}
+              <li><b>{f.serial}</b> — {f.error}</li>
+            {/each}
+          </ul>
+          <p class="w3-small">
+            <a href={ADMIN_CONSOLE_URL} target="_blank" rel="noopener">
+              Manage these devices manually in the Google Admin console →
+            </a>
+          </p>
+        {/if}
+        <button class="w3-button w3-tiny w3-light-grey" on:click={() => (batchActionResults = null)}>Dismiss</button>
+      </div>
+    {/if}
+
     <div class="w3-responsive">
       {#if showViewportScroll}
         <div
@@ -817,6 +968,14 @@
         >
           <thead>
             <tr>
+              <th class="select-col">
+                <input
+                  type="checkbox"
+                  checked={selectableMachines.length > 0 && selectedSerials.size === selectableMachines.length}
+                  indeterminate={selectedSerials.size > 0 && selectedSerials.size < selectableMachines.length}
+                  on:change={toggleSelectAll}
+                />
+              </th>
               <th on:click={() => setSort("student")}>Student</th>
               <th on:click={() => setSort("status")}>Status</th>
               <th>Machine</th>
@@ -831,6 +990,15 @@
           <tbody>
             {#each displayRows as displayRow (displayRow.key)}
               <tr class:has-warning={isWarningMachine(displayRow.machine)}>
+                <td class="select-col">
+                  {#if displayRow.machine && displayRow.machine.serial && displayRow.machine.asset}
+                    <input
+                      type="checkbox"
+                      checked={selectedSerials.has(displayRow.machine.serial)}
+                      on:change={() => toggleSelectMachine(displayRow.machine.serial)}
+                    />
+                  {/if}
+                </td>
                 <td>
                   <b><EmailDisplay email={displayRow.row.student.Email} /></b>
                   <div class="w3-small">{displayRow.row.student.Name}</div>
@@ -953,7 +1121,7 @@
               </tr>
               {#if expandedMachines[displayRow.key] && displayRow.machine}
                 <tr class="expanded-row">
-                  <td colspan="9">
+                  <td colspan="10">
                     <div class="expanded-grid">
                       <div>
                         <h4>Recent Users</h4>
@@ -1196,5 +1364,31 @@
     margin-top: 2px;
     padding: 2px 8px !important;
     font-size: 11px !important;
+  }
+  .select-col {
+    width: 32px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .batch-action-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+  }
+  .modal-wrap {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background: white;
+    max-width: 480px;
+    width: 90%;
   }
 </style>

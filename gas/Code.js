@@ -13,10 +13,9 @@ function makeResult (e, object) {
   return ContentService.createTextOutput(
     JSON.stringify({
       status : 'success',
-      parameters: e.parameters,
       result : object
     })
-  )
+  ).setMimeType(ContentService.MimeType.JSON);
 }
 
 function makeErrorMessage (e, details={}) {
@@ -24,17 +23,18 @@ function makeErrorMessage (e, details={}) {
       JSON.stringify(
         {
           status : 'Error',
-          parameters : e.parameters,
           ...details}
         )
-  )
+  ).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doGet (e) {
   // Provide a Web API for getting Chromebook info
   if (e.parameters.secret != getSecret()) {
     // Ensure they have provided our SECRET! Top SECRET SECURITY! ;-\
-    return ContentService.createTextOutput("no access, sorry -- you don't know the secret!");
+    return ContentService.createTextOutput(
+      JSON.stringify({ status: 'Error', detail: 'Unauthorized' })
+    ).setMimeType(ContentService.MimeType.JSON);
   }
   // Parameters are provided as lists, annoyingly... make a simplified object for convenience
   let params = {};
@@ -120,7 +120,7 @@ function doGet (e) {
 
 function cbBySerial (id) {
   let resp = AdminDirectory.Chromeosdevices.list("my_customer",{query:`id:"${id.toLowerCase()}"`});
-  if (resp && resp.chromeosdevices.length) {
+  if (resp && resp.chromeosdevices && resp.chromeosdevices.length) {
     if (resp.chromeosdevices.length > 1) {
       console.warn('Strange: we got more than one hit for a serial number???',id,resp.chromeosdevices.length,resp.chromeosdevices);
     }

@@ -104,20 +104,27 @@ export async function setDeviceDisabled(
   asset: Asset,
   disabled: boolean
 ): Promise<{ success: boolean; errorMessage?: string }> {
-  const action = disabled ? "disable" : "reenable";
-  const response = await fetch(
-    "/.netlify/functions/index?mode=google&action=" +
-      action +
-      "&serial=" +
-      encodeURIComponent(asset.Serial)
-  );
-  const json = await response.json();
-  if (json.status === "success") {
-    // Invalidate cache so next fetch reflects new status
-    delete serialCache[asset.Serial];
-    return { success: true };
+  try {
+    const action = disabled ? "disable" : "reenable";
+    const response = await fetch(
+      "/.netlify/functions/index?mode=google&action=" +
+        action +
+        "&serial=" +
+        encodeURIComponent(asset.Serial)
+    );
+    if (!response.ok && response.status !== 500) {
+      return { success: false, errorMessage: `Server error: ${response.status}` };
+    }
+    const json = await response.json();
+    if (json.status === "success") {
+      // Invalidate cache so next fetch reflects new status
+      delete serialCache[asset.Serial];
+      return { success: true };
+    }
+    return { success: false, errorMessage: json.errorMessage || json.detail || "Unknown error" };
+  } catch (err) {
+    return { success: false, errorMessage: err instanceof Error ? err.message : String(err) };
   }
-  return { success: false, errorMessage: json.errorMessage || json.detail || "Unknown error" };
 }
 
 export async function checkMachineStatus(asset: Asset) {

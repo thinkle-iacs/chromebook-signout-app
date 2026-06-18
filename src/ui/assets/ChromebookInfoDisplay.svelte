@@ -51,12 +51,15 @@
     actionInProgress = true;
     actionError = "";
     const disabling = currentStatus === "ACTIVE";
-    const result = await setDeviceDisabled(asset, disabling);
-    actionInProgress = false;
-    if (result.success) {
-      currentStatus = disabling ? "DISABLED" : "ACTIVE";
-    } else {
-      actionError = result.errorMessage || "Action failed";
+    try {
+      const result = await setDeviceDisabled(asset, disabling);
+      if (result.success) {
+        currentStatus = disabling ? "DISABLED" : "ACTIVE";
+      } else {
+        actionError = result.errorMessage || "Action failed";
+      }
+    } finally {
+      actionInProgress = false;
     }
   }
 </script>

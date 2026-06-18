@@ -447,29 +447,36 @@
     const succeeded = [];
     const failed = [];
     const disabling = pendingDeviceAction === "disable";
-    await Promise.all(
-      tags.map(async (tag) => {
-        const asset = data.find((row) => row["Asset Tag"] === tag);
-        if (!asset || !asset.Serial) {
-          failed.push({ tag, serial: asset?.Serial || "?", error: "No serial number on record" });
-          return;
-        }
-        const result = await setDeviceDisabled(asset, disabling);
-        if (result.success) {
-          succeeded.push(tag);
-        } else {
-          failed.push({ tag, serial: asset.Serial, error: result.errorMessage || "Unknown error" });
-        }
-      })
-    );
-    deviceActionInProgress = false;
-    deviceActionResults = { succeeded, failed, action: pendingDeviceAction };
-    if (failed.length === 0) {
-      showToast(
-        `${disabling ? "Disabled" : "Re-enabled"} ${succeeded.length} device(s)`,
-        "success"
+    try {
+      await Promise.all(
+        tags.map(async (tag) => {
+          const asset = data.find((row) => row["Asset Tag"] === tag);
+          if (!asset || !asset.Serial) {
+            failed.push({ tag, serial: asset?.Serial || "?", error: "No serial number on record" });
+            return;
+          }
+          try {
+            const result = await setDeviceDisabled(asset, disabling);
+            if (result.success) {
+              succeeded.push(tag);
+            } else {
+              failed.push({ tag, serial: asset.Serial, error: result.errorMessage || "Unknown error" });
+            }
+          } catch (err) {
+            failed.push({ tag, serial: asset.Serial, error: err.message || "Unknown error" });
+          }
+        })
       );
-      selectedAssetTags = new Set();
+    } finally {
+      deviceActionInProgress = false;
+      deviceActionResults = { succeeded, failed, action: pendingDeviceAction };
+      if (failed.length === 0) {
+        showToast(
+          `${disabling ? "Disabled" : "Re-enabled"} ${succeeded.length} device(s)`,
+          "success"
+        );
+        selectedAssetTags = new Set();
+      }
     }
   }
 
