@@ -9,6 +9,9 @@
       }
     ]
   },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/admin.directory.device.chromeos"
+  ],
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "webapp": {
