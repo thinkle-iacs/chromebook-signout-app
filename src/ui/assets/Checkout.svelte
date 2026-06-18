@@ -760,6 +760,7 @@ Hinge bolts:New screws needed for display hinges*/
     <div class="row">
       <FormField
         fullWidth={false}
+        grow={true}
         name={(mode == "it" && "Asset Tag(s)") || "Asset Tag"}
         errors={$assetTags && $signoutForm?.fields?.assetTag?.errors}
       >
