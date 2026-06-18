@@ -11,7 +11,10 @@
     getBillableStudentId,
     DEFAULT_REPLACEMENT_COST,
   } from "@data/lostDeviceBilling";
+  import { setDeviceDisabled } from "@data/google";
   import { showToast } from "@components/toastStore";
+
+  const ADMIN_CONSOLE_URL = "https://admin.google.com/ac/chrome/devices";
 
   export let data;
   export let columns = [];
@@ -425,6 +428,51 @@
     }
   }
 
+  // Batch disable / enable
+  let deviceActionInProgress = false;
+  let deviceActionResults = null; // { succeeded, failed: [{tag, serial, error}], action }
+  let showDeviceActionConfirm = false;
+  let pendingDeviceAction = ""; // "disable" | "reenable"
+
+  function openDeviceActionConfirm(action) {
+    pendingDeviceAction = action;
+    showDeviceActionConfirm = true;
+  }
+
+  async function confirmDeviceAction() {
+    deviceActionInProgress = true;
+    showDeviceActionConfirm = false;
+    deviceActionResults = null;
+    const tags = [...selectedAssetTags];
+    const succeeded = [];
+    const failed = [];
+    const disabling = pendingDeviceAction === "disable";
+    await Promise.all(
+      tags.map(async (tag) => {
+        const asset = data.find((row) => row["Asset Tag"] === tag);
+        if (!asset || !asset.Serial) {
+          failed.push({ tag, serial: asset?.Serial || "?", error: "No serial number on record" });
+          return;
+        }
+        const result = await setDeviceDisabled(asset, disabling);
+        if (result.success) {
+          succeeded.push(tag);
+        } else {
+          failed.push({ tag, serial: asset.Serial, error: result.errorMessage || "Unknown error" });
+        }
+      })
+    );
+    deviceActionInProgress = false;
+    deviceActionResults = { succeeded, failed, action: pendingDeviceAction };
+    if (failed.length === 0) {
+      showToast(
+        `${disabling ? "Disabled" : "Re-enabled"} ${succeeded.length} device(s)`,
+        "success"
+      );
+      selectedAssetTags = new Set();
+    }
+  }
+
   export let loginDataReady = false;
 </script>
 
@@ -655,10 +703,91 @@
     >
       Mark as Lost
     </button>
+    <button
+      class="w3-button w3-red w3-bar-item"
+      disabled={selectedAssetTags.size === 0 || deviceActionInProgress}
+      on:click={() => openDeviceActionConfirm("disable")}
+    >
+      Disable Selected
+    </button>
+    <button
+      class="w3-button w3-green w3-bar-item"
+      disabled={selectedAssetTags.size === 0 || deviceActionInProgress}
+      on:click={() => openDeviceActionConfirm("reenable")}
+    >
+      Re-enable Selected
+    </button>
     <span class="w3-bar-item data-exporter-wrap" style="padding:0;">
       <DataExporter items={filteredData} {filename} headers={exportColumns} />
     </span>
   </div>
+
+  <!-- Disable/enable confirmation dialog -->
+  {#if showDeviceActionConfirm}
+    <div class="modal-wrap">
+      <div class="modal-content w3-card w3-padding">
+        <h4>
+          {pendingDeviceAction === "disable" ? "Disable" : "Re-enable"}
+          {selectedAssetTags.size} device(s)?
+        </h4>
+        {#if pendingDeviceAction === "disable"}
+          <p class="w3-small">
+            Disabled devices will show a lock screen and cannot be used until
+            re-enabled. This calls the Google Admin API.
+          </p>
+        {:else}
+          <p class="w3-small">
+            This will re-enable the selected devices via the Google Admin API.
+          </p>
+        {/if}
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button
+            class="w3-button {pendingDeviceAction === 'disable' ? 'w3-red' : 'w3-green'}"
+            on:click={confirmDeviceAction}
+          >
+            Confirm {pendingDeviceAction === "disable" ? "Disable" : "Re-enable"}
+          </button>
+          <button
+            class="w3-button w3-light-grey"
+            on:click={() => (showDeviceActionConfirm = false)}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Device action results -->
+  {#if deviceActionResults}
+    <div class="w3-panel {deviceActionResults.failed.length ? 'w3-pale-red' : 'w3-pale-green'} w3-border">
+      <p>
+        <strong>
+          {deviceActionResults.action === "disable" ? "Disabled" : "Re-enabled"}
+          {deviceActionResults.succeeded.length} device(s).
+        </strong>
+        {#if deviceActionResults.failed.length}
+          {deviceActionResults.failed.length} failed:
+        {/if}
+      </p>
+      {#if deviceActionResults.failed.length}
+        <ul class="w3-ul w3-small">
+          {#each deviceActionResults.failed as f}
+            <li><b>{f.tag}</b> (s/n: {f.serial}) — {f.error}</li>
+          {/each}
+        </ul>
+        <p class="w3-small">
+          <a href={ADMIN_CONSOLE_URL} target="_blank" rel="noopener">
+            Manage these devices manually in the Google Admin console →
+          </a>
+        </p>
+      {/if}
+      <button
+        class="w3-button w3-tiny w3-light-grey"
+        on:click={() => (deviceActionResults = null)}>Dismiss</button
+      >
+    </div>
+  {/if}
 
   {#if mountBulkMessageSender}
     <div
