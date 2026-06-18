@@ -174,6 +174,9 @@
   $: assets = $assetTags.map(
     (t) => $assetStore[t.toUpperCase()] || $assetStore[t.toLowerCase()]
   );
+  $: chipStatuses = assets.map((a) =>
+    a ? "found" : $validating.assetTag ? "searching" : "notfound"
+  );
   /* $: charger = $assetStore[$chargerTag]; */
 
   let checkedOut: {
@@ -767,6 +770,7 @@ Hinge bolts:New screws needed for display hinges*/
         <ListInput
           bind:value={$assetTags}
           {scanMode}
+          statuses={chipStatuses}
           id="assettag"
           placeholder={scanMode ? "Scan tag, press Enter to add…" : "Asset tag or serial number"}
           autocomplete="off"

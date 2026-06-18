@@ -1,6 +1,7 @@
 <script lang="ts">
   export let value: string[] = [];
   export let scanMode = false;
+  export let statuses: string[] = [];
   export let id: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
   export let autocomplete: string | undefined = undefined;
@@ -50,7 +51,10 @@
 {#if scanMode && value && value.length > 0}
   <div class="tag-list">
     {#each value as tag, i (i)}
-      <span class="w3-tag w3-round w3-light-blue tag">
+      <span class="w3-tag w3-round tag"
+        class:w3-light-blue={statuses[i] === 'found' || !statuses[i]}
+        class:w3-yellow={statuses[i] === 'searching'}
+        class:w3-deep-orange={statuses[i] === 'notfound'}>
         {tag}
         <button
           type="button"
