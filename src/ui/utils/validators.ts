@@ -208,6 +208,10 @@ export const validateAsset = async (
     }
     let valid = false;
     let results = await searchForAsset(s);
+    if (results.length === 0) {
+      // Fallback: try serial number lookup (kids sometimes rip off asset tags)
+      results = await searchForAsset(null, null, s.toLowerCase());
+    }
     if (results.length) {
       valid = true;
     }

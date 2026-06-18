@@ -170,7 +170,9 @@
   );
   $: student = studentMode && getStudent($studentName);
   $: staff = !studentMode && $staffStore[$staffName];
-  $: assets = $assetTags.map((assetTag) => $assetStore[assetTag.toUpperCase()]);
+  $: assets = $assetTags.map(
+    (t) => $assetStore[t.toUpperCase()] || $assetStore[t.toLowerCase()]
+  );
   /* $: charger = $assetStore[$chargerTag]; */
 
   let checkedOut: {
@@ -765,7 +767,7 @@ Hinge bolts:New screws needed for display hinges*/
           id="assettag"
           type="text"
           class="w3-input"
-          placeholder="Asset Tag"
+          placeholder="Asset tag or serial number"
           autocomplete="off"
         />
       </FormField>

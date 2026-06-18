@@ -149,6 +149,7 @@
         id="assettag"
         bind:value={$assetTag}
         class:valid={$lookupForm?.valid}
+        placeholder="Asset tag or serial number"
       />
       {#if $validatingAsset && $assetTag.length > 3}
         <Loader working={true} text="Looking up asset..." />
