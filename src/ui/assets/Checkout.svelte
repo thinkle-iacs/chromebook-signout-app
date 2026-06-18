@@ -67,6 +67,7 @@
   let studentNotes = "";
   let showStudentNoteMode = false;
   let daily = false;
+  let scanMode = false;
   let signoutForm;
   let student: Student | null = null;
   let staff: Staff | null = null;
@@ -764,12 +765,15 @@ Hinge bolts:New screws needed for display hinges*/
       >
         <ListInput
           bind:value={$assetTags}
+          {scanMode}
           id="assettag"
-          type="text"
-          class="w3-input"
-          placeholder="Asset tag or serial number"
+          placeholder={scanMode ? "Scan tag, press Enter to add…" : "Asset tag or serial number"}
           autocomplete="off"
         />
+        <label class="scan-mode-label w3-small">
+          <input type="checkbox" bind:checked={scanMode} />
+          Batch scan mode (Enter adds to list)
+        </label>
       </FormField>
       {#if mode != "it"}
         <!-- <FormField
@@ -1124,6 +1128,12 @@ Hinge bolts:New screws needed for display hinges*/
 </article>
 
 <style>
+  .scan-mode-label {
+    display: block;
+    margin-top: 4px;
+    color: #555;
+    gap: 4px;
+  }
   a {
     text-decoration: none;
   }
