@@ -65,6 +65,8 @@
     flex-wrap: wrap;
     gap: 4px;
     margin-bottom: 4px;
+    max-height: 6em;
+    overflow-y: auto;
   }
   .tag {
     display: inline-flex;
