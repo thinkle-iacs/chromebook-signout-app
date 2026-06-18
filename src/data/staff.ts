@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
 
@@ -20,7 +21,7 @@ export async function searchForStaff(name) {
   if (searchCache[name]) {
     return searchCache[name];
   } else {
-    let response = await fetch(
+    let response = await authedFetch(
       "/.netlify/functions/index?mode=staff&name=" + encodeURIComponent(name)
     );
     let json = await response.json();

@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import type { Asset } from "./inventory";
 import type { Student } from "./students";
 import { writable } from "svelte/store";
@@ -59,7 +60,7 @@ export async function lookupSignoutHistory({
     params.staffId = staff._id;
   }
   let paramString = new URLSearchParams(params);
-  let response = await fetch("/.netlify/functions/index?" + paramString);
+  let response = await authedFetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
   return json.map((item) => ({ ...item.fields, _id: item.id }));
 }

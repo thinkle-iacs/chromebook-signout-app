@@ -1,4 +1,5 @@
 import type { APIGatewayEvent, Context } from "aws-lambda";
+import { getAuthLevel, forbidden } from "./auth";
 import { handler as studentHandler } from "./students";
 import { handler as staffHandler } from "./staff";
 import { handler as inventoryHandler } from "./inventory";
@@ -35,7 +36,10 @@ export async function handler(
   event: APIGatewayEvent,
   context: Context
 ): Promise<{ statusCode: number; body: string }> {
-  if (modes[event.queryStringParameters.mode]) {
+  if (getAuthLevel(context) === "none") {
+    return forbidden("School login required");
+  }
+  if (modes[event.queryStringParameters?.mode]) {
     return modes[event.queryStringParameters.mode](event, context);
   } else {
     return {

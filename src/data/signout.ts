@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import type { Student } from "./students";
 import type { Staff } from "./staff";
 import type { Asset } from "./inventory";
@@ -46,7 +47,7 @@ export async function signoutAsset(
     params.staffRecordId = staff._id;
   }
   params.FormUser = $user.email;
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?" +
       new URLSearchParams(params as Record<string, string>)
   );

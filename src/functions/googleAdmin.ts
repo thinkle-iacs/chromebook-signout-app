@@ -1,11 +1,16 @@
 import type { APIGatewayEvent, Context } from "aws-lambda";
+import { getAuthLevel, forbidden } from "./auth";
 const SHIM_SECRET = process.env.SHIM_SECRET;
 const SHIM_URL = process.env.SHIM_URL;
 
 export async function handler(event: APIGatewayEvent, context: Context) {
   console.log("Google Shim Handler");
   if (event.httpMethod == "GET") {
-    const { user, serial } = event.queryStringParameters;
+    const { user, serial, action } = event.queryStringParameters || {};
+    // Device actions (disable/reenable) require IT-level access
+    if (action && getAuthLevel(context) !== "it") {
+      return forbidden("IT access required for device actions");
+    }
     let params;
     if (user) {
       params = {

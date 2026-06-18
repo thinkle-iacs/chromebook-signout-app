@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { get } from "svelte/store";
 import { user } from "./user";
 import { logger } from "@utils/log";
@@ -84,7 +85,7 @@ export async function updateNotifications(
   }
 
   let params = { mode: "notifications" };
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?" + new URLSearchParams(params),
     {
       method: "PATCH",
@@ -99,7 +100,7 @@ export async function getNotifications(
   params: { ticketNumber?: string } = {}
 ): Promise<NotificationResult[]> {
   let qs = new URLSearchParams({ mode: "notifications", ...params } as any);
-  let response = await fetch("/.netlify/functions/index?" + qs, {
+  let response = await authedFetch("/.netlify/functions/index?" + qs, {
     method: "GET",
   });
   let json = await response.json();
@@ -143,7 +144,7 @@ export async function createNotifications(
     "Firing off request to create notifications",
     notifications
   );
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?" + new URLSearchParams(params),
     {
       method: "POST",

@@ -1,10 +1,11 @@
+import { authedFetch } from "@utils/authedFetch";
 // Simple SIS API testing functions
 import { logger } from "@utils/log";
 export async function testSISConnection() {
   logger.logVerbose("[SIS Data] Testing basic connectivity...");
 
   try {
-    const response = await fetch(
+    const response = await authedFetch(
       "/.netlify/functions/index?mode=sisApi&testStep=connect"
     );
     return await response.json();
@@ -18,7 +19,7 @@ export async function testSISAuth() {
   logger.logVerbose("[SIS Data] Testing SIS authentication...");
 
   try {
-    const response = await fetch(
+    const response = await authedFetch(
       "/.netlify/functions/index?mode=sisApi&testStep=auth"
     );
     return await response.json();
@@ -32,7 +33,7 @@ export async function testStudentLookup(studentEmail: string) {
   logger.logVerbose("[SIS Data] Testing student lookup for:", studentEmail);
 
   try {
-    const response = await fetch(
+    const response = await authedFetch(
       `/.netlify/functions/index?mode=sisApi&testStep=student&studentEmail=${encodeURIComponent(
         studentEmail
       )}`
@@ -48,7 +49,7 @@ export async function testScheduleLookup(studentEmail: string) {
   logger.logVerbose("[SIS Data] Testing schedule lookup for:", studentEmail);
 
   try {
-    const response = await fetch(
+    const response = await authedFetch(
       `/.netlify/functions/index?mode=sisApi&testStep=schedule&studentEmail=${encodeURIComponent(
         studentEmail
       )}`
