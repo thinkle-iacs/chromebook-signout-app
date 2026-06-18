@@ -20,6 +20,7 @@
   let validatingAsset = writable(false);
 
   export let tag;
+  export let isIt: boolean = false;
   $: if (tag) {
     $assetTag = tag;
   }
@@ -193,7 +194,7 @@
       {/if}
     {:else if mode == "google"}
       {#if googleChromebookInfo}
-        <ChromebookInfoDisplay info={googleChromebookInfo} />
+        <ChromebookInfoDisplay info={googleChromebookInfo} {isIt} />
       {:else}
         No google info found (yet)
       {/if}

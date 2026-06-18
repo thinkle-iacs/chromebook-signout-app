@@ -131,6 +131,8 @@
     }
   }
 
+  export let isIt: boolean = false;
+
   let repairingTags: Set<string> = new Set();
 
   type SortColumn =
@@ -861,8 +863,8 @@
       <b>{exportRows.filter((row) => row.Serial).length}</b> last-used machines
     </p>
 
-    <!-- Batch action bar -->
-    {#if selectedSerials.size > 0}
+    <!-- Batch action bar (IT only) -->
+    {#if isIt && selectedSerials.size > 0}
       <div class="batch-action-bar w3-bar">
         <span class="w3-bar-item"><b>{selectedSerials.size}</b> device(s) selected</span>
         <button
@@ -968,14 +970,14 @@
         >
           <thead>
             <tr>
-              <th class="select-col">
+              {#if isIt}<th class="select-col">
                 <input
                   type="checkbox"
                   checked={selectableMachines.length > 0 && selectedSerials.size === selectableMachines.length}
                   indeterminate={selectedSerials.size > 0 && selectedSerials.size < selectableMachines.length}
                   on:change={toggleSelectAll}
                 />
-              </th>
+              </th>{/if}
               <th on:click={() => setSort("student")}>Student</th>
               <th on:click={() => setSort("status")}>Status</th>
               <th>Machine</th>
@@ -984,13 +986,13 @@
               <th>Checkout Status</th>
               <th on:click={() => setSort("summary")}>Summary</th>
               <th on:click={() => setSort("lastUsedMachineCount")}>Count</th>
-              <th>Admin</th>
+              {#if isIt}<th>Admin</th>{/if}
             </tr>
           </thead>
           <tbody>
             {#each displayRows as displayRow (displayRow.key)}
               <tr class:has-warning={isWarningMachine(displayRow.machine)}>
-                <td class="select-col">
+                {#if isIt}<td class="select-col">
                   {#if displayRow.machine && displayRow.machine.serial && displayRow.machine.asset}
                     <input
                       type="checkbox"
@@ -998,7 +1000,7 @@
                       on:change={() => toggleSelectMachine(displayRow.machine.serial)}
                     />
                   {/if}
-                </td>
+                </td>{/if}
                 <td>
                   <b><EmailDisplay email={displayRow.row.student.Email} /></b>
                   <div class="w3-small">{displayRow.row.student.Name}</div>
@@ -1091,7 +1093,7 @@
                   {/if}
                 </td>
                 <td>{formatCount(displayRow)}</td>
-                <td class="admin-cell">
+                {#if isIt}<td class="admin-cell">
                   {#if displayRow.machine && displayRow.machine.serial && displayRow.machine.asset}
                     {#if getAdminStatus(displayRow.machine) === "DEPROVISIONED"}
                       <span class="admin-badge deprovisioned">Deprovisioned</span>
@@ -1117,11 +1119,11 @@
                       </div>
                     {/if}
                   {/if}
-                </td>
+                </td>{/if}
               </tr>
               {#if expandedMachines[displayRow.key] && displayRow.machine}
                 <tr class="expanded-row">
-                  <td colspan="10">
+                  <td colspan={isIt ? 10 : 8}>
                     <div class="expanded-grid">
                       <div>
                         <h4>Recent Users</h4>

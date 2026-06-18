@@ -7,6 +7,7 @@
   import type { Asset } from "@data/inventory";
 
   export let info: ChromebookInfo;
+  export let isIt: boolean = false;
 
   const ADMIN_CONSOLE_URL = "https://admin.google.com/ac/chrome/devices";
 
@@ -45,6 +46,14 @@
   let actionInProgress = false;
   let actionError = "";
   let currentStatus = info.status;
+  let showDisableConfirm = false;
+
+  function openDisableConfirm() {
+    showDisableConfirm = true;
+  }
+  function cancelDisableConfirm() {
+    showDisableConfirm = false;
+  }
 
   async function toggleDisabled() {
     if (!asset) return;
@@ -104,8 +113,8 @@
     </div>
   </div>
 
-  <!-- Disable / re-enable control -->
-  {#if asset && currentStatus !== "DEPROVISIONED"}
+  <!-- Disable / re-enable control (IT staff only) -->
+  {#if isIt && asset && currentStatus !== "DEPROVISIONED"}
     <div class="action-row">
       {#if currentStatus === "DISABLED"}
         <button
@@ -119,7 +128,7 @@
         <button
           class="w3-button w3-orange"
           disabled={actionInProgress}
-          on:click={toggleDisabled}
+          on:click={openDisableConfirm}
         >
           {actionInProgress ? "Disabling…" : "Disable Device"}
         </button>
@@ -132,6 +141,25 @@
           >
         </span>
       {/if}
+    </div>
+  {/if}
+
+  <!-- Disable confirmation dialog -->
+  {#if showDisableConfirm}
+    <div class="confirm-overlay">
+      <div class="w3-card w3-padding confirm-dialog">
+        <h4>Disable this device?</h4>
+        <p class="w3-small">
+          The device will show a lock screen and <strong>cannot be used by students</strong> until re-enabled.
+          Use this if a machine is missing or was taken without authorization.
+        </p>
+        <div class="action-row">
+          <button class="w3-button w3-red" disabled={actionInProgress} on:click={() => { cancelDisableConfirm(); toggleDisabled(); }}>
+            {actionInProgress ? "Disabling…" : "Yes, disable it"}
+          </button>
+          <button class="w3-button w3-light-grey" on:click={cancelDisableConfirm}>Cancel</button>
+        </div>
+      </div>
     </div>
   {/if}
 
@@ -200,5 +228,19 @@
     gap: 12px;
     margin: 8px 0;
     flex-wrap: wrap;
+  }
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .confirm-dialog {
+    background: white;
+    max-width: 400px;
+    width: 90%;
   }
 </style>
