@@ -100,6 +100,26 @@ export async function getDevicesForUser(
   }
 }
 
+export async function setDeviceDisabled(
+  asset: Asset,
+  disabled: boolean
+): Promise<{ success: boolean; errorMessage?: string }> {
+  const action = disabled ? "disable" : "reenable";
+  const response = await fetch(
+    "/.netlify/functions/index?mode=google&action=" +
+      action +
+      "&serial=" +
+      encodeURIComponent(asset.Serial)
+  );
+  const json = await response.json();
+  if (json.status === "success") {
+    // Invalidate cache so next fetch reflects new status
+    delete serialCache[asset.Serial];
+    return { success: true };
+  }
+  return { success: false, errorMessage: json.errorMessage || json.detail || "Unknown error" };
+}
+
 export async function checkMachineStatus(asset: Asset) {
   const googleData = await getDeviceInfo(asset);
 
