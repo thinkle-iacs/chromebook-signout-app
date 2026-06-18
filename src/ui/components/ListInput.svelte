@@ -6,10 +6,22 @@
   export let autocomplete: string | undefined = undefined;
 
   let textValue = "";
+  let _prevScanMode = scanMode;
 
-  // In normal mode keep textValue in sync with the array
-  $: if (!scanMode) {
-    textValue = (value && value.join(", ")) || "";
+  $: {
+    if (scanMode && !_prevScanMode) {
+      // Just switched into scan mode: move any partial text back to the input
+      // so the user has to press Enter to confirm, not auto-create chips
+      textValue = (value && value.join(", ")) || textValue;
+      value = [];
+    } else if (!scanMode && _prevScanMode) {
+      // Switched out of scan mode: join chips back into the text field
+      textValue = (value && value.join(", ")) || "";
+    } else if (!scanMode) {
+      // Normal mode: keep textValue in sync
+      textValue = (value && value.join(", ")) || "";
+    }
+    _prevScanMode = scanMode;
   }
 
   function updateValue(e) {

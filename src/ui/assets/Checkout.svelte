@@ -1170,6 +1170,7 @@ Hinge bolts:New screws needed for display hinges*/
   }
   .row > :global(*) {
     margin-left: 16px;
+    min-width: 0;
   }
   .row > :global(*):first-child {
     margin-left: 0;
