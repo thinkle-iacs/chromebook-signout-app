@@ -67,6 +67,7 @@
   let studentNotes = "";
   let showStudentNoteMode = false;
   let daily = false;
+  let scanMode = false;
   let signoutForm;
   let student: Student | null = null;
   let staff: Staff | null = null;
@@ -172,6 +173,9 @@
   $: staff = !studentMode && $staffStore[$staffName];
   $: assets = $assetTags.map(
     (t) => $assetStore[t.toUpperCase()] || $assetStore[t.toLowerCase()]
+  );
+  $: chipStatuses = assets.map((a) =>
+    a ? "found" : $validating.assetTag ? "searching" : "notfound"
   );
   /* $: charger = $assetStore[$chargerTag]; */
 
@@ -759,17 +763,22 @@ Hinge bolts:New screws needed for display hinges*/
     <div class="row">
       <FormField
         fullWidth={false}
+        grow={true}
         name={(mode == "it" && "Asset Tag(s)") || "Asset Tag"}
         errors={$assetTags && $signoutForm?.fields?.assetTag?.errors}
       >
         <ListInput
           bind:value={$assetTags}
+          {scanMode}
+          statuses={chipStatuses}
           id="assettag"
-          type="text"
-          class="w3-input"
-          placeholder="Asset tag or serial number"
+          placeholder={scanMode ? "Scan tag, press Enter to add…" : "Asset tag or serial number"}
           autocomplete="off"
         />
+        <label class="scan-mode-label w3-small">
+          <input type="checkbox" bind:checked={scanMode} />
+          Batch scan mode (Enter adds to list)
+        </label>
       </FormField>
       {#if mode != "it"}
         <!-- <FormField
@@ -1124,6 +1133,13 @@ Hinge bolts:New screws needed for display hinges*/
 </article>
 
 <style>
+  .scan-mode-label {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+    color: #555;
+    gap: 4px;
+  }
   a {
     text-decoration: none;
   }
@@ -1159,6 +1175,7 @@ Hinge bolts:New screws needed for display hinges*/
   }
   .row > :global(*) {
     margin-left: 16px;
+    min-width: 0;
   }
   .row > :global(*):first-child {
     margin-left: 0;
