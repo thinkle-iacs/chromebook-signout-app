@@ -5,3 +5,6 @@
 
 # Local Netlify folder
 .netlify
+
+# Apps Script — clasp config contains local paths and script ID
+gas/.clasp.json
