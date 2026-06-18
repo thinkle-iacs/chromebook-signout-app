@@ -13,6 +13,42 @@
   import { INACTIVE_PURPOSES } from "@data/inventory";
   import PurposeBadge from "@assets/PurposeBadge.svelte";
   import { getRepairingAssetTags } from "@data/signoutHistory";
+  import { setDeviceDisabled } from "@data/google";
+
+  const ADMIN_CONSOLE_URL = "https://admin.google.com/ac/chrome/devices";
+
+  type DeviceActionState = {
+    status: string;
+    inProgress: boolean;
+    error: string;
+  };
+  let deviceActions: Record<string, DeviceActionState> = {};
+
+  function getAdminStatus(machine: StudentDeviceReportMachine | null): string | null {
+    if (!machine?.serial) return null;
+    return deviceActions[machine.serial]?.status ?? machine.googleData?.status ?? null;
+  }
+
+  async function toggleDeviceDisabled(serial: string, asset, currentAdminStatus: string) {
+    if (!serial || !asset) return;
+    const disabling = currentAdminStatus === "ACTIVE";
+    deviceActions = {
+      ...deviceActions,
+      [serial]: { status: currentAdminStatus, inProgress: true, error: "" },
+    };
+    const result = await setDeviceDisabled(asset, disabling);
+    if (result.success) {
+      deviceActions = {
+        ...deviceActions,
+        [serial]: { status: disabling ? "DISABLED" : "ACTIVE", inProgress: false, error: "" },
+      };
+    } else {
+      deviceActions = {
+        ...deviceActions,
+        [serial]: { status: currentAdminStatus, inProgress: false, error: result.errorMessage || "Action failed" },
+      };
+    }
+  }
 
   let repairingTags: Set<string> = new Set();
 
@@ -789,6 +825,7 @@
               <th>Checkout Status</th>
               <th on:click={() => setSort("summary")}>Summary</th>
               <th on:click={() => setSort("lastUsedMachineCount")}>Count</th>
+              <th>Admin</th>
             </tr>
           </thead>
           <tbody>
@@ -886,10 +923,37 @@
                   {/if}
                 </td>
                 <td>{formatCount(displayRow)}</td>
+                <td class="admin-cell">
+                  {#if displayRow.machine && displayRow.machine.serial && displayRow.machine.asset}
+                    {#if getAdminStatus(displayRow.machine) === "DEPROVISIONED"}
+                      <span class="admin-badge deprovisioned">Deprovisioned</span>
+                    {:else if getAdminStatus(displayRow.machine) === "DISABLED"}
+                      <span class="admin-badge disabled">DISABLED</span>
+                      <button
+                        class="w3-button w3-green w3-tiny admin-action-btn"
+                        disabled={deviceActions[displayRow.machine.serial]?.inProgress}
+                        on:click={() => toggleDeviceDisabled(displayRow.machine.serial, displayRow.machine.asset, getAdminStatus(displayRow.machine))}
+                      >{deviceActions[displayRow.machine.serial]?.inProgress ? "…" : "Re-enable"}</button>
+                    {:else if getAdminStatus(displayRow.machine) === "ACTIVE"}
+                      <button
+                        class="w3-button w3-orange w3-tiny admin-action-btn"
+                        disabled={deviceActions[displayRow.machine.serial]?.inProgress}
+                        on:click={() => toggleDeviceDisabled(displayRow.machine.serial, displayRow.machine.asset, getAdminStatus(displayRow.machine))}
+                      >{deviceActions[displayRow.machine.serial]?.inProgress ? "…" : "Disable"}</button>
+                    {:else if getAdminStatus(displayRow.machine)}
+                      <span class="w3-small w3-text-gray">{getAdminStatus(displayRow.machine)}</span>
+                    {/if}
+                    {#if deviceActions[displayRow.machine.serial]?.error}
+                      <div class="w3-small w3-text-red">
+                        {deviceActions[displayRow.machine.serial].error} — <a href={ADMIN_CONSOLE_URL} target="_blank" rel="noopener">Admin console</a>
+                      </div>
+                    {/if}
+                  {/if}
+                </td>
               </tr>
               {#if expandedMachines[displayRow.key] && displayRow.machine}
                 <tr class="expanded-row">
-                  <td colspan="8">
+                  <td colspan="9">
                     <div class="expanded-grid">
                       <div>
                         <h4>Recent Users</h4>
@@ -1106,5 +1170,31 @@
     font-weight: normal;
     cursor: pointer;
     min-width: unset;
+  }
+  .admin-cell {
+    white-space: nowrap;
+    vertical-align: top;
+  }
+  .admin-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+  }
+  .admin-badge.disabled {
+    background: #ffcccc;
+    color: #8b0000;
+  }
+  .admin-badge.deprovisioned {
+    background: #e0d0f0;
+    color: #4a0072;
+  }
+  .admin-action-btn {
+    display: block;
+    margin-top: 2px;
+    padding: 2px 8px !important;
+    font-size: 11px !important;
   }
 </style>
