@@ -22,25 +22,29 @@
   function handleKeydown(e: KeyboardEvent) {
     if (scanMode && e.key === "Enter") {
       e.preventDefault(); // prevent form submit
-      const newTag = textValue.trim();
-      if (newTag) {
+      const newTag = textValue.trim().toUpperCase();
+      if (newTag && !value.some((t) => t.toUpperCase() === newTag)) {
         value = [...(value || []), newTag];
       }
       textValue = "";
     }
   }
 
-  function removeTag(tag: string) {
-    value = value.filter((t) => t !== tag);
+  function removeTag(index: number) {
+    value = value.filter((_, i) => i !== index);
   }
 </script>
 
 {#if scanMode && value && value.length > 0}
   <div class="tag-list">
-    {#each value as tag}
-      <span class="tag">
+    {#each value as tag, i (i)}
+      <span class="w3-tag w3-round w3-light-blue tag">
         {tag}
-        <button type="button" on:click={() => removeTag(tag)}>×</button>
+        <button
+          type="button"
+          class="w3-button w3-tiny"
+          on:click={() => removeTag(i)}>×</button
+        >
       </span>
     {/each}
   </div>
@@ -63,24 +67,12 @@
     margin-bottom: 4px;
   }
   .tag {
-    background: #e3f2fd;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.85em;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 4px;
   }
   .tag button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    font-size: 1.1em;
+    padding: 0 2px;
     line-height: 1;
-    color: #555;
-  }
-  .tag button:hover {
-    color: #c00;
   }
 </style>

@@ -1129,7 +1129,8 @@ Hinge bolts:New screws needed for display hinges*/
 
 <style>
   .scan-mode-label {
-    display: block;
+    display: flex;
+    align-items: center;
     margin-top: 4px;
     color: #555;
     gap: 4px;
