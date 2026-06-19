@@ -20,6 +20,7 @@
   import StudentGoogleAdminHistory from "@googleAdmin/StudentGoogleAdminHistory.svelte";
 
   export let name = "";
+  export let isIt: boolean = false;
   if (name) {
     $staffName = name;
     logger.logVerbose("Got staff", $staffName, name);
@@ -185,7 +186,7 @@
       </div>
     </article>
     <article class="w3-card w3-cell-middle">
-      <StudentGoogleAdminHistory student={staff} />
+      <StudentGoogleAdminHistory student={staff} {isIt} />
     </article>
   </div>
 {/if}

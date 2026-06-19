@@ -6,6 +6,7 @@
   import type { ChromebookInfo } from "@data/google";
   import { getDevicesForUser } from "@data/google";
   export let student: Student | Staff;
+  export let isIt: boolean = false;
   let lastLookedUp = null;
   let chromebooks: ChromebookInfo[] | void;
 
@@ -25,7 +26,7 @@
   <div class="w3-card w3-container">
     <h2>Student was last to use {chromebooks.length} Chromebooks</h2>
     {#each chromebooks as chromebook}
-      <ChromebookInfoDisplay info={chromebook} />
+      <ChromebookInfoDisplay info={chromebook} {isIt} />
     {/each}
   </div>
 {:else if student}

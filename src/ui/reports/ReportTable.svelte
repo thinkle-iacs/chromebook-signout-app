@@ -11,7 +11,10 @@
     getBillableStudentId,
     DEFAULT_REPLACEMENT_COST,
   } from "@data/lostDeviceBilling";
+  import { setDeviceDisabled } from "@data/google";
   import { showToast } from "@components/toastStore";
+
+  const ADMIN_CONSOLE_URL = "https://admin.google.com/ac/chrome/devices";
 
   export let data;
   export let columns = [];
@@ -370,15 +373,17 @@
   async function confirmMarkSelectedAsLost() {
     isUpdatingStatus = true;
     updateStatusError = "";
+    const tags = [...selectedAssetTags];
+    const total = tags.length;
+    let completed = 0;
+    lostProgress = { completed: 0, total };
     try {
-      const tags = [...selectedAssetTags];
       const billingErrors = [];
       let billedCount = 0;
       await Promise.all(
         tags.map(async (tag) => {
           const asset = data.find((row) => row["Asset Tag"] === tag);
           if (!asset) throw new Error(`Asset not found: ${tag}`);
-          // Bill first so the signout note can record the ticket number.
           let note = lostNote;
           if (billForReplacement) {
             if (!getBillableStudentId(asset)) {
@@ -401,6 +406,11 @@
           }
           await signoutAsset(null, null, asset, note, "Lost", false);
           await updateAsset(asset._id, { Status: "Lost" });
+          // Optimistic UI: mark this tag locally without waiting for a full data reload
+          localLostTags.add(tag);
+          localLostTags = localLostTags;
+          completed++;
+          lostProgress = { completed, total };
         }),
       );
       if (billingErrors.length) {
@@ -415,13 +425,77 @@
             : `Marked ${tags.length} device(s) lost`,
           "success",
         );
-        selectedAssetTags = new Set();
         closeLostConfirm();
+        // Selection kept so user can chain actions (e.g. mark lost then disable)
       }
     } catch (e) {
       updateStatusError = e.message || "Failed to update status.";
     } finally {
       isUpdatingStatus = false;
+    }
+  }
+
+  // Batch disable / enable
+  let deviceActionInProgress = false;
+  let deviceActionProgress = { completed: 0, total: 0 };
+  let deviceActionResults = null; // { succeeded, failed: [{tag, serial, error}], action }
+  let showDeviceActionConfirm = false;
+  let pendingDeviceAction = ""; // "disable" | "reenable"
+
+  // Local optimistic state
+  let localLostTags = new Set();
+  let lostProgress = { completed: 0, total: 0 };
+
+  function openDeviceActionConfirm(action) {
+    pendingDeviceAction = action;
+    showDeviceActionConfirm = true;
+  }
+
+  async function confirmDeviceAction() {
+    deviceActionInProgress = true;
+    showDeviceActionConfirm = false;
+    deviceActionResults = null;
+    const tags = [...selectedAssetTags];
+    const succeeded = [];
+    const failed = [];
+    const disabling = pendingDeviceAction === "disable";
+    const total = tags.length;
+    let completed = 0;
+    deviceActionProgress = { completed: 0, total };
+    try {
+      await Promise.all(
+        tags.map(async (tag) => {
+          const asset = data.find((row) => row["Asset Tag"] === tag);
+          if (!asset || !asset.Serial) {
+            failed.push({ tag, serial: asset?.Serial || "?", error: "No serial number on record" });
+            completed++;
+            deviceActionProgress = { completed, total };
+            return;
+          }
+          try {
+            const result = await setDeviceDisabled(asset, disabling);
+            if (result.success) {
+              succeeded.push(tag);
+            } else {
+              failed.push({ tag, serial: asset.Serial, error: result.errorMessage || "Unknown error" });
+            }
+          } catch (err) {
+            failed.push({ tag, serial: asset.Serial, error: err.message || "Unknown error" });
+          }
+          completed++;
+          deviceActionProgress = { completed, total };
+        })
+      );
+    } finally {
+      deviceActionInProgress = false;
+      deviceActionResults = { succeeded, failed, action: pendingDeviceAction };
+      if (failed.length === 0) {
+        showToast(
+          `${disabling ? "Disabled" : "Re-enabled"} ${succeeded.length} device(s)`,
+          "success"
+        );
+        // Selection kept intentionally — allows chaining actions on same set
+      }
     }
   }
 
@@ -655,10 +729,101 @@
     >
       Mark as Lost
     </button>
+    <button
+      class="w3-button w3-red w3-bar-item"
+      disabled={selectedAssetTags.size === 0 || deviceActionInProgress}
+      on:click={() => openDeviceActionConfirm("disable")}
+    >
+      Disable Selected
+    </button>
+    <button
+      class="w3-button w3-green w3-bar-item"
+      disabled={selectedAssetTags.size === 0 || deviceActionInProgress}
+      on:click={() => openDeviceActionConfirm("reenable")}
+    >
+      Re-enable Selected
+    </button>
     <span class="w3-bar-item data-exporter-wrap" style="padding:0;">
       <DataExporter items={filteredData} {filename} headers={exportColumns} />
     </span>
   </div>
+
+  <!-- Disable/enable confirmation dialog -->
+  {#if showDeviceActionConfirm}
+    <div class="modal-wrap" style="display:flex;align-items:center;justify-content:center;z-index:2000;">
+      <div class="modal-content lost-confirm-modal w3-card" style="max-width:440px;width:90vw;padding:2em;position:relative;">
+        <h4>
+          {pendingDeviceAction === "disable" ? "Disable" : "Re-enable"}
+          {selectedAssetTags.size} device(s)?
+        </h4>
+        {#if pendingDeviceAction === "disable"}
+          <p class="w3-small">
+            Disabled devices will show a lock screen and cannot be used until
+            re-enabled. This calls the Google Admin API.
+          </p>
+        {:else}
+          <p class="w3-small">
+            This will re-enable the selected devices via the Google Admin API.
+          </p>
+        {/if}
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button
+            class="w3-button {pendingDeviceAction === 'disable' ? 'w3-red' : 'w3-green'}"
+            on:click={confirmDeviceAction}
+          >
+            Confirm {pendingDeviceAction === "disable" ? "Disable" : "Re-enable"}
+          </button>
+          <button
+            class="w3-button w3-light-grey"
+            on:click={() => (showDeviceActionConfirm = false)}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Device action in-progress indicator -->
+  {#if deviceActionInProgress}
+    <div class="w3-container w3-pale-blue w3-border w3-margin-bottom">
+      <p>
+        {pendingDeviceAction === "disable" ? "Disabling" : "Re-enabling"} devices…
+        {deviceActionProgress.completed}/{deviceActionProgress.total} done
+      </p>
+    </div>
+  {/if}
+
+  <!-- Device action results -->
+  {#if deviceActionResults}
+    <div class="w3-panel {deviceActionResults.failed.length ? 'w3-pale-red' : 'w3-pale-green'} w3-border">
+      <p>
+        <strong>
+          {deviceActionResults.action === "disable" ? "Disabled" : "Re-enabled"}
+          {deviceActionResults.succeeded.length} device(s).
+        </strong>
+        {#if deviceActionResults.failed.length}
+          {deviceActionResults.failed.length} failed:
+        {/if}
+      </p>
+      {#if deviceActionResults.failed.length}
+        <ul class="w3-ul w3-small">
+          {#each deviceActionResults.failed as f}
+            <li><b>{f.tag}</b> (s/n: {f.serial}) — {f.error}</li>
+          {/each}
+        </ul>
+        <p class="w3-small">
+          <a href={ADMIN_CONSOLE_URL} target="_blank" rel="noopener">
+            Manage these devices manually in the Google Admin console →
+          </a>
+        </p>
+      {/if}
+      <button
+        class="w3-button w3-tiny w3-light-grey"
+        on:click={() => (deviceActionResults = null)}>Dismiss</button
+      >
+    </div>
+  {/if}
 
   {#if mountBulkMessageSender}
     <div
@@ -779,6 +944,9 @@
                     openInNewTab={openAssetLinksInNewTab}
                     signoutStatus={statusByTag.get(row["Asset Tag"]) || ""}
                   />
+                  {#if localLostTags.has(row["Asset Tag"])}
+                    <span class="w3-tag w3-orange" style="font-size:10px;padding:1px 5px;margin-top:2px;display:inline-block;">Marked Lost</span>
+                  {/if}
                 {:else}
                   {row[column]}
                 {/if}
@@ -890,8 +1058,8 @@
           >
             {isUpdatingStatus
               ? billForReplacement
-                ? "Marking lost & sending invoices..."
-                : "Marking as Lost..."
+                ? `Marking & invoicing… (${lostProgress.completed}/${lostProgress.total})`
+                : `Marking Lost… (${lostProgress.completed}/${lostProgress.total})`
               : billForReplacement
                 ? "Confirm & Send Invoice(s)"
                 : "Confirm"}

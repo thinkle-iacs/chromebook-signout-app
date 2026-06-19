@@ -13,10 +13,9 @@ function makeResult (e, object) {
   return ContentService.createTextOutput(
     JSON.stringify({
       status : 'success',
-      parameters: e.parameters,
       result : object
     })
-  )
+  ).setMimeType(ContentService.MimeType.JSON);
 }
 
 function makeErrorMessage (e, details={}) {
@@ -24,17 +23,18 @@ function makeErrorMessage (e, details={}) {
       JSON.stringify(
         {
           status : 'Error',
-          parameters : e.parameters,
           ...details}
         )
-  )
+  ).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doGet (e) {
   // Provide a Web API for getting Chromebook info
   if (e.parameters.secret != getSecret()) {
     // Ensure they have provided our SECRET! Top SECRET SECURITY! ;-\
-    return ContentService.createTextOutput("no access, sorry -- you don't know the secret!");
+    return ContentService.createTextOutput(
+      JSON.stringify({ status: 'Error', detail: 'Unauthorized' })
+    ).setMimeType(ContentService.MimeType.JSON);
   }
   // Parameters are provided as lists, annoyingly... make a simplified object for convenience
   let params = {};
@@ -79,11 +79,39 @@ function doGet (e) {
         );
       }
     }
+  } else if (params.mode === 'action') {
+    // Action mode: disable or reenable a device by serial number
+    // ?secret=SECRET&mode=action&serial=5CD119166D&action=disable|reenable
+    const allowed = ['disable', 'reenable'];
+    if (!params.serial) {
+      return makeErrorMessage(e, { detail: 'No serial provided with mode=action' });
+    }
+    if (!allowed.includes(params.action)) {
+      return makeErrorMessage(e, { detail: `Invalid action "${params.action}": expected disable or reenable` });
+    }
+    try {
+      const device = cbBySerial(params.serial);
+      if (!device) {
+        return makeErrorMessage(e, { detail: `Device not found for serial: ${params.serial}` });
+      }
+      AdminDirectory.Chromeosdevices.action(
+        { action: params.action },
+        'my_customer',
+        device.deviceId
+      );
+      return makeResult(e, { deviceId: device.deviceId, serial: params.serial, action: params.action });
+    } catch (error) {
+      return makeErrorMessage(e, {
+        detail: `Error performing ${params.action}`,
+        errorMessage: error.message || String(error),
+        errorStack: error.stack || null
+      });
+    }
   } else {
     // Error if no mode= provided
-    return makeErrorMessage(e,{
-        detail : 'Unknown mode: expected mode="serial" or mode="user"'
-      });    
+    return makeErrorMessage(e, {
+      detail: 'Unknown mode: expected mode="serial", mode="user", or mode="action"'
+    });
   }
 }
 
@@ -92,7 +120,7 @@ function doGet (e) {
 
 function cbBySerial (id) {
   let resp = AdminDirectory.Chromeosdevices.list("my_customer",{query:`id:"${id.toLowerCase()}"`});
-  if (resp && resp.chromeosdevices.length) {
+  if (resp && resp.chromeosdevices && resp.chromeosdevices.length) {
     if (resp.chromeosdevices.length > 1) {
       console.warn('Strange: we got more than one hit for a serial number???',id,resp.chromeosdevices.length,resp.chromeosdevices);
     }
@@ -113,6 +141,36 @@ function testCbBySerial () {
   let id = "5CD042L0ZS";
   console.log('Testing CB by Serial with',id);
   console.log(cbBySerial(id));
+}
+
+function testDisable () {
+  let serial = "5CD119166D"; // ACTIVE device
+  console.log('Looking up device by serial:', serial);
+  const device = cbBySerial(serial);
+  console.log('Found device:', device && device.deviceId, 'status:', device && device.status);
+  console.log('Attempting disable...');
+  AdminDirectory.Chromeosdevices.action(
+    { action: 'disable' },
+    'my_customer',
+    device.deviceId
+  );
+  console.log('Done — checking new status:');
+  console.log(cbBySerial(serial).status);
+}
+
+function testReenable () {
+  let serial = "5CD119166D"; // should be DISABLED after testDisable
+  console.log('Looking up device by serial:', serial);
+  const device = cbBySerial(serial);
+  console.log('Found device:', device && device.deviceId, 'status:', device && device.status);
+  console.log('Attempting reenable...');
+  AdminDirectory.Chromeosdevices.action(
+    { action: 'reenable' },
+    'my_customer',
+    device.deviceId
+  );
+  console.log('Done — checking new status:');
+  console.log(cbBySerial(serial).status);
 }
 
 

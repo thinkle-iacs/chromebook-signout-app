@@ -23,6 +23,7 @@
   import StudentTicketsTab from "./StudentTicketsTab.svelte";
   import Loader from "@components/Loader.svelte";
   export let name = "";
+  export let isIt: boolean = false;
   if (name) {
     $studentName = name;
     logger.logVerbose("LookupStudent got student", $studentName, name);
@@ -160,7 +161,7 @@
         >
       </nav>
       <div class="w3-container">
-        <StudentGoogleAdminHistory {student} active={activeTab === "google"} />
+        <StudentGoogleAdminHistory {student} {isIt} active={activeTab === "google"} />
         <StudentTicketsTab {student} active={activeTab === "tickets"} />
         {#if activeTab == "loans"}
           <h3>Current Loans:</h3>

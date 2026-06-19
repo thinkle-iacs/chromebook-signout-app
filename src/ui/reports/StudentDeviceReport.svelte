@@ -10,9 +10,245 @@
     type StudentDeviceReportMachine,
     type StudentDeviceReportRow,
   } from "@data/studentDeviceReport";
-  import { INACTIVE_PURPOSES } from "@data/inventory";
+  import { INACTIVE_PURPOSES, updateAsset } from "@data/inventory";
   import PurposeBadge from "@assets/PurposeBadge.svelte";
   import { getRepairingAssetTags } from "@data/signoutHistory";
+  import { setDeviceDisabled } from "@data/google";
+  import { signoutAsset } from "@data/signout";
+  import { billForLostDevice, getBillableStudentId, DEFAULT_REPLACEMENT_COST } from "@data/lostDeviceBilling";
+  import { showToast } from "@components/toastStore";
+  import BulkMessageSender from "@notifications/BulkMessageSender.svelte";
+
+  const ADMIN_CONSOLE_URL = "https://admin.google.com/ac/chrome/devices";
+
+  type DeviceActionState = {
+    status: string;
+    inProgress: boolean;
+    error: string;
+  };
+  let deviceActions: Record<string, DeviceActionState> = {};
+
+  function getAdminStatus(machine: StudentDeviceReportMachine | null): string | null {
+    if (!machine?.serial) return null;
+    return deviceActions[machine.serial]?.status ?? machine.googleData?.status ?? null;
+  }
+
+  async function toggleDeviceDisabled(serial: string, asset, currentAdminStatus: string) {
+    if (!serial || !asset) return;
+    const disabling = currentAdminStatus === "ACTIVE";
+    deviceActions = {
+      ...deviceActions,
+      [serial]: { status: currentAdminStatus, inProgress: true, error: "" },
+    };
+    try {
+      const result = await setDeviceDisabled(asset, disabling);
+      if (result.success) {
+        deviceActions = {
+          ...deviceActions,
+          [serial]: { status: disabling ? "DISABLED" : "ACTIVE", inProgress: false, error: "" },
+        };
+      } else {
+        deviceActions = {
+          ...deviceActions,
+          [serial]: { status: currentAdminStatus, inProgress: false, error: result.errorMessage || "Action failed" },
+        };
+      }
+    } finally {
+      if (deviceActions[serial]?.inProgress) {
+        deviceActions = { ...deviceActions, [serial]: { ...deviceActions[serial], inProgress: false } };
+      }
+    }
+  }
+
+  // Batch selection state
+  let selectedSerials: Set<string> = new Set();
+  let showBatchActionConfirm = false;
+  let pendingBatchAction = "";
+  let batchActionInProgress = false;
+  let batchActionProgress = { completed: 0, total: 0 };
+  let batchActionResults: { succeeded: string[]; failed: { serial: string; error: string }[]; action: string } | null = null;
+
+  // Local optimistic state
+  let localLostSerials: Set<string> = new Set();
+
+  // Lost device flow
+  let showLostConfirm = false;
+  let lostNote = "";
+  let billForReplacement = false;
+  let replacementCost = DEFAULT_REPLACEMENT_COST;
+  let isUpdatingLostStatus = false;
+  let lostProgress = { completed: 0, total: 0 };
+  let updateLostError = "";
+
+  // Bulk message sender
+  let showBulkMessageSender = false;
+  let mountBulkMessageSender = false;
+
+  $: selectableMachines = displayRows
+    .filter((dr) => dr.machine && dr.machine.serial && dr.machine.asset)
+    .map((dr) => dr.machine.serial);
+
+  $: selectedAssets = [...selectedSerials]
+    .map((serial) => displayRows.find((d) => d.machine?.serial === serial)?.machine?.asset)
+    .filter(Boolean);
+
+  $: selectedAssetTagsForEmail = [...selectedSerials]
+    .map((serial) => displayRows.find((d) => d.machine?.serial === serial)?.machine?.assetTag)
+    .filter(Boolean);
+
+  $: billableSelectedCount = selectedAssets.filter((asset) => getBillableStudentId(asset)).length;
+
+  function toggleSelectMachine(serial: string) {
+    if (selectedSerials.has(serial)) {
+      selectedSerials.delete(serial);
+    } else {
+      selectedSerials.add(serial);
+    }
+    selectedSerials = new Set(selectedSerials);
+  }
+
+  function toggleSelectAll() {
+    if (selectedSerials.size === selectableMachines.length) {
+      selectedSerials = new Set();
+    } else {
+      selectedSerials = new Set(selectableMachines);
+    }
+  }
+
+  function openBatchAction(action: string) {
+    pendingBatchAction = action;
+    showBatchActionConfirm = true;
+  }
+
+  function openLostConfirm() {
+    lostNote = "";
+    billForReplacement = false;
+    replacementCost = DEFAULT_REPLACEMENT_COST;
+    updateLostError = "";
+    showLostConfirm = true;
+  }
+  function closeLostConfirm() {
+    showLostConfirm = false;
+  }
+
+  async function confirmMarkSelectedAsLost() {
+    isUpdatingLostStatus = true;
+    updateLostError = "";
+    const total = selectedAssets.length;
+    let completed = 0;
+    lostProgress = { completed: 0, total };
+    try {
+      const billingErrors: string[] = [];
+      let billedCount = 0;
+      await Promise.all(
+        selectedAssets.map(async (asset) => {
+          const tag = asset["Asset Tag"];
+          let note = lostNote;
+          if (billForReplacement) {
+            if (!getBillableStudentId(asset)) {
+              billingErrors.push(`${tag}: no current student to bill`);
+            } else {
+              try {
+                const { ticket } = await billForLostDevice(asset, { cost: replacementCost, note: lostNote });
+                note = (lostNote ? lostNote + " " : "") +
+                  `Billed family $${replacementCost} for replacement` +
+                  (ticket.Number ? ` (Ticket #${ticket.Number}).` : ".");
+                billedCount++;
+              } catch (e) {
+                billingErrors.push(`${tag}: ${e.message}`);
+              }
+            }
+          }
+          await signoutAsset(null, null, asset, note, "Lost", false);
+          await updateAsset(asset._id, { Status: "Lost" });
+          // Optimistic UI: find this asset's serial and mark it
+          const dr = displayRows.find((d) => d.machine?.asset === asset);
+          if (dr?.machine?.serial) {
+            localLostSerials.add(dr.machine.serial);
+            localLostSerials = localLostSerials;
+          }
+          completed++;
+          lostProgress = { completed, total };
+        }),
+      );
+      if (billingErrors.length) {
+        updateLostError = `Marked as lost, but some invoices could not be sent — ${billingErrors.join("; ")}`;
+        if (billedCount) showToast(`Queued ${billedCount} invoice(s)`, "info");
+      } else {
+        showToast(
+          billForReplacement
+            ? `Marked ${total} device(s) lost and queued ${billedCount} invoice(s)`
+            : `Marked ${total} device(s) lost`,
+          "success",
+        );
+        closeLostConfirm();
+      }
+    } catch (e) {
+      updateLostError = e instanceof Error ? e.message : "Failed to update status.";
+    } finally {
+      isUpdatingLostStatus = false;
+    }
+  }
+
+  function openBulkMessageSender() {
+    if (!mountBulkMessageSender) mountBulkMessageSender = true;
+    showBulkMessageSender = true;
+  }
+
+  async function confirmBatchDeviceAction() {
+    batchActionInProgress = true;
+    showBatchActionConfirm = false;
+    batchActionResults = null;
+    const serials = [...selectedSerials];
+    const succeeded: string[] = [];
+    const failed: { serial: string; error: string }[] = [];
+    const disabling = pendingBatchAction === "disable";
+    const total = serials.length;
+    let completed = 0;
+    batchActionProgress = { completed: 0, total };
+    try {
+      await Promise.all(
+        serials.map(async (serial) => {
+          const dr = displayRows.find((d) => d.machine?.serial === serial);
+          const asset = dr?.machine?.asset;
+          if (!asset) {
+            failed.push({ serial, error: "Asset not found" });
+            completed++;
+            batchActionProgress = { completed, total };
+            return;
+          }
+          try {
+            const result = await setDeviceDisabled(asset, disabling);
+            if (result.success) {
+              succeeded.push(serial);
+              deviceActions = {
+                ...deviceActions,
+                [serial]: { status: disabling ? "DISABLED" : "ACTIVE", inProgress: false, error: "" },
+              };
+            } else {
+              failed.push({ serial, error: result.errorMessage || "Unknown error" });
+            }
+          } catch (err) {
+            failed.push({ serial, error: err instanceof Error ? err.message : "Unknown error" });
+          }
+          completed++;
+          batchActionProgress = { completed, total };
+        })
+      );
+    } finally {
+      batchActionInProgress = false;
+      batchActionResults = { succeeded, failed, action: pendingBatchAction };
+      if (failed.length === 0) {
+        showToast(
+          `${disabling ? "Disabled" : "Re-enabled"} ${succeeded.length} device(s)`,
+          "success"
+        );
+        // Selection kept so user can chain actions (e.g. mark lost then disable)
+      }
+    }
+  }
+
+  export let isIt: boolean = false;
 
   let repairingTags: Set<string> = new Set();
 
@@ -744,6 +980,165 @@
       <b>{exportRows.filter((row) => row.Serial).length}</b> last-used machines
     </p>
 
+    <!-- Batch action bar -->
+    {#if selectedSerials.size > 0}
+      <div class="batch-action-bar w3-bar">
+        <span class="w3-bar-item"><b>{selectedSerials.size}</b> device(s) selected</span>
+        <button class="w3-button w3-blue w3-bar-item" on:click={openBulkMessageSender}>
+          Send Email
+        </button>
+        <button class="w3-button w3-orange w3-bar-item" disabled={isUpdatingLostStatus} on:click={openLostConfirm}>
+          Mark as Lost
+        </button>
+        <button
+          class="w3-button w3-red w3-bar-item"
+          disabled={batchActionInProgress}
+          on:click={() => openBatchAction("disable")}
+        >Disable Selected</button>
+        <button
+          class="w3-button w3-green w3-bar-item"
+          disabled={batchActionInProgress}
+          on:click={() => openBatchAction("reenable")}
+        >Re-enable Selected</button>
+        <button
+          class="w3-button w3-light-grey w3-bar-item"
+          on:click={() => (selectedSerials = new Set())}
+        >Clear</button>
+      </div>
+    {/if}
+
+    <!-- Batch device action in-progress indicator -->
+    {#if batchActionInProgress}
+      <div class="w3-container w3-pale-blue w3-border w3-margin-bottom">
+        <p>{pendingBatchAction === "disable" ? "Disabling" : "Re-enabling"} devices… {batchActionProgress.completed}/{batchActionProgress.total} done</p>
+      </div>
+    {/if}
+
+    <!-- Batch action confirm dialog -->
+    {#if showBatchActionConfirm}
+      <div class="modal-wrap" style="display:flex;align-items:center;justify-content:center;z-index:2000;">
+        <div class="modal-content w3-card" style="max-width:440px;width:90vw;padding:2em;position:relative;">
+          <h4>{pendingBatchAction === "disable" ? "Disable" : "Re-enable"} {selectedSerials.size} device(s)?</h4>
+          {#if pendingBatchAction === "disable"}
+            <p class="w3-small">Disabled devices will show a lock screen and cannot be used until re-enabled.</p>
+          {:else}
+            <p class="w3-small">This will re-enable the selected devices via the Google Admin API.</p>
+          {/if}
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button
+              class="w3-button {pendingBatchAction === 'disable' ? 'w3-red' : 'w3-green'}"
+              on:click={confirmBatchDeviceAction}
+            >Confirm {pendingBatchAction === "disable" ? "Disable" : "Re-enable"}</button>
+            <button class="w3-button w3-light-grey" on:click={() => (showBatchActionConfirm = false)}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    <!-- Lost device confirm dialog -->
+    {#if showLostConfirm}
+      <div class="modal-wrap" style="display:flex;align-items:center;justify-content:center;z-index:2000;">
+        <div class="modal-content w3-card" style="max-width:440px;width:90vw;padding:2em;position:relative;">
+          <button class="close-modal-btn" on:click={closeLostConfirm} disabled={isUpdatingLostStatus} aria-label="Close" type="button">&times;</button>
+          <h3>Mark {selectedSerials.size} device(s) as Lost?</h3>
+          <label for="sdr-lost-note">Optional Note:</label>
+          <textarea
+            id="sdr-lost-note"
+            class="w3-input w3-border"
+            rows="3"
+            bind:value={lostNote}
+            placeholder="Add a note (optional)"
+          ></textarea>
+          <div class="w3-margin-top">
+            <label>
+              <input type="checkbox" class="w3-check" bind:checked={billForReplacement} disabled={isUpdatingLostStatus} />
+              Bill family for replacement
+            </label>
+            {#if billForReplacement}
+              <div class="w3-margin-top">
+                <label for="sdr-replacement-cost">Replacement cost ($):</label>
+                <input
+                  id="sdr-replacement-cost"
+                  type="number"
+                  min="0"
+                  class="w3-input w3-border"
+                  bind:value={replacementCost}
+                  disabled={isUpdatingLostStatus}
+                />
+              </div>
+              <p class="w3-small w3-text-gray">
+                {billableSelectedCount} of {selectedSerials.size} selected device(s) have a current student and can be billed.
+              </p>
+            {/if}
+          </div>
+          <div class="w3-bar w3-margin-top">
+            <button
+              class="w3-button w3-orange w3-bar-item"
+              on:click={confirmMarkSelectedAsLost}
+              disabled={isUpdatingLostStatus || (billForReplacement && (!replacementCost || replacementCost <= 0))}
+            >
+              {isUpdatingLostStatus
+                ? billForReplacement
+                  ? `Marking & invoicing… (${lostProgress.completed}/${lostProgress.total})`
+                  : `Marking Lost… (${lostProgress.completed}/${lostProgress.total})`
+                : billForReplacement
+                  ? "Confirm & Send Invoice(s)"
+                  : "Confirm"}
+            </button>
+          </div>
+          {#if updateLostError}
+            <div class="w3-text-red">{updateLostError}</div>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
+    <!-- Bulk message sender -->
+    {#if mountBulkMessageSender}
+      <div
+        class="modal-wrap modal-bulk-message"
+        style:display={showBulkMessageSender ? "flex" : "none"}
+        style="align-items:center;justify-content:center;z-index:2000;"
+      >
+        <div class="modal-content" style="width:100vw;height:100vh;max-width:100vw;max-height:100vh;position:relative;">
+          <button
+            class="close-modal-btn"
+            on:click={() => (showBulkMessageSender = false)}
+            aria-label="Close"
+            type="button">&times;</button>
+          <BulkMessageSender assetTags={selectedAssetTagsForEmail} />
+        </div>
+      </div>
+    {/if}
+
+    <!-- Batch action results -->
+    {#if batchActionResults}
+      <div class="w3-panel {batchActionResults.failed.length ? 'w3-pale-red' : 'w3-pale-green'} w3-border">
+        <p>
+          <strong>
+            {batchActionResults.action === "disable" ? "Disabled" : "Re-enabled"}
+            {batchActionResults.succeeded.length} device(s).
+          </strong>
+          {#if batchActionResults.failed.length}
+            {batchActionResults.failed.length} failed:
+          {/if}
+        </p>
+        {#if batchActionResults.failed.length}
+          <ul class="w3-ul w3-small">
+            {#each batchActionResults.failed as f}
+              <li><b>{f.serial}</b> — {f.error}</li>
+            {/each}
+          </ul>
+          <p class="w3-small">
+            <a href={ADMIN_CONSOLE_URL} target="_blank" rel="noopener">
+              Manage these devices manually in the Google Admin console →
+            </a>
+          </p>
+        {/if}
+        <button class="w3-button w3-tiny w3-light-grey" on:click={() => (batchActionResults = null)}>Dismiss</button>
+      </div>
+    {/if}
+
     <div class="w3-responsive">
       {#if showViewportScroll}
         <div
@@ -781,6 +1176,14 @@
         >
           <thead>
             <tr>
+              <th class="select-col">
+                <input
+                  type="checkbox"
+                  checked={selectableMachines.length > 0 && selectedSerials.size === selectableMachines.length}
+                  indeterminate={selectedSerials.size > 0 && selectedSerials.size < selectableMachines.length}
+                  on:change={toggleSelectAll}
+                />
+              </th>
               <th on:click={() => setSort("student")}>Student</th>
               <th on:click={() => setSort("status")}>Status</th>
               <th>Machine</th>
@@ -789,11 +1192,21 @@
               <th>Checkout Status</th>
               <th on:click={() => setSort("summary")}>Summary</th>
               <th on:click={() => setSort("lastUsedMachineCount")}>Count</th>
+              {#if isIt}<th>Admin</th>{/if}
             </tr>
           </thead>
           <tbody>
             {#each displayRows as displayRow (displayRow.key)}
               <tr class:has-warning={isWarningMachine(displayRow.machine)}>
+                <td class="select-col">
+                  {#if displayRow.machine && displayRow.machine.serial && displayRow.machine.asset}
+                    <input
+                      type="checkbox"
+                      checked={selectedSerials.has(displayRow.machine.serial)}
+                      on:change={() => toggleSelectMachine(displayRow.machine.serial)}
+                    />
+                  {/if}
+                </td>
                 <td>
                   <b><EmailDisplay email={displayRow.row.student.Email} /></b>
                   <div class="w3-small">{displayRow.row.student.Name}</div>
@@ -838,6 +1251,9 @@
                             s/n {displayRow.machine.serial}
                           </div>
                         </div>
+                      {/if}
+                      {#if displayRow.machine.serial && localLostSerials.has(displayRow.machine.serial)}
+                        <span class="w3-tag w3-orange" style="font-size:10px;padding:1px 5px;">Marked Lost</span>
                       {/if}
                     </div>
                   {:else}
@@ -886,10 +1302,37 @@
                   {/if}
                 </td>
                 <td>{formatCount(displayRow)}</td>
+                {#if isIt}<td class="admin-cell">
+                  {#if displayRow.machine && displayRow.machine.serial && displayRow.machine.asset}
+                    {#if getAdminStatus(displayRow.machine) === "DEPROVISIONED"}
+                      <span class="admin-badge deprovisioned">Deprovisioned</span>
+                    {:else if getAdminStatus(displayRow.machine) === "DISABLED"}
+                      <span class="admin-badge disabled">DISABLED</span>
+                      <button
+                        class="w3-button w3-green w3-tiny admin-action-btn"
+                        disabled={deviceActions[displayRow.machine.serial]?.inProgress}
+                        on:click={() => toggleDeviceDisabled(displayRow.machine.serial, displayRow.machine.asset, getAdminStatus(displayRow.machine))}
+                      >{deviceActions[displayRow.machine.serial]?.inProgress ? "…" : "Re-enable"}</button>
+                    {:else if getAdminStatus(displayRow.machine) === "ACTIVE"}
+                      <button
+                        class="w3-button w3-orange w3-tiny admin-action-btn"
+                        disabled={deviceActions[displayRow.machine.serial]?.inProgress}
+                        on:click={() => toggleDeviceDisabled(displayRow.machine.serial, displayRow.machine.asset, getAdminStatus(displayRow.machine))}
+                      >{deviceActions[displayRow.machine.serial]?.inProgress ? "…" : "Disable"}</button>
+                    {:else if getAdminStatus(displayRow.machine)}
+                      <span class="w3-small w3-text-gray">{getAdminStatus(displayRow.machine)}</span>
+                    {/if}
+                    {#if deviceActions[displayRow.machine.serial]?.error}
+                      <div class="w3-small w3-text-red">
+                        {deviceActions[displayRow.machine.serial].error} — <a href={ADMIN_CONSOLE_URL} target="_blank" rel="noopener">Admin console</a>
+                      </div>
+                    {/if}
+                  {/if}
+                </td>{/if}
               </tr>
               {#if expandedMachines[displayRow.key] && displayRow.machine}
                 <tr class="expanded-row">
-                  <td colspan="8">
+                  <td colspan={isIt ? 10 : 9}>
                     <div class="expanded-grid">
                       <div>
                         <h4>Recent Users</h4>
@@ -1106,5 +1549,72 @@
     font-weight: normal;
     cursor: pointer;
     min-width: unset;
+  }
+  .admin-cell {
+    white-space: nowrap;
+    vertical-align: top;
+  }
+  .admin-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+  }
+  .admin-badge.disabled {
+    background: #ffcccc;
+    color: #8b0000;
+  }
+  .admin-badge.deprovisioned {
+    background: #e0d0f0;
+    color: #4a0072;
+  }
+  .admin-action-btn {
+    display: block;
+    margin-top: 2px;
+    padding: 2px 8px !important;
+    font-size: 11px !important;
+  }
+  .select-col {
+    width: 32px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .batch-action-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+  }
+  .modal-wrap {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background: white;
+    overflow: auto;
+  }
+  .close-modal-btn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 2em;
+    color: #888;
+    cursor: pointer;
+    z-index: 10;
+    padding: 0;
+    line-height: 1;
+  }
+  .close-modal-btn:hover {
+    color: #c6093b;
   }
 </style>

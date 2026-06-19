@@ -2,11 +2,14 @@
   import { logger } from "@utils/log";
   import AssetDisplay from "./AssetDisplay.svelte";
   import type { ChromebookInfo } from "@data/google";
+  import { setDeviceDisabled } from "@data/google";
   import { assetStore, searchForAsset } from "@data/inventory";
   import type { Asset } from "@data/inventory";
 
   export let info: ChromebookInfo;
-  info.activeTimeRanges;
+  export let isIt: boolean = false;
+
+  const ADMIN_CONSOLE_URL = "https://admin.google.com/ac/chrome/devices";
 
   function formatDuration(ms) {
     const totSeconds = ms / 1000;
@@ -26,6 +29,7 @@
       }
     }
   }
+
   let showAllUsers = false;
   let asset: Asset;
   if ($assetStore[info.serialNumber.toLowerCase()]) {
@@ -37,9 +41,52 @@
     });
   }
   let showChart = false;
+
+  // Disable/enable action state
+  let actionInProgress = false;
+  let actionError = "";
+  let currentStatus = info.status;
+  let showDisableConfirm = false;
+
+  function openDisableConfirm() {
+    showDisableConfirm = true;
+  }
+  function cancelDisableConfirm() {
+    showDisableConfirm = false;
+  }
+
+  async function toggleDisabled() {
+    if (!asset) return;
+    actionInProgress = true;
+    actionError = "";
+    const disabling = currentStatus === "ACTIVE";
+    try {
+      const result = await setDeviceDisabled(asset, disabling);
+      if (result.success) {
+        currentStatus = disabling ? "DISABLED" : "ACTIVE";
+      } else {
+        actionError = result.errorMessage || "Action failed";
+      }
+    } finally {
+      actionInProgress = false;
+    }
+  }
 </script>
 
 <div class="w3-small w3-card w3-container">
+  <!-- Device status banner -->
+  {#if currentStatus === "DISABLED"}
+    <div class="w3-panel w3-red status-banner">
+      <strong>⚠ Device is DISABLED</strong> — shows a lock screen; cannot be used
+      by students.
+    </div>
+  {:else if currentStatus === "DEPROVISIONED"}
+    <div class="w3-panel w3-deep-purple w3-text-white status-banner">
+      <strong>Device is DEPROVISIONED</strong> — removed from management. Cannot
+      be re-enrolled without a license.
+    </div>
+  {/if}
+
   {#if info.recentUsers && info.activeTimeRanges}
     <h4 class="summary w3-medium">
       Last used by <b>{info.recentUsers[0].email}</b> on
@@ -47,6 +94,7 @@
     </h4>
     <div class="w3-tiny">According to Google Admin Data</div>
   {/if}
+
   <div class="w3-row">
     <div class="w3-col l8 m8 s12">
       s/n: {info.serialNumber}
@@ -64,6 +112,57 @@
       {#if asset}<AssetDisplay {asset} />{/if}
     </div>
   </div>
+
+  <!-- Disable / re-enable control (IT staff only) -->
+  {#if isIt && asset && currentStatus !== "DEPROVISIONED"}
+    <div class="action-row">
+      {#if currentStatus === "DISABLED"}
+        <button
+          class="w3-button w3-green"
+          disabled={actionInProgress}
+          on:click={toggleDisabled}
+        >
+          {actionInProgress ? "Re-enabling…" : "Re-enable Device"}
+        </button>
+      {:else}
+        <button
+          class="w3-button w3-orange"
+          disabled={actionInProgress}
+          on:click={openDisableConfirm}
+        >
+          {actionInProgress ? "Disabling…" : "Disable Device"}
+        </button>
+      {/if}
+      {#if actionError}
+        <span class="w3-text-red w3-small">
+          {actionError} —
+          <a href={ADMIN_CONSOLE_URL} target="_blank" rel="noopener"
+            >manage in Admin console</a
+          >
+        </span>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Disable confirmation dialog -->
+  {#if showDisableConfirm}
+    <div class="confirm-overlay">
+      <div class="w3-card w3-padding confirm-dialog">
+        <h4>Disable this device?</h4>
+        <p class="w3-small">
+          The device will show a lock screen and <strong>cannot be used by students</strong> until re-enabled.
+          Use this if a machine is missing or was taken without authorization.
+        </p>
+        <div class="action-row">
+          <button class="w3-button w3-red" disabled={actionInProgress} on:click={() => { cancelDisableConfirm(); toggleDisabled(); }}>
+            {actionInProgress ? "Disabling…" : "Yes, disable it"}
+          </button>
+          <button class="w3-button w3-light-grey" on:click={cancelDisableConfirm}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
   <button
     class="w3-button"
     class:w3-blue={showChart}
@@ -117,5 +216,31 @@
   }
   .reverse li:last-child {
     border-bottom: 1px solid #ddd;
+  }
+  .status-banner {
+    margin: 8px 0;
+    padding: 8px 16px;
+    border-radius: 4px;
+  }
+  .action-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+    flex-wrap: wrap;
+  }
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .confirm-dialog {
+    background: white;
+    max-width: 400px;
+    width: 90%;
   }
 </style>
