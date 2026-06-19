@@ -990,18 +990,16 @@
         <button class="w3-button w3-orange w3-bar-item" disabled={isUpdatingLostStatus} on:click={openLostConfirm}>
           Mark as Lost
         </button>
-        {#if isIt}
-          <button
-            class="w3-button w3-red w3-bar-item"
-            disabled={batchActionInProgress}
-            on:click={() => openBatchAction("disable")}
-          >Disable Selected</button>
-          <button
-            class="w3-button w3-green w3-bar-item"
-            disabled={batchActionInProgress}
-            on:click={() => openBatchAction("reenable")}
-          >Re-enable Selected</button>
-        {/if}
+        <button
+          class="w3-button w3-red w3-bar-item"
+          disabled={batchActionInProgress}
+          on:click={() => openBatchAction("disable")}
+        >Disable Selected</button>
+        <button
+          class="w3-button w3-green w3-bar-item"
+          disabled={batchActionInProgress}
+          on:click={() => openBatchAction("reenable")}
+        >Re-enable Selected</button>
         <button
           class="w3-button w3-light-grey w3-bar-item"
           on:click={() => (selectedSerials = new Set())}
