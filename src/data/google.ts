@@ -106,7 +106,7 @@ export async function setDeviceDisabled(
 ): Promise<{ success: boolean; errorMessage?: string }> {
   try {
     const action = disabled ? "disable" : "reenable";
-    const response = await fetch(
+    const response = await authedFetch(
       "/.netlify/functions/index?mode=google&action=" +
         action +
         "&serial=" +
