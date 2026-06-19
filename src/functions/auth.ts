@@ -8,12 +8,14 @@ const IT_USERS = new Set([
 
 export type AuthLevel = "none" | "teacher" | "it";
 
-// Netlify sets CONTEXT="production" in prod; undefined in local dev via `netlify dev`.
-// Trust local dev so the Identity widget bypass in user.ts doesn't break the dev loop.
-const IS_PRODUCTION = process.env.CONTEXT === "production";
+// Netlify sets CONTEXT to "production", "deploy-preview", or "branch-deploy" in hosted
+// environments, and leaves it undefined when running locally via `netlify dev`.
+// Only skip auth when CONTEXT is truly absent (local dev) — previews/branch deploys
+// should still enforce auth.
+const IS_LOCAL_DEV = !process.env.CONTEXT;
 
 export function getAuthLevel(context: Context): AuthLevel {
-  if (!IS_PRODUCTION) return "it";
+  if (IS_LOCAL_DEV) return "it";
 
   const email: string | undefined = (context as any).clientContext?.user?.email;
   if (!email) return "none";

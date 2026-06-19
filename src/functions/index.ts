@@ -39,8 +39,9 @@ export async function handler(
   if (getAuthLevel(context) === "none") {
     return forbidden("School login required");
   }
-  if (modes[event.queryStringParameters?.mode]) {
-    return modes[event.queryStringParameters.mode](event, context);
+  const mode = event.queryStringParameters?.mode;
+  if (modes[mode]) {
+    return modes[mode](event, context);
   } else {
     return {
       statusCode: 400,
