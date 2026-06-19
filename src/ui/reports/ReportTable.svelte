@@ -373,15 +373,17 @@
   async function confirmMarkSelectedAsLost() {
     isUpdatingStatus = true;
     updateStatusError = "";
+    const tags = [...selectedAssetTags];
+    const total = tags.length;
+    let completed = 0;
+    lostProgress = { completed: 0, total };
     try {
-      const tags = [...selectedAssetTags];
       const billingErrors = [];
       let billedCount = 0;
       await Promise.all(
         tags.map(async (tag) => {
           const asset = data.find((row) => row["Asset Tag"] === tag);
           if (!asset) throw new Error(`Asset not found: ${tag}`);
-          // Bill first so the signout note can record the ticket number.
           let note = lostNote;
           if (billForReplacement) {
             if (!getBillableStudentId(asset)) {
@@ -404,6 +406,11 @@
           }
           await signoutAsset(null, null, asset, note, "Lost", false);
           await updateAsset(asset._id, { Status: "Lost" });
+          // Optimistic UI: mark this tag locally without waiting for a full data reload
+          localLostTags.add(tag);
+          localLostTags = localLostTags;
+          completed++;
+          lostProgress = { completed, total };
         }),
       );
       if (billingErrors.length) {
@@ -418,8 +425,8 @@
             : `Marked ${tags.length} device(s) lost`,
           "success",
         );
-        selectedAssetTags = new Set();
         closeLostConfirm();
+        // Selection kept so user can chain actions (e.g. mark lost then disable)
       }
     } catch (e) {
       updateStatusError = e.message || "Failed to update status.";
@@ -430,9 +437,14 @@
 
   // Batch disable / enable
   let deviceActionInProgress = false;
+  let deviceActionProgress = { completed: 0, total: 0 };
   let deviceActionResults = null; // { succeeded, failed: [{tag, serial, error}], action }
   let showDeviceActionConfirm = false;
   let pendingDeviceAction = ""; // "disable" | "reenable"
+
+  // Local optimistic state
+  let localLostTags = new Set();
+  let lostProgress = { completed: 0, total: 0 };
 
   function openDeviceActionConfirm(action) {
     pendingDeviceAction = action;
@@ -447,12 +459,17 @@
     const succeeded = [];
     const failed = [];
     const disabling = pendingDeviceAction === "disable";
+    const total = tags.length;
+    let completed = 0;
+    deviceActionProgress = { completed: 0, total };
     try {
       await Promise.all(
         tags.map(async (tag) => {
           const asset = data.find((row) => row["Asset Tag"] === tag);
           if (!asset || !asset.Serial) {
             failed.push({ tag, serial: asset?.Serial || "?", error: "No serial number on record" });
+            completed++;
+            deviceActionProgress = { completed, total };
             return;
           }
           try {
@@ -465,6 +482,8 @@
           } catch (err) {
             failed.push({ tag, serial: asset.Serial, error: err.message || "Unknown error" });
           }
+          completed++;
+          deviceActionProgress = { completed, total };
         })
       );
     } finally {
@@ -475,7 +494,7 @@
           `${disabling ? "Disabled" : "Re-enabled"} ${succeeded.length} device(s)`,
           "success"
         );
-        selectedAssetTags = new Set();
+        // Selection kept intentionally — allows chaining actions on same set
       }
     }
   }
@@ -731,8 +750,8 @@
 
   <!-- Disable/enable confirmation dialog -->
   {#if showDeviceActionConfirm}
-    <div class="modal-wrap">
-      <div class="modal-content w3-card w3-padding">
+    <div class="modal-wrap" style="display:flex;align-items:center;justify-content:center;z-index:2000;">
+      <div class="modal-content lost-confirm-modal w3-card" style="max-width:440px;width:90vw;padding:2em;position:relative;">
         <h4>
           {pendingDeviceAction === "disable" ? "Disable" : "Re-enable"}
           {selectedAssetTags.size} device(s)?
@@ -762,6 +781,16 @@
           </button>
         </div>
       </div>
+    </div>
+  {/if}
+
+  <!-- Device action in-progress indicator -->
+  {#if deviceActionInProgress}
+    <div class="w3-container w3-pale-blue w3-border w3-margin-bottom">
+      <p>
+        {pendingDeviceAction === "disable" ? "Disabling" : "Re-enabling"} devices…
+        {deviceActionProgress.completed}/{deviceActionProgress.total} done
+      </p>
     </div>
   {/if}
 
@@ -915,6 +944,9 @@
                     openInNewTab={openAssetLinksInNewTab}
                     signoutStatus={statusByTag.get(row["Asset Tag"]) || ""}
                   />
+                  {#if localLostTags.has(row["Asset Tag"])}
+                    <span class="w3-tag w3-orange" style="font-size:10px;padding:1px 5px;margin-top:2px;display:inline-block;">Marked Lost</span>
+                  {/if}
                 {:else}
                   {row[column]}
                 {/if}
@@ -1026,8 +1058,8 @@
           >
             {isUpdatingStatus
               ? billForReplacement
-                ? "Marking lost & sending invoices..."
-                : "Marking as Lost..."
+                ? `Marking & invoicing… (${lostProgress.completed}/${lostProgress.total})`
+                : `Marking Lost… (${lostProgress.completed}/${lostProgress.total})`
               : billForReplacement
                 ? "Confirm & Send Invoice(s)"
                 : "Confirm"}

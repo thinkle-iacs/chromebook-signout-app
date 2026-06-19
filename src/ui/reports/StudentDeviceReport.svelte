@@ -10,10 +10,14 @@
     type StudentDeviceReportMachine,
     type StudentDeviceReportRow,
   } from "@data/studentDeviceReport";
-  import { INACTIVE_PURPOSES } from "@data/inventory";
+  import { INACTIVE_PURPOSES, updateAsset } from "@data/inventory";
   import PurposeBadge from "@assets/PurposeBadge.svelte";
   import { getRepairingAssetTags } from "@data/signoutHistory";
   import { setDeviceDisabled } from "@data/google";
+  import { signoutAsset } from "@data/signout";
+  import { billForLostDevice, getBillableStudentId, DEFAULT_REPLACEMENT_COST } from "@data/lostDeviceBilling";
+  import { showToast } from "@components/toastStore";
+  import BulkMessageSender from "@notifications/BulkMessageSender.svelte";
 
   const ADMIN_CONSOLE_URL = "https://admin.google.com/ac/chrome/devices";
 
@@ -61,11 +65,38 @@
   let showBatchActionConfirm = false;
   let pendingBatchAction = "";
   let batchActionInProgress = false;
+  let batchActionProgress = { completed: 0, total: 0 };
   let batchActionResults: { succeeded: string[]; failed: { serial: string; error: string }[]; action: string } | null = null;
+
+  // Local optimistic state
+  let localLostSerials: Set<string> = new Set();
+
+  // Lost device flow
+  let showLostConfirm = false;
+  let lostNote = "";
+  let billForReplacement = false;
+  let replacementCost = DEFAULT_REPLACEMENT_COST;
+  let isUpdatingLostStatus = false;
+  let lostProgress = { completed: 0, total: 0 };
+  let updateLostError = "";
+
+  // Bulk message sender
+  let showBulkMessageSender = false;
+  let mountBulkMessageSender = false;
 
   $: selectableMachines = displayRows
     .filter((dr) => dr.machine && dr.machine.serial && dr.machine.asset)
     .map((dr) => dr.machine.serial);
+
+  $: selectedAssets = [...selectedSerials]
+    .map((serial) => displayRows.find((d) => d.machine?.serial === serial)?.machine?.asset)
+    .filter(Boolean);
+
+  $: selectedAssetTagsForEmail = [...selectedSerials]
+    .map((serial) => displayRows.find((d) => d.machine?.serial === serial)?.machine?.assetTag)
+    .filter(Boolean);
+
+  $: billableSelectedCount = selectedAssets.filter((asset) => getBillableStudentId(asset)).length;
 
   function toggleSelectMachine(serial: string) {
     if (selectedSerials.has(serial)) {
@@ -89,6 +120,81 @@
     showBatchActionConfirm = true;
   }
 
+  function openLostConfirm() {
+    lostNote = "";
+    billForReplacement = false;
+    replacementCost = DEFAULT_REPLACEMENT_COST;
+    updateLostError = "";
+    showLostConfirm = true;
+  }
+  function closeLostConfirm() {
+    showLostConfirm = false;
+  }
+
+  async function confirmMarkSelectedAsLost() {
+    isUpdatingLostStatus = true;
+    updateLostError = "";
+    const total = selectedAssets.length;
+    let completed = 0;
+    lostProgress = { completed: 0, total };
+    try {
+      const billingErrors: string[] = [];
+      let billedCount = 0;
+      await Promise.all(
+        selectedAssets.map(async (asset) => {
+          const tag = asset["Asset Tag"];
+          let note = lostNote;
+          if (billForReplacement) {
+            if (!getBillableStudentId(asset)) {
+              billingErrors.push(`${tag}: no current student to bill`);
+            } else {
+              try {
+                const { ticket } = await billForLostDevice(asset, { cost: replacementCost, note: lostNote });
+                note = (lostNote ? lostNote + " " : "") +
+                  `Billed family $${replacementCost} for replacement` +
+                  (ticket.Number ? ` (Ticket #${ticket.Number}).` : ".");
+                billedCount++;
+              } catch (e) {
+                billingErrors.push(`${tag}: ${e.message}`);
+              }
+            }
+          }
+          await signoutAsset(null, null, asset, note, "Lost", false);
+          await updateAsset(asset._id, { Status: "Lost" });
+          // Optimistic UI: find this asset's serial and mark it
+          const dr = displayRows.find((d) => d.machine?.asset === asset);
+          if (dr?.machine?.serial) {
+            localLostSerials.add(dr.machine.serial);
+            localLostSerials = localLostSerials;
+          }
+          completed++;
+          lostProgress = { completed, total };
+        }),
+      );
+      if (billingErrors.length) {
+        updateLostError = `Marked as lost, but some invoices could not be sent — ${billingErrors.join("; ")}`;
+        if (billedCount) showToast(`Queued ${billedCount} invoice(s)`, "info");
+      } else {
+        showToast(
+          billForReplacement
+            ? `Marked ${total} device(s) lost and queued ${billedCount} invoice(s)`
+            : `Marked ${total} device(s) lost`,
+          "success",
+        );
+        closeLostConfirm();
+      }
+    } catch (e) {
+      updateLostError = e instanceof Error ? e.message : "Failed to update status.";
+    } finally {
+      isUpdatingLostStatus = false;
+    }
+  }
+
+  function openBulkMessageSender() {
+    if (!mountBulkMessageSender) mountBulkMessageSender = true;
+    showBulkMessageSender = true;
+  }
+
   async function confirmBatchDeviceAction() {
     batchActionInProgress = true;
     showBatchActionConfirm = false;
@@ -97,6 +203,9 @@
     const succeeded: string[] = [];
     const failed: { serial: string; error: string }[] = [];
     const disabling = pendingBatchAction === "disable";
+    const total = serials.length;
+    let completed = 0;
+    batchActionProgress = { completed: 0, total };
     try {
       await Promise.all(
         serials.map(async (serial) => {
@@ -104,6 +213,8 @@
           const asset = dr?.machine?.asset;
           if (!asset) {
             failed.push({ serial, error: "Asset not found" });
+            completed++;
+            batchActionProgress = { completed, total };
             return;
           }
           try {
@@ -120,13 +231,19 @@
           } catch (err) {
             failed.push({ serial, error: err instanceof Error ? err.message : "Unknown error" });
           }
+          completed++;
+          batchActionProgress = { completed, total };
         })
       );
     } finally {
       batchActionInProgress = false;
       batchActionResults = { succeeded, failed, action: pendingBatchAction };
       if (failed.length === 0) {
-        selectedSerials = new Set();
+        showToast(
+          `${disabling ? "Disabled" : "Re-enabled"} ${succeeded.length} device(s)`,
+          "success"
+        );
+        // Selection kept so user can chain actions (e.g. mark lost then disable)
       }
     }
   }
@@ -863,20 +980,28 @@
       <b>{exportRows.filter((row) => row.Serial).length}</b> last-used machines
     </p>
 
-    <!-- Batch action bar (IT only) -->
-    {#if isIt && selectedSerials.size > 0}
+    <!-- Batch action bar -->
+    {#if selectedSerials.size > 0}
       <div class="batch-action-bar w3-bar">
         <span class="w3-bar-item"><b>{selectedSerials.size}</b> device(s) selected</span>
-        <button
-          class="w3-button w3-red w3-bar-item"
-          disabled={batchActionInProgress}
-          on:click={() => openBatchAction("disable")}
-        >Disable Selected</button>
-        <button
-          class="w3-button w3-green w3-bar-item"
-          disabled={batchActionInProgress}
-          on:click={() => openBatchAction("reenable")}
-        >Re-enable Selected</button>
+        <button class="w3-button w3-blue w3-bar-item" on:click={openBulkMessageSender}>
+          Send Email
+        </button>
+        <button class="w3-button w3-orange w3-bar-item" disabled={isUpdatingLostStatus} on:click={openLostConfirm}>
+          Mark as Lost
+        </button>
+        {#if isIt}
+          <button
+            class="w3-button w3-red w3-bar-item"
+            disabled={batchActionInProgress}
+            on:click={() => openBatchAction("disable")}
+          >Disable Selected</button>
+          <button
+            class="w3-button w3-green w3-bar-item"
+            disabled={batchActionInProgress}
+            on:click={() => openBatchAction("reenable")}
+          >Re-enable Selected</button>
+        {/if}
         <button
           class="w3-button w3-light-grey w3-bar-item"
           on:click={() => (selectedSerials = new Set())}
@@ -884,10 +1009,17 @@
       </div>
     {/if}
 
+    <!-- Batch device action in-progress indicator -->
+    {#if batchActionInProgress}
+      <div class="w3-container w3-pale-blue w3-border w3-margin-bottom">
+        <p>{pendingBatchAction === "disable" ? "Disabling" : "Re-enabling"} devices… {batchActionProgress.completed}/{batchActionProgress.total} done</p>
+      </div>
+    {/if}
+
     <!-- Batch action confirm dialog -->
     {#if showBatchActionConfirm}
-      <div class="modal-wrap">
-        <div class="modal-content w3-card w3-padding">
+      <div class="modal-wrap" style="display:flex;align-items:center;justify-content:center;z-index:2000;">
+        <div class="modal-content w3-card" style="max-width:440px;width:90vw;padding:2em;position:relative;">
           <h4>{pendingBatchAction === "disable" ? "Disable" : "Re-enable"} {selectedSerials.size} device(s)?</h4>
           {#if pendingBatchAction === "disable"}
             <p class="w3-small">Disabled devices will show a lock screen and cannot be used until re-enabled.</p>
@@ -901,6 +1033,82 @@
             >Confirm {pendingBatchAction === "disable" ? "Disable" : "Re-enable"}</button>
             <button class="w3-button w3-light-grey" on:click={() => (showBatchActionConfirm = false)}>Cancel</button>
           </div>
+        </div>
+      </div>
+    {/if}
+
+    <!-- Lost device confirm dialog -->
+    {#if showLostConfirm}
+      <div class="modal-wrap" style="display:flex;align-items:center;justify-content:center;z-index:2000;">
+        <div class="modal-content w3-card" style="max-width:440px;width:90vw;padding:2em;position:relative;">
+          <button class="close-modal-btn" on:click={closeLostConfirm} disabled={isUpdatingLostStatus} aria-label="Close" type="button">&times;</button>
+          <h3>Mark {selectedSerials.size} device(s) as Lost?</h3>
+          <label for="sdr-lost-note">Optional Note:</label>
+          <textarea
+            id="sdr-lost-note"
+            class="w3-input w3-border"
+            rows="3"
+            bind:value={lostNote}
+            placeholder="Add a note (optional)"
+          ></textarea>
+          <div class="w3-margin-top">
+            <label>
+              <input type="checkbox" class="w3-check" bind:checked={billForReplacement} disabled={isUpdatingLostStatus} />
+              Bill family for replacement
+            </label>
+            {#if billForReplacement}
+              <div class="w3-margin-top">
+                <label for="sdr-replacement-cost">Replacement cost ($):</label>
+                <input
+                  id="sdr-replacement-cost"
+                  type="number"
+                  min="0"
+                  class="w3-input w3-border"
+                  bind:value={replacementCost}
+                  disabled={isUpdatingLostStatus}
+                />
+              </div>
+              <p class="w3-small w3-text-gray">
+                {billableSelectedCount} of {selectedSerials.size} selected device(s) have a current student and can be billed.
+              </p>
+            {/if}
+          </div>
+          <div class="w3-bar w3-margin-top">
+            <button
+              class="w3-button w3-orange w3-bar-item"
+              on:click={confirmMarkSelectedAsLost}
+              disabled={isUpdatingLostStatus || (billForReplacement && (!replacementCost || replacementCost <= 0))}
+            >
+              {isUpdatingLostStatus
+                ? billForReplacement
+                  ? `Marking & invoicing… (${lostProgress.completed}/${lostProgress.total})`
+                  : `Marking Lost… (${lostProgress.completed}/${lostProgress.total})`
+                : billForReplacement
+                  ? "Confirm & Send Invoice(s)"
+                  : "Confirm"}
+            </button>
+          </div>
+          {#if updateLostError}
+            <div class="w3-text-red">{updateLostError}</div>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
+    <!-- Bulk message sender -->
+    {#if mountBulkMessageSender}
+      <div
+        class="modal-wrap modal-bulk-message"
+        style:display={showBulkMessageSender ? "flex" : "none"}
+        style="align-items:center;justify-content:center;z-index:2000;"
+      >
+        <div class="modal-content" style="width:100vw;height:100vh;max-width:100vw;max-height:100vh;position:relative;">
+          <button
+            class="close-modal-btn"
+            on:click={() => (showBulkMessageSender = false)}
+            aria-label="Close"
+            type="button">&times;</button>
+          <BulkMessageSender assetTags={selectedAssetTagsForEmail} />
         </div>
       </div>
     {/if}
@@ -970,14 +1178,14 @@
         >
           <thead>
             <tr>
-              {#if isIt}<th class="select-col">
+              <th class="select-col">
                 <input
                   type="checkbox"
                   checked={selectableMachines.length > 0 && selectedSerials.size === selectableMachines.length}
                   indeterminate={selectedSerials.size > 0 && selectedSerials.size < selectableMachines.length}
                   on:change={toggleSelectAll}
                 />
-              </th>{/if}
+              </th>
               <th on:click={() => setSort("student")}>Student</th>
               <th on:click={() => setSort("status")}>Status</th>
               <th>Machine</th>
@@ -992,7 +1200,7 @@
           <tbody>
             {#each displayRows as displayRow (displayRow.key)}
               <tr class:has-warning={isWarningMachine(displayRow.machine)}>
-                {#if isIt}<td class="select-col">
+                <td class="select-col">
                   {#if displayRow.machine && displayRow.machine.serial && displayRow.machine.asset}
                     <input
                       type="checkbox"
@@ -1000,7 +1208,7 @@
                       on:change={() => toggleSelectMachine(displayRow.machine.serial)}
                     />
                   {/if}
-                </td>{/if}
+                </td>
                 <td>
                   <b><EmailDisplay email={displayRow.row.student.Email} /></b>
                   <div class="w3-small">{displayRow.row.student.Name}</div>
@@ -1045,6 +1253,9 @@
                             s/n {displayRow.machine.serial}
                           </div>
                         </div>
+                      {/if}
+                      {#if displayRow.machine.serial && localLostSerials.has(displayRow.machine.serial)}
+                        <span class="w3-tag w3-orange" style="font-size:10px;padding:1px 5px;">Marked Lost</span>
                       {/if}
                     </div>
                   {:else}
@@ -1123,7 +1334,7 @@
               </tr>
               {#if expandedMachines[displayRow.key] && displayRow.machine}
                 <tr class="expanded-row">
-                  <td colspan={isIt ? 10 : 8}>
+                  <td colspan={isIt ? 10 : 9}>
                     <div class="expanded-grid">
                       <div>
                         <h4>Recent Users</h4>
@@ -1382,7 +1593,7 @@
   .modal-wrap {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1390,7 +1601,22 @@
   }
   .modal-content {
     background: white;
-    max-width: 480px;
-    width: 90%;
+    overflow: auto;
+  }
+  .close-modal-btn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 2em;
+    color: #888;
+    cursor: pointer;
+    z-index: 10;
+    padding: 0;
+    line-height: 1;
+  }
+  .close-modal-btn:hover {
+    color: #c6093b;
   }
 </style>
