@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
 import type { Student } from "./students";
@@ -67,7 +68,7 @@ export async function getContracts(
     params.all = "true";
   }
   let paramString = new URLSearchParams(params);
-  let response = await fetch("/.netlify/functions/index?" + paramString);
+  let response = await authedFetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
   logger.logVerbose("Got asset data:", json);
   contractStore.update(($contractStore) => {
@@ -93,7 +94,7 @@ export async function mapContract(contract: Contract, student: Student) {
     id: contract._id,
     fields: { Student: [student._id], "Contract Signed": true },
   };
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?" + new URLSearchParams(params),
     {
       method: "PATCH",

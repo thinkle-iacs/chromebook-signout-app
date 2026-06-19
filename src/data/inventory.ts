@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
 import { Staff } from "./staff";
@@ -88,7 +89,7 @@ export async function searchForAsset(
     params.purpose = purpose;
   }
   let paramString = new URLSearchParams(params);
-  let response = await fetch("/.netlify/functions/index?" + paramString);
+  let response = await authedFetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
   logger.logVerbose("Got asset data:", json);
   assetStore.update(($assetStore) => {
@@ -174,7 +175,7 @@ export async function fetchReport({
   }
 
   let paramString = new URLSearchParams(params);
-  let response = await fetch("/.netlify/functions/index?" + paramString);
+  let response = await authedFetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
   logger.logVerbose("Got report data:", json);
 
@@ -227,7 +228,7 @@ export async function getAllChromebooks() {
 // Update asset function
 export async function updateAsset(id: string, fields: any) {
   try {
-    const response = await fetch("/.netlify/functions/index?mode=asset", {
+    const response = await authedFetch("/.netlify/functions/index?mode=asset", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

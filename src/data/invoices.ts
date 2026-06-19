@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { get } from "svelte/store";
 import { user } from "./user";
 
@@ -60,7 +61,7 @@ export async function createInvoices(
 
   const params = { mode: "invoices" };
   await get(user); // ensure session
-  const response = await fetch(
+  const response = await authedFetch(
     "/.netlify/functions/index?" + new URLSearchParams(params),
     {
       method: "POST",
@@ -85,7 +86,7 @@ export async function updateInvoices(
   }
 
   const params = { mode: "invoices" };
-  const response = await fetch(
+  const response = await authedFetch(
     "/.netlify/functions/index?" + new URLSearchParams(params),
     { method: "PATCH", body: JSON.stringify(updates) }
   );
@@ -101,7 +102,7 @@ export async function getInvoices(
   } = {}
 ): Promise<InvoiceResult[]> {
   const qs = new URLSearchParams({ mode: "invoices", ...params } as any);
-  const response = await fetch("/.netlify/functions/index?" + qs, {
+  const response = await authedFetch("/.netlify/functions/index?" + qs, {
     method: "GET",
   });
   const json = await response.json();

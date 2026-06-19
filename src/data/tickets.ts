@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
 import { restructureLookupFields } from "./restructureLookups";
@@ -104,7 +105,7 @@ export async function getTickets(
     return cachedQueries[cacheKey];
   }
 
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index" +
       (queryString ? "?mode=tickets&" + queryString : "?mode=tickets")
   );
@@ -157,7 +158,7 @@ export function getTicket(id: string): Ticket {
 }
 
 export async function createTicket(ticketData: Partial<Ticket>) {
-  let response = await fetch("/.netlify/functions/index?mode=tickets", {
+  let response = await authedFetch("/.netlify/functions/index?mode=tickets", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -184,7 +185,7 @@ export async function createTicket(ticketData: Partial<Ticket>) {
 }
 
 export async function updateTicket(id: string, updates: Partial<Ticket>) {
-  let response = await fetch("/.netlify/functions/index?mode=tickets", {
+  let response = await authedFetch("/.netlify/functions/index?mode=tickets", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

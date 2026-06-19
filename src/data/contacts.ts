@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
 //import type { Writable } from "svelte/store";
@@ -33,7 +34,7 @@ export function getEmails(contact: Contact) {
 export async function getContacts() {
   let params: { [key: string]: string } = { mode: "contact" };
   let paramString = new URLSearchParams(params);
-  let response = await fetch("/.netlify/functions/index?" + paramString);
+  let response = await authedFetch("/.netlify/functions/index?" + paramString);
   let json = await response.json();
   logger.logVerbose("Got contact data:", json);
   contactStore.update(($contactStore) => {

@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
 
@@ -21,7 +22,7 @@ export async function searchForStudent(name) {
   if (cachedSearch[name]) {
     return cachedSearch[name];
   }
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?mode=student&name=" + encodeURIComponent(name)
   );
   let json = await response.json();
@@ -60,7 +61,7 @@ export async function fetchStudentsForReport({
     params.emails = emails.join(",");
   }
 
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?" + new URLSearchParams(params)
   );
   if (!response.ok) {
@@ -106,7 +107,7 @@ export function getStudent(name: string): Student {
 }
 
 export async function addStudentNote(student: Student, note: string) {
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?mode=updateStudent&studentId=" +
       student._id +
       "&note=" +

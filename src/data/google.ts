@@ -1,3 +1,4 @@
+import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
 import type { Asset } from "./inventory";
@@ -64,7 +65,7 @@ export async function getDeviceInfo(
   if (serialCache[device.Serial]) {
     return serialCache[device.Serial];
   }
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?mode=google&serial=" +
       encodeURIComponent(device.Serial)
   );
@@ -85,7 +86,7 @@ export async function getDevicesForUser(
   if (userCache[user.Email]) {
     return userCache[user.Email];
   }
-  let response = await fetch(
+  let response = await authedFetch(
     "/.netlify/functions/index?mode=google&user=" +
       encodeURIComponent(user.Email)
   );
