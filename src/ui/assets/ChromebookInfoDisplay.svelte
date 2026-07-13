@@ -87,7 +87,7 @@
     </div>
   {/if}
 
-  {#if info.recentUsers && info.activeTimeRanges}
+  {#if info.recentUsers?.length > 0 && info.activeTimeRanges?.length > 0}
     <h4 class="summary w3-medium">
       Last used by <b>{info.recentUsers[0].email}</b> on
       <b>{info.activeTimeRanges[info.activeTimeRanges.length - 1].date}</b>
@@ -150,14 +150,26 @@
       <div class="w3-card w3-padding confirm-dialog">
         <h4>Disable this device?</h4>
         <p class="w3-small">
-          The device will show a lock screen and <strong>cannot be used by students</strong> until re-enabled.
-          Use this if a machine is missing or was taken without authorization.
+          The device will show a lock screen and <strong
+            >cannot be used by students</strong
+          > until re-enabled. Use this if a machine is missing or was taken without
+          authorization.
         </p>
         <div class="action-row">
-          <button class="w3-button w3-red" disabled={actionInProgress} on:click={() => { cancelDisableConfirm(); toggleDisabled(); }}>
+          <button
+            class="w3-button w3-red"
+            disabled={actionInProgress}
+            on:click={() => {
+              cancelDisableConfirm();
+              toggleDisabled();
+            }}
+          >
             {actionInProgress ? "Disabling…" : "Yes, disable it"}
           </button>
-          <button class="w3-button w3-light-grey" on:click={cancelDisableConfirm}>Cancel</button>
+          <button
+            class="w3-button w3-light-grey"
+            on:click={cancelDisableConfirm}>Cancel</button
+          >
         </div>
       </div>
     </div>
@@ -175,7 +187,7 @@
       <div class="w3-col l6 m6 s12">
         <h5>Last Users:</h5>
         <ul class="w3-ul">
-          {#each info.recentUsers as user, idx}
+          {#each info.recentUsers || [] as user, idx}
             {#if showAllUsers || idx < 5}
               <li>{user.email}</li>
             {/if}
@@ -200,7 +212,7 @@
       <div class="w3-col m6 l6 s12">
         <h5>Last used:</h5>
         <ul class="w3-ul reverse">
-          {#each info.activeTimeRanges as timeRange}
+          {#each info.activeTimeRanges || [] as timeRange}
             <li>{timeRange.date} for {formatDuration(timeRange.activeTime)}</li>
           {/each}
         </ul>
