@@ -8,10 +8,10 @@ const IT_USERS = new Set([
 
 export type AuthLevel = "none" | "teacher" | "it";
 
-// Netlify sets CONTEXT to "production", "deploy-preview", or "branch-deploy" in hosted
-// environments. Locally, older netlify-cli left it undefined; newer versions (v23) set it
-// to "dev". Skip auth only in those local cases — previews/branch deploys still enforce it.
-const IS_LOCAL_DEV = !process.env.CONTEXT || process.env.CONTEXT === "dev";
+// Skip auth only under `netlify dev`, which sets NETLIFY_DEV=true. Do not key this off
+// CONTEXT: Netlify provides CONTEXT at build time only, so deployed functions see it as
+// undefined — checking `!process.env.CONTEXT` left production with no auth at all.
+const IS_LOCAL_DEV = process.env.NETLIFY_DEV === "true";
 
 export function getAuthLevel(context: Context): AuthLevel {
   if (IS_LOCAL_DEV) return "it";
