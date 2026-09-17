@@ -14,6 +14,7 @@ import { handler as updateStudent } from "./updateStudent";
 import { handler as sisApiHandler } from "./sisApi";
 import { handler as ticketHandler } from "./tickets";
 import { handler as invoicesHandler } from "./invoices";
+import { handler as intakeHandler } from "./intake";
 
 let modes = {
   student: studentHandler,
@@ -36,6 +37,11 @@ export async function handler(
   event: APIGatewayEvent,
   context: Context
 ): Promise<{ statusCode: number; body: string }> {
+  // Intake authenticates itself, ahead of the login gate: an enrolled device signed in as
+  // cbenroll carries an X-Intake-Token and no JWT. See src/functions/intake.ts.
+  if (event.queryStringParameters?.mode === "intake") {
+    return intakeHandler(event, context);
+  }
   if (getAuthLevel(context) === "none") {
     return forbidden("School login required");
   }

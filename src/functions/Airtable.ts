@@ -17,3 +17,4 @@ export let notificationsBase = base("Notifications");
 export let messagesBase = base("Messages");
 export let ticketsBase = base("Tickets");
 export let invoicesBase = base("Invoices");
+export let intakeDefaultsBase = base("Intake Defaults");
