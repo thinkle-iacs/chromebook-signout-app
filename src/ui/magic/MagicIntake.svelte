@@ -45,6 +45,8 @@
 
   let manualSerial = "";
   let manualReason = "";
+  /** Heard from the extension (its beacon) even if it couldn't read a serial. */
+  let extensionVersion: string | null = null;
   let source = "";
 
   let device: LookupResult | null = null;
@@ -97,12 +99,14 @@
     conflict = null;
     error = null;
     extStatus = "looking for the extension";
+    extensionVersion = null;
 
     // The beacon arrives in milliseconds; the device can take a couple of seconds on a
     // cold service worker, which is worth saying out loud rather than looking hung.
     const sawBeacon = (event: MessageEvent) => {
       if (event.data?.source === MESSAGE_SOURCE && event.data.type === PRESENT_TYPE) {
         extStatus = "reading this device";
+        extensionVersion = event.data.extensionVersion ?? "?";
       }
     };
     window.addEventListener("message", sawBeacon);
@@ -111,8 +115,16 @@
 
     if (found.available === false) {
       announced = null;
-      extStatus = "no extension — manual entry";
-      manualReason = found.reason;
+      // Every failure but no_extension means an extension answered — just without a serial,
+      // which is what happens anywhere but a managed Chromebook. (Its beacon usually fires
+      // before this page is listening, so don't rely on having seen it.)
+      if (found.code !== "no_extension") extensionVersion = extensionVersion ?? "";
+      extStatus = extensionVersion !== null
+        ? `extension${extensionVersion ? ` v${extensionVersion}` : ""} — can't read this device`
+        : "no extension — manual entry";
+      manualReason = extensionVersion !== null
+        ? `The intake extension is installed but couldn't read a serial number. That only works on a school-managed Chromebook. (${found.reason})`
+        : found.reason;
       phase = "manual";
       await tick();
       manualInput?.focus();
@@ -396,7 +408,7 @@
   {#if phase === "manual"}
     {#if $loggedIn}
       <section class="device">
-        <h2>No extension on this machine</h2>
+        <h2>{extensionVersion !== null ? "Can't read this device" : "No extension on this machine"}</h2>
         <p class="muted">{manualReason}</p>
         <form on:submit|preventDefault={submitManual}>
           <label for="manual-serial">Serial number</label>
@@ -420,7 +432,7 @@
       </section>
     {:else if !loginPrompt}
       <div class="panel warn">
-        <h2>No extension on this machine</h2>
+        <h2>{extensionVersion !== null ? "Can't read this device" : "No extension on this machine"}</h2>
         <p>{manualReason} Sign in to enter a serial by hand.</p>
         <LogIn />
       </div>
