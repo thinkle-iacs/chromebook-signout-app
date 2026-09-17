@@ -115,7 +115,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Admin Directory's manufactureDate is usually year-month ("2020-11"), sometimes a full date.
- * Written as a full date (first of the month) so it works in a text or a date field.
+ * Inventory's Manufacture Date is a date field, so year-month becomes the first of the month.
  */
 export function formatManufactureDate(value: string | undefined): string | undefined {
   const match = value?.trim().match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
