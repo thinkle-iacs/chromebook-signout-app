@@ -50,6 +50,8 @@
   let device: LookupResult | null = null;
   let assetTag = "";
   let year = "";
+  /** What the year was prefilled with, so an untouched prefill isn't written back. */
+  let yearPrefill = "";
   let make = "";
   let model = "";
   let tagHint = "";
@@ -164,7 +166,7 @@
     if (device.defaults) batch = device.defaults;
     batchError = device.defaultsError;
     assetTag = device.existingRecord?.["Asset Tag"] ?? announced?.device.assetId ?? "";
-    year = device.suggested?.["Year of Purchase"] ?? "";
+    year = yearPrefill = device.suggested?.["Year of Purchase"] ?? "";
     make = device.existingRecord?.Make ?? device.suggested?.Make ?? "";
     model = device.existingRecord?.Model ?? device.suggested?.Model ?? "";
     tagHint = "";
@@ -182,7 +184,9 @@
     phase = "writing";
     conflict = null;
     const fields: Record<string, string> = {};
-    if (year.trim()) fields["Year of Purchase"] = year.trim();
+    // Only a year the tech changed. A new record gets the enrollment-year guess server-side;
+    // an existing one keeps its Year of Purchase (and nYOP follows DOP when there is one).
+    if (year.trim() && year.trim() !== yearPrefill) fields["Year of Purchase"] = year.trim();
     if (make.trim()) fields.Make = make.trim();
     if (model.trim()) fields.Model = model.trim();
 
@@ -428,7 +432,14 @@
             <dt>Auto-update expires</dt><dd>{formatAue(device.google.autoUpdateExpiration)}</dd>
           {/if}
           <dt><label for="intake-year">Year of purchase</label></dt>
-          <dd><input id="intake-year" class="small" bind:value={year} inputmode="numeric" /></dd>
+          <dd>
+            <input id="intake-year" class="small" bind:value={year} inputmode="numeric" />
+            {#if device.existingRecord?.DOP}
+              <span class="muted">from DOP {device.existingRecord.DOP}; changing this won't override it</span>
+            {:else if !device.existingRecord}
+              <span class="muted">guessed from first enrollment</span>
+            {/if}
+          </dd>
         </dl>
       {/if}
     </section>

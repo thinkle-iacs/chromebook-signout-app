@@ -154,6 +154,15 @@ describe("lookup", () => {
     });
   });
 
+  test("prefills from nYOP, which prefers DOP over the Year of Purchase guess", async () => {
+    inventory.push({
+      id: "recOld",
+      fields: { Serial: "5CD1234ABC", "Asset Tag": "IACS-9", DOP: "2019-06-01", nYOP: "2019", "Year of Purchase": "2021" },
+    });
+    const r = await call("lookup", { params: { serial: "5CD1234ABC" }, token: "the-token" });
+    expect(r.body.suggested["Year of Purchase"]).toBe("2019");
+  });
+
   test("prefills a known device's recorded year rather than its enrollment year", async () => {
     inventory.push({ id: "recOld", fields: { Serial: "5CD1234ABC", "Asset Tag": "IACS-9", "Year of Purchase": 2021 } });
     const r = await call("lookup", { params: { serial: "5CD1234ABC" }, token: "the-token" });
@@ -196,6 +205,13 @@ describe("commit", () => {
     expect(r.status).toBe(200);
     expect(r.body.googleAssetIdWriteBack).toEqual({ ok: false, error: "Not Authorized" });
     expect(inventory).toHaveLength(1);
+  });
+
+  test("a re-intake that doesn't send a year leaves the recorded guess alone", async () => {
+    inventory.push({ id: "recOld", fields: { Serial: "5CD1234ABC", "Asset Tag": "IACS-9", "Year of Purchase": "2021" } });
+    const r = await commit({ serial: "5CD1234ABC", assetTag: "IACS-9" });
+    expect(r.body.fieldsWritten).not.toHaveProperty("Year of Purchase");
+    expect(inventory[0].fields["Year of Purchase"]).toBe("2021");
   });
 
   test("re-intaking the same device with the same tag refreshes it", async () => {

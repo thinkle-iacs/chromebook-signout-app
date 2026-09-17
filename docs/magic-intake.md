@@ -89,7 +89,10 @@ writes to the real base. To drive the page safely, serve `public/` with
   full name is parsed (`parseModel`); the page shows Make and Model as editable because
   unseen models may parse imperfectly.
 - `MAC-Wireless`: upper-case hex, no separators — `D039576D475B`.
-- `Year of Purchase`: text, e.g. `"2025"`.
+- `Year of Purchase`: text, and only a guess. `DOP` (a date) is authoritative when set, and
+  the formula `nYOP` = DOP's year, else `Year of Purchase`. Intake writes the guess (from
+  first enrollment) on new records, prefills from `nYOP` on existing ones, and only writes
+  the year back if the tech changed it. It never writes `DOP`: enrollment isn't purchase.
 - `Category`: always `Chromebook`, so it's a constant rather than a batch default.
 
 ## Don't regress

@@ -144,10 +144,10 @@ async function lookup(event: APIGatewayEvent): Promise<Response> {
 
   const existingRecord = existing[0] ? recordView(existing[0]) : null;
   const suggested = google ? suggestedFields(google) : null;
-  if (suggested && existingRecord?.["Year of Purchase"]) {
-    // A known device keeps its recorded year as the prefill, not its latest enrollment.
-    suggested["Year of Purchase"] = String(existingRecord["Year of Purchase"]);
-  }
+  // A known device keeps its recorded year as the prefill, not its latest enrollment.
+  // nYOP is Inventory's formula: DOP's year if there is a DOP, else the Year of Purchase guess.
+  const recordedYear = existingRecord?.nYOP ?? existingRecord?.["Year of Purchase"];
+  if (suggested && recordedYear) suggested["Year of Purchase"] = String(recordedYear);
 
   return json(200, {
     serial: google?.serialNumber ?? serial,
