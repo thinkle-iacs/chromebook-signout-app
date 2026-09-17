@@ -22,7 +22,7 @@ export type GoogleDevice = {
 
 export type InventoryFields = Record<string, string | number | undefined>;
 
-export const DEFAULT_FIELDS = ["Purpose", "Status", "Location", "Category"] as const;
+export const DEFAULT_FIELDS = ["Purpose", "Status", "Location"] as const;
 export type IntakeDefaults = Partial<Record<(typeof DEFAULT_FIELDS)[number], string>>;
 
 /** Fields the page may set per device on commit. Everything else is derived or refused. */
@@ -30,6 +30,7 @@ export const OVERRIDABLE_FIELDS = [
   "Year of Purchase",
   "Make",
   "Model",
+  "Category",
   ...DEFAULT_FIELDS,
 ] as const;
 
@@ -51,18 +52,19 @@ export function formulaString(value: string): string {
 }
 
 /**
- * Design §5 flags this as a guess: first token of the model. The known multi-word and
- * lower-cased brand prefixes are normalised; anything that doesn't lead with a known
- * brand falls back to the first token, which the tech sees on the confirm step.
+ * Admin Directory reports the full marketing name ("HP Chromebook 11A G8 EE"); Inventory
+ * splits it into Make ("HP") and a brand-less Model ("11A G8 EE"). Brand spellings match
+ * what Inventory already uses (Sept 2026: HP 879, Lenovo 556, Acer 347, Samsung 200, Asus 2).
+ * Still a guess for models we haven't seen, so the page shows both as editable.
  */
 const KNOWN_MAKES: [RegExp, string][] = [
   [/^hp\b/i, "HP"],
   [/^hewlett[- ]packard\b/i, "HP"],
   [/^lenovo\b/i, "Lenovo"],
   [/^acer\b/i, "Acer"],
-  [/^dell\b/i, "Dell"],
-  [/^asus\b/i, "ASUS"],
   [/^samsung\b/i, "Samsung"],
+  [/^asus\b/i, "Asus"],
+  [/^dell\b/i, "Dell"],
   [/^google\b/i, "Google"],
   [/^ctl\b/i, "CTL"],
 ];
@@ -74,15 +76,28 @@ export function parseMake(model: string | undefined): string | undefined {
   return trimmed.split(/\s+/)[0];
 }
 
+/** The model without its brand or the word "Chromebook": "HP Chromebook 11A G8 EE" → "11A G8 EE". */
+export function parseModel(model: string | undefined): string | undefined {
+  const trimmed = model?.trim();
+  if (!trimmed) return undefined;
+  const brand = KNOWN_MAKES.find(([pattern]) => pattern.test(trimmed));
+  if (!brand) return trimmed;
+  const rest = trimmed
+    .replace(brand[0], "")
+    .replace(/\bchromebook\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return rest || trimmed;
+}
+
 /**
- * Admin Directory reports `macAddress` as 12 bare lowercase hex digits. Written as
- * colon-separated upper case, the way it is printed on the device label.
- * TODO: confirm against the MAC-Wireless values already in Inventory.
+ * Admin Directory reports `macAddress` as 12 bare lowercase hex digits. Inventory stores
+ * them upper case with no separators ("D039576D475B").
  */
 export function formatMac(mac: string | undefined): string | undefined {
   const hex = mac?.replace(/[^0-9a-f]/gi, "");
   if (!hex || hex.length !== 12) return mac || undefined;
-  return hex.toUpperCase().match(/../g)!.join(":");
+  return hex.toUpperCase();
 }
 
 /** Year of first enrollment. Right for new stock; a prefill, never written blind (§5). */
@@ -97,7 +112,8 @@ export function suggestedFields(google: GoogleDevice): InventoryFields {
   return compact({
     Serial: google.serialNumber,
     "Device Type": "Chromebook",
-    Model: google.model,
+    Category: "Chromebook", // 1984 of 1986 Chromebook rows
+    Model: parseModel(google.model),
     Make: parseMake(google.model),
     "MAC-Wireless": formatMac(google.macAddress),
     "Year of Purchase": yearFromEnrollment(google.firstEnrollmentTime),

@@ -57,8 +57,8 @@ design §3–4 and writes down what the trade costs.
 1. **Netlify env:** `INTAKE_TOKEN` — a long random string. The same value goes into the
    extension's policy JSON in the Admin console. Unset, the token path is simply closed and
    only IT logins work.
-2. **Airtable:** a table named `Intake Defaults` in base `appFim2L4assVgjdk` with four
-   single-line-text fields: `Purpose`, `Status`, `Location`, `Category`. The endpoint
+2. **Airtable:** a table named `Intake Defaults` in base `appFim2L4assVgjdk` with three
+   single-line-text fields: `Purpose`, `Status`, `Location`. The endpoint
    creates its one row on the first save. Without the table, intake still works; records
    just get no batch fields, and the page says so.
 3. **GAS shim:** push `gas/Code.js` and deploy a new version of the web app, or the Google
@@ -82,13 +82,15 @@ design §3–4 and writes down what the trade costs.
 writes to the real base. To drive the page safely, serve `public/` with
 `/.netlify/functions/*` proxied to the extension repo's `dev/mock-endpoint.mjs`.
 
-## Open questions
+## Field conventions (checked against Inventory, Sept 2026)
 
-- `MAC-Wireless` format: written as `AA:BB:CC:DD:EE:FF` (`formatMac`). Confirm against
-  existing rows.
-- `Make` parsing (`parseMake`): known brands normalised, else first token of the model.
-  Confirm against the fleet's distinct models.
-- Default `Category` for a new device.
+- `Make`: brand only — HP, Lenovo, Acer, Samsung, Asus.
+- `Model`: without the brand or "Chromebook" — `11A G8 EE`, `100e`, `C723-K22H`. Google's
+  full name is parsed (`parseModel`); the page shows Make and Model as editable because
+  unseen models may parse imperfectly.
+- `MAC-Wireless`: upper-case hex, no separators — `D039576D475B`.
+- `Year of Purchase`: text, e.g. `"2025"`.
+- `Category`: always `Chromebook`, so it's a constant rather than a batch default.
 
 ## Don't regress
 

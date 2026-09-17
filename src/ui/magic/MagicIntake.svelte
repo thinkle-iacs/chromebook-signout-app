@@ -50,6 +50,8 @@
   let device: LookupResult | null = null;
   let assetTag = "";
   let year = "";
+  let make = "";
+  let model = "";
   let tagHint = "";
 
   let result: CommitResult | null = null;
@@ -163,6 +165,8 @@
     batchError = device.defaultsError;
     assetTag = device.existingRecord?.["Asset Tag"] ?? announced?.device.assetId ?? "";
     year = device.suggested?.["Year of Purchase"] ?? "";
+    make = device.existingRecord?.Make ?? device.suggested?.Make ?? "";
+    model = device.existingRecord?.Model ?? device.suggested?.Model ?? "";
     tagHint = "";
     phase = "device";
     await focusTag();
@@ -179,6 +183,8 @@
     conflict = null;
     const fields: Record<string, string> = {};
     if (year.trim()) fields["Year of Purchase"] = year.trim();
+    if (make.trim()) fields.Make = make.trim();
+    if (model.trim()) fields.Model = model.trim();
 
     const response = await commitDevice(credentials, {
       serial: device.serial,
@@ -250,7 +256,7 @@
   // --- batch defaults (design §7) --------------------------------------------------------
 
   async function editBatch() {
-    batchDraft = { Purpose: "", Status: "", Location: "", Category: "", ...(batch ?? {}) };
+    batchDraft = { Purpose: "", Status: "", Location: "", ...(batch ?? {}) };
     editingBatch = true;
     await tick();
     purposeSelect?.focus();
@@ -333,12 +339,16 @@
           </select>
         </label>
         <label>Status <input bind:value={batchDraft.Status} list="intake-statuses" /></label>
-        <label>Location <input bind:value={batchDraft.Location} /></label>
-        <label>Category <input bind:value={batchDraft.Category} /></label>
+        <label>Location <input bind:value={batchDraft.Location} list="intake-locations" /></label>
         <datalist id="intake-statuses">
+          <option value="New" />
           <option value="Active" />
-          <option value="In Repair" />
-          <option value="Lost" />
+        </datalist>
+        <datalist id="intake-locations">
+          <option value="Tech Room" />
+          <option value="Student Loan" />
+          <option value="Library" />
+          <option value="Staff Loan" />
         </datalist>
         <span class="batch-buttons">
           <button class="w3-button w3-blue" type="submit">Save for this batch</button>
@@ -408,14 +418,17 @@
       <p class="serial">{device.serial}</p>
       {#if device.google}
         <dl class="fields">
-          {#if device.suggested?.Make}<dt>Make</dt><dd>{device.suggested.Make}</dd>{/if}
-          <dt>Model</dt><dd>{device.google.model ?? ""}</dd>
+          <dt>Google calls it</dt><dd>{device.google.model ?? ""}</dd>
+          <dt><label for="intake-make">Make</label></dt>
+          <dd><input id="intake-make" class="small" bind:value={make} /></dd>
+          <dt><label for="intake-model">Model</label></dt>
+          <dd><input id="intake-model" class="small wide" bind:value={model} /></dd>
           {#if device.suggested?.["MAC-Wireless"]}<dt>MAC</dt><dd>{device.suggested["MAC-Wireless"]}</dd>{/if}
           {#if device.google.autoUpdateExpiration}
             <dt>Auto-update expires</dt><dd>{formatAue(device.google.autoUpdateExpiration)}</dd>
           {/if}
           <dt><label for="intake-year">Year of purchase</label></dt>
-          <dd><input id="intake-year" class="year" bind:value={year} inputmode="numeric" /></dd>
+          <dd><input id="intake-year" class="small" bind:value={year} inputmode="numeric" /></dd>
         </dl>
       {/if}
     </section>
@@ -624,10 +637,13 @@
   dl.fields dd {
     margin: 0;
   }
-  dl.fields input.year {
+  dl.fields input.small {
     font-size: 1rem;
     padding: 0.1rem 0.4rem;
-    width: 6rem;
+    width: 7rem;
+  }
+  dl.fields input.small.wide {
+    width: 16rem;
   }
 
   .tag-entry {

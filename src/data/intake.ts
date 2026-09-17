@@ -14,7 +14,6 @@ export type IntakeDefaults = {
   Purpose?: string;
   Status?: string;
   Location?: string;
-  Category?: string;
 };
 
 export type LookupResult = {

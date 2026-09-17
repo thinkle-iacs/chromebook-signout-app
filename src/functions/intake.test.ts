@@ -148,7 +148,7 @@ describe("lookup", () => {
     const r = await call("lookup", { params: { serial: "5cd1234abc" }, token: "the-token" });
     expect(r.body).toMatchObject({
       serial: "5CD1234ABC",
-      suggested: { Make: "Lenovo", "MAC-Wireless": "A0:B1:C2:D3:E4:F5", "Year of Purchase": "2026" },
+      suggested: { Make: "Lenovo", "MAC-Wireless": "A0B1C2D3E4F5", "Year of Purchase": "2026" },
       existingRecord: null,
       defaults: { Purpose: "Student Loan", Status: "Active" },
     });
