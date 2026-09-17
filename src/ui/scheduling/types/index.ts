@@ -51,7 +51,7 @@ export interface StructuredSchedule {
 // SIS (Student Information System) data types
 export interface SISClass {
   title: string;
-  periods: string[]; // ["BLOCK A(Mon-Tues) BLOCK C(Thur-Fri)"]
+  periods: string[]; // ["BLOCK 3(Mon-Tues) BLOCK 6(Thur-Fri)"]
   location?: string;
   subjects?: string[];
 }

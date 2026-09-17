@@ -7,7 +7,7 @@
   } from "@scheduling/scheduleSampleData";
   import { buildStructuredSchedule } from "@scheduling/structuredSchedule";
   import {
-    parseProjectScheduleFromSIS,
+    parseScheduleFromSIS,
     getBellScheduleForStudentDay,
   } from "@scheduling/bellSchedules";
 
@@ -31,7 +31,7 @@
       const { student, schedule } = sampleData;
 
       // STEP 1: Parse SIS data into day mappings
-      scheduleMap = parseProjectScheduleFromSIS(schedule);
+      scheduleMap = parseScheduleFromSIS(schedule);
       logger.logPriority("Schedule map:", scheduleMap);
 
       // STEP 2: Get bell schedules for each day
@@ -144,7 +144,7 @@
                 {#each Object.entries(classes) as [block, className]}
                   <div class="class-block">
                     <strong>{block.toUpperCase()}:</strong>
-                    {className}
+                    {Array.isArray(className) ? className.join(", ") : className}
                   </div>
                 {:else}
                   <div class="no-classes">No classes found</div>

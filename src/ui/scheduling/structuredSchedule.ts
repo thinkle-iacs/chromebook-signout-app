@@ -1,12 +1,10 @@
 // Structured schedule data types for frontend consumption
 import {
-  getBellScheduleForStudent,
   getBellScheduleForStudentDay,
-  parseProjectScheduleFromSIS,
-  mapSISPeriodToBellPeriod,
-  parseTimeString,
+  parseScheduleFromSIS,
   getPeriodsForDay,
 } from "./bellSchedules";
+import { STRUCTURAL_PERIOD_IDS } from "./msSchedules";
 import type {
   ScheduleBlock,
   StructuredDaySchedule,
@@ -25,7 +23,7 @@ export function buildStructuredSchedule(
   sisSchedule: SISSchedule
 ): StructuredDaySchedule[] {
   // STEP 1: Parse SIS schedule into day-by-day mapping
-  const scheduleMap = parseProjectScheduleFromSIS(sisSchedule);
+  const scheduleMap = parseScheduleFromSIS(sisSchedule);
 
   // Create schedule for each weekday (1-5 = Mon-Fri)
   const weekSchedule: StructuredDaySchedule[] = [];
@@ -51,28 +49,19 @@ export function buildStructuredSchedule(
 
     // For each bell schedule period, map the specific class for that day
     for (const bellPeriod of periodsForThisDay) {
-      const blockId = bellPeriod.id; // e.g. "block_a", "adv", "win", "l_r"
+      const blockId = bellPeriod.id; // e.g. "block_3", "adv", "win", "lunch"
 
-      // Try multiple key formats to find the class
-      let className = daySchedule[blockId]; // Try exact match first
+      // Aspen's period ids and our bell period ids use the same vocabulary,
+      // so the classes for this block are a direct lookup.
+      const classNames = daySchedule[blockId] || [];
+      // Classes that rotate through a block by term are shown together.
+      const className = classNames.join(" / ");
 
-      if (!className) {
-        // Try uppercase format: "block_a" -> "BLOCK_A"
-        const upperKey = blockId.replace("block_", "BLOCK_").toUpperCase();
-        className = daySchedule[upperKey];
-      }
-
-      if (!className) {
-        // Try without prefix: "block_a" -> "A"
-        const letterOnly = blockId.replace("block_", "").toUpperCase();
-        className = daySchedule[letterOnly];
-      }
-
-      if (className) {
+      if (classNames.length) {
         // Find the full class details from SIS data
         const classDetails = findClassByName(
           sisSchedule.classes || [],
-          className
+          classNames[0]
         );
 
         blocks.push({
@@ -80,63 +69,42 @@ export function buildStructuredSchedule(
           end: formatTime(bellPeriod.endTime),
           class: className,
           room: classDetails?.location || "",
-          isFree: isFreeTimeClass({
-            title: className,
-            subjects: classDetails?.subjects,
-          }),
+          isFree: classNames.every((title) =>
+            isFreeTimeClass({
+              title,
+              subjects: findClassByName(sisSchedule.classes || [], title)
+                ?.subjects,
+            })
+          ),
           blockName: bellPeriod.displayName,
           teachers: classDetails?.teachers || [],
           subject:
-            classDetails?.subjects?.[0] || getSubjectFromClassName(className),
+            classDetails?.subjects?.[0] ||
+            getSubjectFromClassName(classNames[0]),
+        });
+      } else if (STRUCTURAL_PERIOD_IDS.includes(blockId) || blockId === "l_r") {
+        // Part of the day's structure (advisory, WIN, lunch, recess, brunch)
+        // that Aspen didn't roster this student into by name.
+        blocks.push({
+          start: formatTime(bellPeriod.startTime),
+          end: formatTime(bellPeriod.endTime),
+          class: bellPeriod.displayName,
+          room: "",
+          isFree: true,
+          blockName: bellPeriod.displayName,
+          subject: "N/A",
         });
       } else {
-        // No class mapped for this block on this day - check if it's a structural period
-        if (blockId === "adv") {
-          blocks.push({
-            start: formatTime(bellPeriod.startTime),
-            end: formatTime(bellPeriod.endTime),
-            class: "Advisory",
-            room: "",
-            isFree: true,
-            blockName: bellPeriod.displayName,
-            subject: "N/A",
-          });
-        } else if (blockId === "l_r") {
-          blocks.push({
-            start: formatTime(bellPeriod.startTime),
-            end: formatTime(bellPeriod.endTime),
-            class: "Lunch/Recess",
-            room: "",
-            isFree: true,
-            blockName: bellPeriod.displayName,
-            subject: "N/A",
-          });
-        } else if (blockId === "win") {
-          blocks.push({
-            start: formatTime(bellPeriod.startTime),
-            end: formatTime(bellPeriod.endTime),
-            class: "WIN",
-            room: "",
-            isFree: true,
-            blockName: bellPeriod.displayName,
-            subject: "N/A",
-          });
-        } else if (
-          !bellPeriod.id.includes("lunch") &&
-          !bellPeriod.id.includes("l_r") &&
-          !bellPeriod.id.includes("win")
-        ) {
-          // Only add free periods for actual class blocks
-          blocks.push({
-            start: formatTime(bellPeriod.startTime),
-            end: formatTime(bellPeriod.endTime),
-            class: "Free Period",
-            room: "",
-            isFree: true,
-            blockName: bellPeriod.displayName,
-            subject: "Free",
-          });
-        }
+        // An actual class block with nothing scheduled in it
+        blocks.push({
+          start: formatTime(bellPeriod.startTime),
+          end: formatTime(bellPeriod.endTime),
+          class: "Free Period",
+          room: "",
+          isFree: true,
+          blockName: bellPeriod.displayName,
+          subject: "Free",
+        });
       }
     }
 

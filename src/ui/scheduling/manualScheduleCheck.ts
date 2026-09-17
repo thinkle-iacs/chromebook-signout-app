@@ -1,13 +1,13 @@
 import { buildStructuredSchedule } from "./structuredSchedule";
 import {
-  parseProjectScheduleFromSIS,
+  parseScheduleFromSIS,
   getBellScheduleForStudentDay,
 } from "./bellSchedules";
 import { test56schedule } from "./scheduleSampleData";
 
 /**
  * Quick unit test you can run to debug schedule parsing
- * Run with: npx ts-node src/scheduling/test.ts
+ * Run with: npx ts-node src/ui/scheduling/manualScheduleCheck.ts
  */
 function runScheduleTest() {
   console.log("🧪 Testing Schedule Parsing...\n");
@@ -25,7 +25,7 @@ function runScheduleTest() {
 
   // Step 1: Parse SIS data
   console.log("📅 STEP 1: Parsing SIS data...");
-  const scheduleMap = parseProjectScheduleFromSIS(schedule);
+  const scheduleMap = parseScheduleFromSIS(schedule);
 
   for (const [day, classes] of Object.entries(scheduleMap)) {
     console.log(`  ${day}:`, Object.keys(classes).length, "blocks");
