@@ -2,6 +2,7 @@
   export let mode: "staff" | "student" = "student";
   export let inputElement: HTMLInputElement | null;
   import { logger } from "@utils/log";
+  import { onDestroy, onMount } from "svelte";
   let dropdownElement: HTMLElement | null;
 
   import {
@@ -44,31 +45,49 @@
   function handleResize() {
     updatePosition();
   }
-  window.addEventListener("resize", handleResize);
-  // Clean up (Svelte automatically on destroy by returning function)
-  import { onDestroy } from "svelte";
-  onDestroy(() => window.removeEventListener("resize", handleResize));
-
-  function trackFocus(element) {
-    document.body.addEventListener("click", (mouseEvent) => {
-      if (
-        (dropdownElement && dropdownElement.contains(mouseEvent.target)) ||
-        (inputElement && inputElement.contains(mouseEvent.target))
-      ) {
-        show = true;
-        updatePosition();
-      } else {
-        show = false;
-      }
-    });
+  // Hide when the user clicks elsewhere; show again whenever they come back to
+  // the input — including via keyboard (Tab) or by just typing, not only by
+  // clicking it.
+  function handleBodyClick(mouseEvent: MouseEvent) {
+    const target = mouseEvent.target as Node;
+    if (
+      (dropdownElement && dropdownElement.contains(target)) ||
+      (inputElement && inputElement.contains(target))
+    ) {
+      show = true;
+      updatePosition();
+    } else {
+      show = false;
+    }
   }
+  function reveal() {
+    show = true;
+    updatePosition();
+  }
+  let listenedInput: HTMLInputElement | null = null;
+  $: if (inputElement !== listenedInput) {
+    listenedInput?.removeEventListener("focus", reveal);
+    listenedInput?.removeEventListener("input", reveal);
+    inputElement?.addEventListener("focus", reveal);
+    inputElement?.addEventListener("input", reveal);
+    listenedInput = inputElement;
+  }
+  onMount(() => {
+    window.addEventListener("resize", handleResize);
+    document.body.addEventListener("click", handleBodyClick);
+  });
+  onDestroy(() => {
+    window.removeEventListener("resize", handleResize);
+    document.body.removeEventListener("click", handleBodyClick);
+    listenedInput?.removeEventListener("focus", reveal);
+    listenedInput?.removeEventListener("input", reveal);
+  });
   $: logger.logVerbose("Dropdown:", dropdown, "show:", show);
 </script>
 
 {#if dropdown.length && show}
   <ul
     class="w3-white dropdown w3-ul w3-border"
-    use:trackFocus
     bind:this={dropdownElement}
     style="top:{coords.top}px;left:{coords.left}px;min-width:{coords.width}px;"
   >
