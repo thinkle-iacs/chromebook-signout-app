@@ -1,68 +1,73 @@
 # `/magic/` — Chromebook intake
 
-Work branch for the new-Chromebook intake flow. This app owns two of the three pieces:
+**Live in production, verified end to end on a managed Chromebook (September 2026).**
 
-1. **`mode=intake`** — a new handler in `src/functions/`, alongside the existing modes in
-   `src/functions/index.ts`.
-2. **`/magic/`** — a new route + Svelte page, registered in `src/ui/App.svelte`.
+Join a Chromebook to the domain → sign in as `cbenroll` → Chrome opens to
+`cb.innovationcharter.org/magic/` → type the asset tag → Enter → the Airtable `Inventory`
+record is created or refreshed from Admin Directory, and the tag is written back to Google.
+A tech doing this 100 times in a sitting never touches the mouse after the first device.
 
-The third piece is a ChromeOS extension living in its own private repo:
+This app owns two of the three pieces:
+
+1. **`mode=intake`** — the endpoint, in `src/functions/`.
+2. **`/magic/`** — the page, in `src/ui/magic/`.
+
+The third is a ChromeOS extension in its own private repo:
 **[thinkle-iacs/cb-intake-extension](https://github.com/thinkle-iacs/cb-intake-extension)**.
-
-**The full design lives in that repo at `docs/design.md`** — architecture, security model,
-field mapping, conflict rules, and UI requirements. It covers both halves, and the
-security model doesn't survive being reasoned about one half at a time. Read it first.
+Its `docs/design.md` and `docs/protocol.md` are the full design and the security model,
+covering both halves. The extension is a **content script** that hands `/magic/` the serial
+and the policy token; **the page makes its own same-origin calls**.
 
 ---
 
-## What this branch is for
+## Where things are
 
-Target flow: join a Chromebook to the domain → sign in as `cbenroll` → Chrome opens to
-`cb.innovationcharter.org/magic/` → type the asset tag → confirm → Airtable `Inventory`
-upserted with make/model/MAC/AUE pulled from Admin Directory.
-
-A tech doing this 100 times in a sitting should never touch the mouse after the first
-device.
-
-## What it touches here
-
-The extension repo changed the design after this doc was first written: the extension is now
-a **content script** that hands `/magic/` the serial and the policy token, and **the page
-makes its own same-origin calls**. See that repo's `docs/protocol.md`, which supersedes
-design §3–4 and writes down what the trade costs.
-
-- **New:** `src/functions/intake.ts` (handler) and `src/functions/intakeFields.ts` (field
-  mapping and conflict rules, pure and unit-tested). `src/functions/index.ts` dispatches
-  `mode=intake` **ahead of** the login gate: a `cbenroll` session has no JWT.
-- **New:** `src/ui/magic/MagicIntake.svelte`, routed at `/magic/` in `src/ui/App.svelte`
+- `src/functions/intake.ts` — handler (`lookup`, `commit`, `setDefaults`).
+  `src/functions/intakeFields.ts` — field mapping and conflict rules, pure and unit-tested.
+  `src/functions/index.ts` dispatches `mode=intake` **ahead of** the login gate: a
+  `cbenroll` session has no JWT.
+- `src/ui/magic/MagicIntake.svelte` — the page, routed at `/magic/` in `src/ui/App.svelte`
   with no login gate and no app chrome. `src/data/intake.ts` is its API client.
-- **Copied, don't edit:** `src/ui/magic/protocol.ts` and `src/ui/magic/cb-intake-page.ts`
-  from the extension repo. The header comment records the commit they came from.
-- **Modified:** `gas/Code.js` — `mode=setAssetId` patches `annotatedAssetId`. Best-effort;
-  its failure never fails an intake.
-- **Later:** `public/ext/` to host the extension CRX + `update.xml`.
+- `src/ui/magic/protocol.ts`, `src/ui/magic/cb-intake-page.ts` — **copied from the extension
+  repo; don't edit here.** The header comment records the commit they came from.
+- `gas/Code.js` — `mode=setAssetId` patches `annotatedAssetId`. Best-effort; its failure
+  never fails an intake.
+- `public/ext/` — the signed extension CRX and `update.xml`, served at
+  `https://cb.innovationcharter.org/ext/update.xml` with content-type headers from
+  `netlify.toml`.
 
-## Build order
+## Production setup (all done)
 
-1. ~~`intake.ts` + `Intake Defaults` table~~ — endpoint done and tested; the table still
-   needs creating (below).
-2. ~~`/magic/` page including the manual-serial fallback~~ — done, driven against the mock.
-3. Extension (other repo) — built; prove `chrome.enterprise.deviceAttributes` on a real
-   managed device.
-4. CRX hosting, Admin console, `cbenroll` account.
-5. Field-test one device end to end before widening the OU.
+- **Netlify env:** `INTAKE_TOKEN`. The same value is in the extension's **Policy for
+  extensions** JSON in the Admin console: `{"intakeToken": {"Value": "…"}}`. Change one,
+  change both, and redeploy — functions only see an env change after a new deploy.
+- **Airtable:** table `Intake Defaults` (`Purpose`, `Status`, `Location`) in base
+  `appFim2L4assVgjdk`. One row, created on the first "Save for this batch".
+- **Apps Script:** deployed with `mode=setAssetId` (deployment version 8).
+- **Admin console:** `cbenroll` in its own OU; extension `nmeplbocjanmcndfkmnhjbdhnjjlfkdd`
+  force-installed there from the update URL above; startup URL `/magic/`.
 
-## Setup before this works in production
+## Releasing a new extension version
 
-1. **Netlify env:** `INTAKE_TOKEN` — a long random string. The same value goes into the
-   extension's policy JSON in the Admin console. Unset, the token path is simply closed and
-   only IT logins work.
-2. **Airtable:** a table named `Intake Defaults` in base `appFim2L4assVgjdk` with three
-   single-line-text fields: `Purpose`, `Status`, `Location`. The endpoint
-   creates its one row on the first save. Without the table, intake still works; records
-   just get no batch fields, and the page says so.
-3. **GAS shim:** push `gas/Code.js` and deploy a new version of the web app, or the Google
-   write-back reports failure on every device (the Airtable write still succeeds).
+In the extension repo: `npm version patch && npm run check && npm run pack`, which needs
+`keys/cb-intake.pem` (not in git — it's in the IT password manager). Copy
+`release/cb-intake-<version>.crx` and `release/update.xml` into `public/ext/` here, deploy,
+and confirm with `curl` that both are served before anything else. Leave old CRX files in
+place for rollback. Full steps: that repo's `docs/release.md`.
+
+## Troubleshooting
+
+- **"This device's intake token was refused."** First check DevTools → Network on the
+  `mode=intake&action=lookup` request: is there an `x-intake-token` request header at all?
+  (The first real device found a bug where the page sent none — fixed in #35.) Then
+  `chrome://policy` shows what the Admin console actually delivered.
+- **Test a token against production without revealing it**, from a terminal:
+  `read -rs "T?Paste token: " && curl -s -o /dev/null -w "%{http_code}\n" -H "X-Intake-Token: $T" "https://cb.innovationcharter.org/.netlify/functions/index?mode=intake&action=lookup&serial=ZZZZ0000TEST"; unset T`
+  — `200` accepted, `401` rejected.
+- **"Can't read this device"** on anything but a managed Chromebook is expected: desktop
+  Chrome has no `chrome.enterprise` API.
+- **Google write-back failed** but the record saved: the Apps Script deployment is stale or
+  needs re-authorizing.
 
 ## Endpoint behavior beyond protocol.md
 
@@ -71,16 +76,9 @@ design §3–4 and writes down what the trade costs.
   so a typo in manual entry can't become a record.
 - `commit` refuses with **409 `tag_in_use`** if the tag is already on a *different* serial.
   No override: fix the other record first.
-- A re-intake never applies batch defaults and never overwrites `Year of Purchase` unless
-  the tech confirmed one.
-- Writes use Airtable `typecast`, so a year lands in a number field and defaults match
-  select options.
-
-## Trying it without Airtable
-
-`netlify dev` pulls production env, and local dev treats every request as IT — so it
-writes to the real base. To drive the page safely, serve `public/` with
-`/.netlify/functions/*` proxied to the extension repo's `dev/mock-endpoint.mjs`.
+- A re-intake never applies batch defaults, and keeps a recorded `DOP` unless the tech
+  changes it.
+- Writes use Airtable `typecast`, so defaults match select options.
 
 ## Field conventions (checked against Inventory, Sept 2026)
 
@@ -89,14 +87,21 @@ writes to the real base. To drive the page safely, serve `public/` with
   full name is parsed (`parseModel`); the page shows Make and Model as editable because
   unseen models may parse imperfectly.
 - `MAC-Wireless`: upper-case hex, no separators — `D039576D475B`.
-- `DOP`: "in service since" — written as the first enrollment date (Google keeps it across
-  wipes). Filled on new records and on existing records with a blank DOP; a recorded DOP is
-  kept unless the tech changes it. `nYOP` derives the year from it, so `Year of Purchase`
-  (the old guess field) isn't written.
+- `DOP`: "in service since" — the first enrollment date (Google keeps it across wipes).
+  Filled on new records and on existing records with a blank DOP. `nYOP` derives the year
+  from it, so `Year of Purchase` (the old guess field) isn't written.
 - `Manufacture Date` (date field): from Admin Directory's `manufactureDate`, which is usually
-  year-month, so it's written as the first of the month (`2020-11-01`).
-  Refreshed on every re-scan, so re-scanning an older device fills it in.
-- `Category`: always `Chromebook`, so it's a constant rather than a batch default.
+  year-month, so it's written as the first of the month (`2020-11-01`). Refreshed on every
+  re-scan, so re-scanning an older device fills it in.
+- `Category`: always `Chromebook`.
+
+## Trying it locally
+
+`netlify dev` pulls production env and skips auth (it sets `NETLIFY_DEV=true`), so it
+**writes to the real base** — lookups are safe, commits are real. To drive the page without
+touching Airtable, serve `public/` with `/.netlify/functions/*` proxied to the extension
+repo's `dev/mock-endpoint.mjs`, and make sure that setup does *not* treat every request as
+logged in, or a missing token goes unnoticed.
 
 ## Don't regress
 
@@ -107,3 +112,5 @@ writes to the real base. To drive the page safely, serve `public/` with
 - A serial that already carries a *different* asset tag is refused unless explicitly
   overridden.
 - The success panel is a state, not a toast.
+- Local-dev auth skipping keys off `NETLIFY_DEV`, never `CONTEXT` — Netlify doesn't give
+  deployed functions `CONTEXT`, and checking it once left production with no auth (#32).
