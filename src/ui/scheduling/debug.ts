@@ -1,6 +1,6 @@
 // Simple debugging script to check what's happening
 import {
-  parseProjectScheduleFromSIS,
+  parseScheduleFromSIS,
   getBellScheduleForStudentDay,
 } from "./bellSchedules";
 import { test56schedule } from "./scheduleSampleData";
@@ -11,7 +11,7 @@ logger.logPriority("=== DEBUGGING SCHEDULE PARSING ===\n");
 
 // Step 1: Parse schedule map
 logger.logPriority("1. Parsing SIS data...");
-const scheduleMap = parseProjectScheduleFromSIS(schedule);
+const scheduleMap = parseScheduleFromSIS(schedule);
 logger.logPriority("Schedule Map:");
 for (const [day, classes] of Object.entries(scheduleMap)) {
   logger.logPriority(`  ${day}:`);
