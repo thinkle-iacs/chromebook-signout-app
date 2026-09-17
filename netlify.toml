@@ -10,3 +10,16 @@
   targetPort = 5001
   functions = "functions"
   port = 8888
+# Self-hosted Chromebook intake extension (thinkle-iacs/cb-intake-extension, docs/release.md).
+# Real files are served ahead of the /* -> /index.html rewrite; these set the types Chrome expects.
+[[headers]]
+  for = "/ext/*.crx"
+  [headers.values]
+    Content-Type = "application/x-chrome-extension"
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/ext/update.xml"
+  [headers.values]
+    Content-Type = "application/xml"
+    Cache-Control = "no-cache"
