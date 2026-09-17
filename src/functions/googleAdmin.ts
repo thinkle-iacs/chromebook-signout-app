@@ -3,10 +3,11 @@ import { getAuthLevel, forbidden } from "./auth";
 const SHIM_SECRET = process.env.SHIM_SECRET;
 const SHIM_URL = process.env.SHIM_URL;
 
-async function callShim(params: Record<string, string>) {
+export async function callShim(params: Record<string, string>, init: RequestInit = {}) {
   const response = await fetch(SHIM_URL + "?" + new URLSearchParams(params), {
     method: "GET",
     redirect: "follow",
+    ...init,
   });
   return response.json();
 }

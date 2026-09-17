@@ -23,6 +23,7 @@
   import ConfirmDialog from "@ui/components/ConfirmDialog.svelte";
   import { toastStore } from "@components/toastStore";
   import { testRoutes } from "./tests/test-routes";
+  import MagicIntake from "@ui/magic/MagicIntake.svelte";
 
   let update = 0;
   let title = "IACS Chromebook Signout";
@@ -55,7 +56,17 @@
   let toast: any = null;
   $: toast = $toastStore;
 
+  // /magic/ is a bench tool that runs without the login gate or the app chrome: on an
+  // enrolled device the intake extension supplies the credential. The page asks for a
+  // login itself when it needs one. See src/ui/magic/MagicIntake.svelte.
+  $: bare = page === MagicIntake;
+
   onMount(() => {
+    router("/magic/", () => {
+      params = {};
+      page = MagicIntake;
+      title = "Chromebook Intake";
+    });
     router("/message", () => {
       if (page != Message) update += 1;
       page = Message;
@@ -172,6 +183,9 @@
   let showLogLevel = false;
 </script>
 
+{#if bare}
+  <svelte:component this={page} {isIt} />
+{:else}
 <!-- Markup copied from original App.svelte left unchanged intentionally -->
 <div
   class="w3-main"
@@ -315,7 +329,8 @@
     {/if}
   </main>
 </div>
-{#if $loggedIn}
+{/if}
+{#if $loggedIn && !bare}
   <footer class="w3-container w3-cell w3-cell-bottom w3-white">
     Hi there, {$user?.user_metadata?.full_name} ({$user.email})
     <a href="/user" on:click={l("/user")}>(need to log out?)</a>

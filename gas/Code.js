@@ -107,10 +107,35 @@ function doGet (e) {
         errorStack: error.stack || null
       });
     }
+  } else if (params.mode === 'setAssetId') {
+    // Asset ID mode: write the inventory asset tag back to the device (Chromebook intake)
+    // ?secret=SECRET&mode=setAssetId&serial=5CD119166D&assetId=IACS-1234
+    if (!params.serial || !params.assetId) {
+      return makeErrorMessage(e, { detail: 'serial and assetId are required with mode=setAssetId' });
+    }
+    try {
+      const device = cbBySerial(params.serial);
+      if (!device) {
+        return makeErrorMessage(e, { detail: `Device not found for serial: ${params.serial}` });
+      }
+      // patch, not update: update would clear the other annotated fields
+      AdminDirectory.Chromeosdevices.patch(
+        { annotatedAssetId: params.assetId },
+        'my_customer',
+        device.deviceId
+      );
+      return makeResult(e, { deviceId: device.deviceId, serial: params.serial, annotatedAssetId: params.assetId });
+    } catch (error) {
+      return makeErrorMessage(e, {
+        detail: 'Error setting annotatedAssetId',
+        errorMessage: error.message || String(error),
+        errorStack: error.stack || null
+      });
+    }
   } else {
     // Error if no mode= provided
     return makeErrorMessage(e, {
-      detail: 'Unknown mode: expected mode="serial", mode="user", or mode="action"'
+      detail: 'Unknown mode: expected mode="serial", mode="user", mode="action", or mode="setAssetId"'
     });
   }
 }

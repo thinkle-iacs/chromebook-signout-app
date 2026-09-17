@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gupdate xmlns="http://www.google.com/update2/response" protocol="2.0">
+  <app appid="nmeplbocjanmcndfkmnhjbdhnjjlfkdd">
+    <updatecheck codebase="https://cb.innovationcharter.org/ext/cb-intake-0.1.0.crx" version="0.1.0" />
+  </app>
+</gupdate>
