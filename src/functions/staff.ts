@@ -2,10 +2,10 @@ import type { APIGatewayEvent, Context } from "aws-lambda";
 import { staffBase } from "./Airtable";
 
 export async function handler(event: APIGatewayEvent, context: Context) {
-  const { name } = event.queryStringParameters;
+  const { name } = event.queryStringParameters || {};
   let query = staffBase.select({
     maxRecords: 100,
-    filterByFormula: `Search("${name.toLowerCase()}",LOWER({Full Name}))`,
+    filterByFormula: `Search("${airtableString((name || "").toLowerCase())}",LOWER({Full Name}))`,
     fields: [
       "Email",
       "First",
@@ -22,4 +22,8 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     statusCode: 200,
     body: JSON.stringify(result),
   };
+}
+
+function airtableString(value: string) {
+  return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }

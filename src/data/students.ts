@@ -1,6 +1,7 @@
 import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
+import { createSearchCache } from "@utils/searchCache";
 
 export let studentsStore = writable({});
 
@@ -16,29 +17,40 @@ export type Student = {
   Tickets?: string[]; // list of Ticket record IDs (lookup from Airtable)
   "Ticket Numbers"?: number[]; // list of open ticket numbers associated with this student
 };
-let cachedSearch = {};
+// Must match maxRecords in src/functions/students.ts
+const STUDENT_SEARCH_LIMIT = 100;
+
+const studentSearchCache = createSearchCache<any>({
+  limit: STUDENT_SEARCH_LIMIT,
+  getName: (result) => result.fields.Name,
+  fetchResults: async (name) => {
+    let response = await authedFetch(
+      "/.netlify/functions/index?mode=student&name=" + encodeURIComponent(name)
+    );
+    if (!response.ok) {
+      throw new Error(`Student search failed: ${response.status}`);
+    }
+    let json = await response.json();
+    logger.logVerbose("Got data:", json);
+    studentsStore.update(($studentsStore) => {
+      for (let result of json) {
+        $studentsStore[result.fields.LASID] = {
+          ...result.fields,
+          Tickets: result.fields.Tickets || [],
+          _id: result.id,
+        };
+      }
+      return $studentsStore;
+    });
+    return json;
+  },
+});
+
+/** Cached results for a name search, or null if we'd need to hit the server. */
+export const peekStudentSearch = studentSearchCache.peek;
 
 export async function searchForStudent(name) {
-  if (cachedSearch[name]) {
-    return cachedSearch[name];
-  }
-  let response = await authedFetch(
-    "/.netlify/functions/index?mode=student&name=" + encodeURIComponent(name)
-  );
-  let json = await response.json();
-  logger.logVerbose("Got data:", json);
-  studentsStore.update(($studentsStore) => {
-    for (let result of json) {
-      $studentsStore[result.fields.LASID] = {
-        ...result.fields,
-        Tickets: result.fields.Tickets || [],
-        _id: result.id,
-      };
-    }
-    return $studentsStore;
-  });
-  cachedSearch[name] = json;
-  return json;
+  return studentSearchCache.search(name);
 }
 
 export async function fetchStudentsForReport({
