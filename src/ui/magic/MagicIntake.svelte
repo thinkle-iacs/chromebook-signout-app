@@ -36,8 +36,10 @@
   let phase: Phase = "waiting";
   let extStatus = "looking for the extension";
   let announced: IntakeDevice | null = null;
-  $: credentials = announced?.credentials ?? null;
-  $: authStatus = credentials?.token
+  // A function, not a `$:` declaration: reactive values only update at the next flush, so
+  // a request made right after `announced` is set would go out without the token.
+  const credentials = () => announced?.credentials ?? null;
+  $: authStatus = announced?.credentials?.token
     ? "using this device's intake token"
     : $loggedIn
     ? "using your login"
@@ -159,12 +161,12 @@
   async function lookup(serial: string, from: string) {
     phase = "loading";
     source = from;
-    const response = await lookupDevice(credentials, serial);
+    const response = await lookupDevice(credentials(), serial);
     if (response.ok === false) {
       if (response.needsLogin) {
         phase = announced ? "waiting" : "manual";
         askForLogin(
-          credentials?.token
+          credentials()?.token
             ? "This device's intake token was refused. Sign in to keep going."
             : "Sign in to look up devices.",
           () => lookup(serial, from)
@@ -203,7 +205,7 @@
     if (make.trim()) fields.Make = make.trim();
     if (model.trim()) fields.Model = model.trim();
 
-    const response = await commitDevice(credentials, {
+    const response = await commitDevice(credentials(), {
       serial: device.serial,
       assetTag: tag,
       fields,
@@ -282,7 +284,7 @@
   async function submitBatch() {
     // Changing the batch default is a deliberate, separate action — never a side effect
     // of a per-device edit.
-    const response = await saveDefaults(credentials, batchDraft);
+    const response = await saveDefaults(credentials(), batchDraft);
     if (response.ok === false) {
       if (response.needsLogin) {
         askForLogin("Sign in to change the batch defaults.", submitBatch);
