@@ -93,8 +93,9 @@ writes to the real base. To drive the page safely, serve `public/` with
   wipes). Filled on new records and on existing records with a blank DOP; a recorded DOP is
   kept unless the tech changes it. `nYOP` derives the year from it, so `Year of Purchase`
   (the old guess field) isn't written.
-- Manufacture date: shown on the page with the device's age. Not written yet — needs an
-  Inventory field.
+- `Manufacture Date`: from Admin Directory's `manufactureDate`, which is usually year-month;
+  written as the first of the month (`2020-11-01`) so it suits a text or date field.
+  Refreshed on every re-scan, so re-scanning an older device fills it in.
 - `Category`: always `Chromebook`, so it's a constant rather than a batch default.
 
 ## Don't regress

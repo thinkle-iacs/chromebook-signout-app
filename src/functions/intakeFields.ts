@@ -113,6 +113,16 @@ export function dateFromEnrollment(firstEnrollmentTime: string | undefined): str
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * Admin Directory's manufactureDate is usually year-month ("2020-11"), sometimes a full date.
+ * Written as a full date (first of the month) so it works in a text or a date field.
+ */
+export function formatManufactureDate(value: string | undefined): string | undefined {
+  const match = value?.trim().match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
+  if (!match) return undefined;
+  return `${match[1]}-${match[2]}-${match[3] ?? "01"}`;
+}
+
 /** What Google tells us, mapped to Inventory. Does not include the asset tag. */
 export function suggestedFields(google: GoogleDevice): InventoryFields {
   return compact({
@@ -123,6 +133,7 @@ export function suggestedFields(google: GoogleDevice): InventoryFields {
     Make: parseMake(google.model),
     "MAC-Wireless": formatMac(google.macAddress),
     DOP: dateFromEnrollment(google.firstEnrollmentTime),
+    "Manufacture Date": formatManufactureDate(google.manufactureDate),
   });
 }
 

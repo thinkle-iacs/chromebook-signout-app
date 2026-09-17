@@ -9,11 +9,13 @@ import {
   suggestedFields,
   tokenMatches,
   dateFromEnrollment,
+  formatManufactureDate,
   type CommitInput,
 } from "./intakeFields";
 
 const google = {
   serialNumber: "5CD1234ABC",
+  manufactureDate: "2025-11",
   model: "HP Chromebook 11 G8 EE",
   macAddress: "a0b1c2d3e4f5",
   firstEnrollmentTime: "2026-08-14T12:00:00.000Z",
@@ -46,6 +48,14 @@ describe("field mapping", () => {
     expect(formatMac(undefined)).toBeUndefined();
   });
 
+  test("formatManufactureDate fills in the day Google usually leaves off", () => {
+    expect(formatManufactureDate("2020-11")).toBe("2020-11-01");
+    expect(formatManufactureDate("2020-11-15")).toBe("2020-11-15");
+    expect(formatManufactureDate("")).toBeUndefined();
+    expect(formatManufactureDate("unknown")).toBeUndefined();
+    expect(formatManufactureDate(undefined)).toBeUndefined();
+  });
+
   test("dateFromEnrollment", () => {
     expect(dateFromEnrollment("2026-08-14T12:00:00.000Z")).toBe("2026-08-14");
     expect(dateFromEnrollment("garbage")).toBeUndefined();
@@ -61,6 +71,7 @@ describe("field mapping", () => {
       Make: "HP",
       "MAC-Wireless": "A0B1C2D3E4F5",
       DOP: "2026-08-14",
+      "Manufacture Date": "2025-11-01",
     });
     expect(suggestedFields({ serialNumber: "X1234" })).toEqual({
       Serial: "X1234",
@@ -125,6 +136,7 @@ describe("planCommit (design §6)", () => {
         Make: "HP",
         "MAC-Wireless": "A0B1C2D3E4F5",
         DOP: "2026-08-14",
+        "Manufacture Date": "2025-11-01",
         Purpose: "Student Loan",
         Location: "Tech Room",
         "Asset Tag": "IACS-1234",
@@ -172,6 +184,8 @@ describe("planCommit (design §6)", () => {
     expect(plan.idempotent).toBe(true);
     expect(plan.fields["Asset Tag"]).toBe("IACS-1234");
     expect(plan.fields).not.toHaveProperty("DOP");
+    // Google-derived, so a re-scan fills it in on records that predate the field.
+    expect(plan.fields["Manufacture Date"]).toBe("2025-11-01");
     expect(plan.fields).not.toHaveProperty("Purpose");
     expect(plan.fields["MAC-Wireless"]).toBe("A0B1C2D3E4F5");
   });

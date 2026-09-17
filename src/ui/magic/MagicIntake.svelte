@@ -81,6 +81,7 @@
     "Model",
     "MAC-Wireless",
     "DOP",
+    "Manufacture Date",
     "Purpose",
     "Status",
     "Location",
