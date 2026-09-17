@@ -148,26 +148,17 @@ describe("lookup", () => {
     const r = await call("lookup", { params: { serial: "5cd1234abc" }, token: "the-token" });
     expect(r.body).toMatchObject({
       serial: "5CD1234ABC",
-      suggested: { Make: "Lenovo", "MAC-Wireless": "A0B1C2D3E4F5", "Year of Purchase": "2026" },
+      suggested: { Make: "Lenovo", "MAC-Wireless": "A0B1C2D3E4F5", DOP: "2026-08-14" },
       existingRecord: null,
       defaults: { Purpose: "Student Loan", Status: "Active" },
     });
   });
 
-  test("prefills from nYOP, which prefers DOP over the Year of Purchase guess", async () => {
-    inventory.push({
-      id: "recOld",
-      fields: { Serial: "5CD1234ABC", "Asset Tag": "IACS-9", DOP: "2019-06-01", nYOP: "2019", "Year of Purchase": "2021" },
-    });
-    const r = await call("lookup", { params: { serial: "5CD1234ABC" }, token: "the-token" });
-    expect(r.body.suggested["Year of Purchase"]).toBe("2019");
-  });
-
-  test("prefills a known device's recorded year rather than its enrollment year", async () => {
-    inventory.push({ id: "recOld", fields: { Serial: "5CD1234ABC", "Asset Tag": "IACS-9", "Year of Purchase": 2021 } });
+  test("prefills a known device's recorded DOP rather than its enrollment date", async () => {
+    inventory.push({ id: "recOld", fields: { Serial: "5CD1234ABC", "Asset Tag": "IACS-9", DOP: "2019-06-01" } });
     const r = await call("lookup", { params: { serial: "5CD1234ABC" }, token: "the-token" });
     expect(r.body.existingRecord).toMatchObject({ _id: "recOld", "Asset Tag": "IACS-9" });
-    expect(r.body.suggested["Year of Purchase"]).toBe("2021");
+    expect(r.body.suggested.DOP).toBe("2019-06-01");
   });
 
   test("refuses a serial that could break out of the formula", async () => {
@@ -180,7 +171,7 @@ describe("commit", () => {
   const commit = (body: any) => call("commit", { body, token: "the-token" });
 
   test("creates a record and writes the tag back to Google", async () => {
-    const r = await commit({ serial: "5CD1234ABC", assetTag: "IACS-1234", fields: { "Year of Purchase": "2025" } });
+    const r = await commit({ serial: "5CD1234ABC", assetTag: "IACS-1234", fields: { DOP: "2025-09-01" } });
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({
       created: true,
@@ -189,7 +180,7 @@ describe("commit", () => {
         "Asset Tag": "IACS-1234",
         Serial: "5CD1234ABC",
         Make: "Lenovo",
-        "Year of Purchase": "2025",
+        DOP: "2025-09-01",
         Purpose: "Student Loan",
       },
       googleAssetIdWriteBack: { ok: true },
@@ -207,11 +198,11 @@ describe("commit", () => {
     expect(inventory).toHaveLength(1);
   });
 
-  test("a re-intake that doesn't send a year leaves the recorded guess alone", async () => {
-    inventory.push({ id: "recOld", fields: { Serial: "5CD1234ABC", "Asset Tag": "IACS-9", "Year of Purchase": "2021" } });
+  test("a re-intake that doesn't send a DOP leaves the recorded one alone", async () => {
+    inventory.push({ id: "recOld", fields: { Serial: "5CD1234ABC", "Asset Tag": "IACS-9", DOP: "2019-06-01" } });
     const r = await commit({ serial: "5CD1234ABC", assetTag: "IACS-9" });
-    expect(r.body.fieldsWritten).not.toHaveProperty("Year of Purchase");
-    expect(inventory[0].fields["Year of Purchase"]).toBe("2021");
+    expect(r.body.fieldsWritten).not.toHaveProperty("DOP");
+    expect(inventory[0].fields.DOP).toBe("2019-06-01");
   });
 
   test("re-intaking the same device with the same tag refreshes it", async () => {

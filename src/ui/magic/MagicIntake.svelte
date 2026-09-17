@@ -49,9 +49,9 @@
 
   let device: LookupResult | null = null;
   let assetTag = "";
-  let year = "";
-  /** What the year was prefilled with, so an untouched prefill isn't written back. */
-  let yearPrefill = "";
+  let dop = "";
+  /** What DOP was prefilled with, so an untouched prefill isn't written back. */
+  let dopPrefill = "";
   let make = "";
   let model = "";
   let tagHint = "";
@@ -80,7 +80,7 @@
     "Make",
     "Model",
     "MAC-Wireless",
-    "Year of Purchase",
+    "DOP",
     "Purpose",
     "Status",
     "Location",
@@ -166,7 +166,7 @@
     if (device.defaults) batch = device.defaults;
     batchError = device.defaultsError;
     assetTag = device.existingRecord?.["Asset Tag"] ?? announced?.device.assetId ?? "";
-    year = yearPrefill = device.suggested?.["Year of Purchase"] ?? "";
+    dop = dopPrefill = device.suggested?.DOP ?? "";
     make = device.existingRecord?.Make ?? device.suggested?.Make ?? "";
     model = device.existingRecord?.Model ?? device.suggested?.Model ?? "";
     tagHint = "";
@@ -184,9 +184,9 @@
     phase = "writing";
     conflict = null;
     const fields: Record<string, string> = {};
-    // Only a year the tech changed. A new record gets the enrollment-year guess server-side;
-    // an existing one keeps its Year of Purchase (and nYOP follows DOP when there is one).
-    if (year.trim() && year.trim() !== yearPrefill) fields["Year of Purchase"] = year.trim();
+    // Only a date the tech changed. The server fills DOP from first enrollment on a new
+    // record (or a blank one) and keeps a recorded DOP otherwise.
+    if (dop && dop !== dopPrefill) fields.DOP = dop;
     if (make.trim()) fields.Make = make.trim();
     if (model.trim()) fields.Model = model.trim();
 
@@ -294,6 +294,16 @@
     } else if (event.key === "Escape" && phase === "conflict") {
       cancelConflict();
     }
+  }
+
+  /** "5 yrs" from a manufactureDate like "2020-11" or "2020-11-01". */
+  function ageFrom(value: string | undefined) {
+    const match = value?.match(/^(\d{4})-(\d{2})/);
+    if (!match) return "";
+    const months =
+      (new Date().getFullYear() - Number(match[1])) * 12 + (new Date().getMonth() + 1 - Number(match[2]));
+    if (months < 0) return "";
+    return months < 12 ? `${months} mo old` : `${(months / 12).toFixed(1).replace(/\.0$/, "")} yrs old`;
   }
 
   function formatAue(value: string | undefined) {
@@ -431,14 +441,14 @@
           {#if device.google.autoUpdateExpiration}
             <dt>Auto-update expires</dt><dd>{formatAue(device.google.autoUpdateExpiration)}</dd>
           {/if}
-          <dt><label for="intake-year">Year of purchase</label></dt>
+          {#if device.google.manufactureDate}
+            <dt>Manufactured</dt>
+            <dd>{device.google.manufactureDate} <span class="muted">({ageFrom(device.google.manufactureDate)})</span></dd>
+          {/if}
+          <dt><label for="intake-dop">In service since (DOP)</label></dt>
           <dd>
-            <input id="intake-year" class="small" bind:value={year} inputmode="numeric" />
-            {#if device.existingRecord?.DOP}
-              <span class="muted">from DOP {device.existingRecord.DOP}; changing this won't override it</span>
-            {:else if !device.existingRecord}
-              <span class="muted">guessed from first enrollment</span>
-            {/if}
+            <input id="intake-dop" class="date" type="date" bind:value={dop} />
+            <span class="muted">{device.existingRecord?.DOP ? "as recorded" : "first enrolled"}</span>
           </dd>
         </dl>
       {/if}
@@ -652,6 +662,10 @@
     font-size: 1rem;
     padding: 0.1rem 0.4rem;
     width: 7rem;
+  }
+  dl.fields input.date {
+    font-size: 1rem;
+    padding: 0.1rem 0.4rem;
   }
   dl.fields input.small.wide {
     width: 16rem;

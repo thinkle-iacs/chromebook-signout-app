@@ -89,10 +89,12 @@ writes to the real base. To drive the page safely, serve `public/` with
   full name is parsed (`parseModel`); the page shows Make and Model as editable because
   unseen models may parse imperfectly.
 - `MAC-Wireless`: upper-case hex, no separators — `D039576D475B`.
-- `Year of Purchase`: text, and only a guess. `DOP` (a date) is authoritative when set, and
-  the formula `nYOP` = DOP's year, else `Year of Purchase`. Intake writes the guess (from
-  first enrollment) on new records, prefills from `nYOP` on existing ones, and only writes
-  the year back if the tech changed it. It never writes `DOP`: enrollment isn't purchase.
+- `DOP`: "in service since" — written as the first enrollment date (Google keeps it across
+  wipes). Filled on new records and on existing records with a blank DOP; a recorded DOP is
+  kept unless the tech changes it. `nYOP` derives the year from it, so `Year of Purchase`
+  (the old guess field) isn't written.
+- Manufacture date: shown on the page with the device's age. Not written yet — needs an
+  Inventory field.
 - `Category`: always `Chromebook`, so it's a constant rather than a batch default.
 
 ## Don't regress

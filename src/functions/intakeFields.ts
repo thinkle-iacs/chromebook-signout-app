@@ -27,7 +27,7 @@ export type IntakeDefaults = Partial<Record<(typeof DEFAULT_FIELDS)[number], str
 
 /** Fields the page may set per device on commit. Everything else is derived or refused. */
 export const OVERRIDABLE_FIELDS = [
-  "Year of Purchase",
+  "DOP",
   "Make",
   "Model",
   "Category",
@@ -100,12 +100,18 @@ export function formatMac(mac: string | undefined): string | undefined {
   return hex.toUpperCase();
 }
 
-/** Year of first enrollment. Right for new stock; a prefill, never written blind (§5). */
-export function yearFromEnrollment(firstEnrollmentTime: string | undefined): string | undefined {
+/**
+ * DOP is "in service since": the first enrollment date, which is as early as a Chromebook
+ * could have been used here. Google keeps firstEnrollmentTime across wipes and re-enrollment.
+ * Inventory's nYOP formula derives the year from DOP, so Year of Purchase isn't written.
+ */
+export function dateFromEnrollment(firstEnrollmentTime: string | undefined): string | undefined {
   if (!firstEnrollmentTime) return undefined;
-  const year = new Date(firstEnrollmentTime).getUTCFullYear();
-  return Number.isFinite(year) ? String(year) : undefined;
+  const date = new Date(firstEnrollmentTime);
+  return isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
 }
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** What Google tells us, mapped to Inventory. Does not include the asset tag. */
 export function suggestedFields(google: GoogleDevice): InventoryFields {
@@ -116,7 +122,7 @@ export function suggestedFields(google: GoogleDevice): InventoryFields {
     Model: parseModel(google.model),
     Make: parseMake(google.model),
     "MAC-Wireless": formatMac(google.macAddress),
-    "Year of Purchase": yearFromEnrollment(google.firstEnrollmentTime),
+    DOP: dateFromEnrollment(google.firstEnrollmentTime),
   });
 }
 
@@ -172,12 +178,11 @@ export function planCommit(input: CommitInput): CommitPlan {
 
   let fields: InventoryFields;
   if (existing) {
-    // Refresh what Google knows. Year of Purchase is left alone unless the tech confirmed
-    // one, since enrollment year is wrong for a device re-enrolled years later. Batch
-    // defaults never apply to an existing record: changing the batch strip must not
-    // silently relocate a device someone re-intakes.
-    const { "Year of Purchase": _year, ...refresh } = suggested;
-    fields = { ...refresh, ...overrides };
+    // Refresh what Google knows. A recorded DOP is kept unless the tech changed it; a blank
+    // one is filled in. Batch defaults never apply to an existing record: changing the batch
+    // strip must not silently relocate a device someone re-intakes.
+    const { DOP: enrolled, ...refresh } = suggested;
+    fields = { ...refresh, ...(existing.fields.DOP ? {} : { DOP: enrolled }), ...overrides };
   } else {
     fields = { ...suggested, ...compact(input.defaults ?? {}), ...overrides };
   }
@@ -196,6 +201,7 @@ function pickOverrides(raw: Record<string, unknown>): InventoryFields {
   const out: InventoryFields = {};
   for (const key of OVERRIDABLE_FIELDS) {
     const value = raw?.[key];
+    if (key === "DOP" && !(typeof value === "string" && ISO_DATE.test(value.trim()))) continue;
     if (typeof value === "string" && value.trim()) out[key] = value.trim();
     else if (typeof value === "number") out[key] = value;
   }

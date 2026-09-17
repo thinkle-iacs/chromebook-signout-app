@@ -8,7 +8,7 @@ import {
   planCommit,
   suggestedFields,
   tokenMatches,
-  yearFromEnrollment,
+  dateFromEnrollment,
   type CommitInput,
 } from "./intakeFields";
 
@@ -46,10 +46,10 @@ describe("field mapping", () => {
     expect(formatMac(undefined)).toBeUndefined();
   });
 
-  test("yearFromEnrollment", () => {
-    expect(yearFromEnrollment("2026-08-14T12:00:00.000Z")).toBe("2026");
-    expect(yearFromEnrollment("garbage")).toBeUndefined();
-    expect(yearFromEnrollment(undefined)).toBeUndefined();
+  test("dateFromEnrollment", () => {
+    expect(dateFromEnrollment("2026-08-14T12:00:00.000Z")).toBe("2026-08-14");
+    expect(dateFromEnrollment("garbage")).toBeUndefined();
+    expect(dateFromEnrollment(undefined)).toBeUndefined();
   });
 
   test("suggestedFields drops what Google didn't report", () => {
@@ -60,7 +60,7 @@ describe("field mapping", () => {
       Model: "11 G8 EE",
       Make: "HP",
       "MAC-Wireless": "A0B1C2D3E4F5",
-      "Year of Purchase": "2026",
+      DOP: "2026-08-14",
     });
     expect(suggestedFields({ serialNumber: "X1234" })).toEqual({
       Serial: "X1234",
@@ -124,7 +124,7 @@ describe("planCommit (design §6)", () => {
         Model: "11 G8 EE",
         Make: "HP",
         "MAC-Wireless": "A0B1C2D3E4F5",
-        "Year of Purchase": "2026",
+        DOP: "2026-08-14",
         Purpose: "Student Loan",
         Location: "Tech Room",
         "Asset Tag": "IACS-1234",
@@ -135,22 +135,34 @@ describe("planCommit (design §6)", () => {
   test("per-device overrides win, and unknown fields are ignored", () => {
     const plan = planCommit({
       ...base,
-      overrides: { "Year of Purchase": "2024", Purpose: "Tech", "Student (Current)": "rec123" },
+      overrides: { DOP: "2025-01-02", Purpose: "Tech", "Student (Current)": "rec123" },
     });
     expect(plan.kind).toBe("write");
     if (plan.kind !== "write") return;
-    expect(plan.fields["Year of Purchase"]).toBe("2024");
+    expect(plan.fields.DOP).toBe("2025-01-02");
     expect(plan.fields.Purpose).toBe("Tech");
     expect(plan.fields).not.toHaveProperty("Student (Current)");
   });
 
-  test("same tag on the same serial is an idempotent refresh that keeps year and defaults", () => {
+  test("a DOP override that isn't a date is ignored", () => {
+    const plan = planCommit({ ...base, overrides: { DOP: "last spring" } });
+    if (plan.kind !== "write") throw new Error("expected a write");
+    expect(plan.fields.DOP).toBe("2026-08-14");
+  });
+
+  test("an existing record with no DOP gets one", () => {
+    const plan = planCommit({ ...base, existing: { id: "recA", fields: { "Asset Tag": "IACS-1234" } } });
+    if (plan.kind !== "write") throw new Error("expected a write");
+    expect(plan.fields.DOP).toBe("2026-08-14");
+  });
+
+  test("same tag on the same serial is an idempotent refresh that keeps DOP and defaults", () => {
     const plan = planCommit({
       ...base,
       assetTag: "iacs-1234 ",
       existing: {
         id: "recA",
-        fields: { "Asset Tag": "IACS-1234", "Year of Purchase": "2019", Purpose: "Staff Spare" },
+        fields: { "Asset Tag": "IACS-1234", DOP: "2019-06-01", Purpose: "Staff Spare" },
       },
       tagHolder: { id: "recA", fields: { Serial: "5CD1234ABC" } },
     });
@@ -159,7 +171,7 @@ describe("planCommit (design §6)", () => {
     expect(plan.recordId).toBe("recA");
     expect(plan.idempotent).toBe(true);
     expect(plan.fields["Asset Tag"]).toBe("IACS-1234");
-    expect(plan.fields).not.toHaveProperty("Year of Purchase");
+    expect(plan.fields).not.toHaveProperty("DOP");
     expect(plan.fields).not.toHaveProperty("Purpose");
     expect(plan.fields["MAC-Wireless"]).toBe("A0B1C2D3E4F5");
   });
