@@ -374,7 +374,7 @@
       <button class="link" type="button" on:click={editBatch}>change</button>
     {/if}
     {#if batchError}
-      <span class="bad-text">Batch defaults unavailable: {batchError}</span>
+      <span class="bad-text">{batchError}</span>
     {/if}
   </section>
 

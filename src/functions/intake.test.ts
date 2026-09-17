@@ -248,6 +248,23 @@ describe("commit", () => {
   });
 });
 
+test("a missing Intake Defaults table is explained, not reported as a permissions problem", async () => {
+  const select = defaultsTable.select;
+  defaultsTable.select = () => ({
+    firstPage: async () => {
+      throw Object.assign(new Error("You are not authorized to perform this operation"), { error: "NOT_AUTHORIZED", statusCode: 403 });
+    },
+  });
+  try {
+    const r = await call("lookup", { params: { serial: "5CD1234ABC" }, token: "the-token" });
+    expect(r.status).toBe(200);
+    expect(r.body.defaults).toBeNull();
+    expect(r.body.defaultsError).toMatch(/no "Intake Defaults" table/);
+  } finally {
+    defaultsTable.select = select;
+  }
+});
+
 describe("setDefaults", () => {
   test("updates the one row, keeping only the known fields", async () => {
     const r = await call("setDefaults", {

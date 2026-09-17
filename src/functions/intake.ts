@@ -107,6 +107,14 @@ async function readDefaults(): Promise<{ id: string | null; defaults: IntakeDefa
   return { id: row?.id ?? null, defaults };
 }
 
+/** Airtable answers a missing table with NOT_AUTHORIZED rather than not-found. */
+function describeDefaultsError(err: any): string {
+  if (err?.error === "NOT_AUTHORIZED" || err?.statusCode === 403 || err?.statusCode === 404) {
+    return 'There is no "Intake Defaults" table in Airtable yet (or the API key can\'t see it). New records will get no Purpose, Status or Location.';
+  }
+  return String(err?.message ?? err);
+}
+
 /** Best-effort: set annotatedAssetId in Admin Directory. Never throws. */
 async function writeBackAssetId(serial: string, assetTag: string) {
   try {
@@ -138,7 +146,7 @@ async function lookup(event: APIGatewayEvent): Promise<Response> {
     bySerial(serial),
     readDefaults().then(
       (r) => ({ defaults: r.defaults, error: null }),
-      (err) => ({ defaults: null, error: String(err?.message ?? err) }),
+      (err) => ({ defaults: null, error: describeDefaultsError(err) }),
     ),
   ]);
 
