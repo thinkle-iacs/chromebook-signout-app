@@ -70,7 +70,8 @@ export async function searchForAsset(
   lasid?,
   serial?,
   staffEmail?,
-  purpose?
+  purpose?,
+  staffName?
 ) {
   let params: any = { mode: "asset" };
   if (tag) {
@@ -87,6 +88,9 @@ export async function searchForAsset(
   }
   if (purpose) {
     params.purpose = purpose;
+  }
+  if (staffName) {
+    params.staffName = staffName;
   }
   let paramString = new URLSearchParams(params);
   let response = await authedFetch("/.netlify/functions/index?" + paramString);
@@ -113,7 +117,14 @@ export async function searchForAsset(
 }
 
 export async function getCurrentLoansForStaff(staff) {
-  let results = await searchForAsset(null, null, null, staff.Email);
+  let results = await searchForAsset(
+    null,
+    null,
+    null,
+    staff.Email,
+    null,
+    staff["Full Name"]
+  );
   if (results.length) {
     let $assetStore = get(assetStore);
     return results.map((result) => $assetStore[result.fields["Asset Tag"]]);

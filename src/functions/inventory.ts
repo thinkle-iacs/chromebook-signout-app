@@ -26,6 +26,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     lasid,
     serial,
     staffEmail,
+    staffName,
     onlyChromebooks,
     studentLoan,
     staffLoan,
@@ -44,7 +45,21 @@ export async function handler(event: APIGatewayEvent, context: Context) {
   } else if (serial) {
     filterByFormula = `LOWER({Serial}) = "${serial.toLowerCase()}"`;
   } else if (staffEmail) {
-    filterByFormula = `LOWER(ARRAYJOIN({Staff Email}, "")) = "${staffEmail.toLowerCase()}"`;
+    // {Staff Email} only gets filled in when the machine was signed out through
+    // the app (it comes via the signout record). Machines assigned directly in
+    // Airtable only have the raw {Staff User} field, so match that too, by
+    // email or by full name.
+    const quote = (s: string) => s.toLowerCase().replace(/"/g, '\\"');
+    const email = quote(staffEmail);
+    const staffUser = `LOWER(TRIM({Staff User} & ""))`;
+    const matches = [
+      `LOWER(ARRAYJOIN({Staff Email}, "")) = "${email}"`,
+      `${staffUser} = "${email}"`,
+    ];
+    if (staffName) {
+      matches.push(`${staffUser} = "${quote(staffName.trim())}"`);
+    }
+    filterByFormula = `OR(${matches.join(",")})`;
   }
 
   // Add filter for Chromebooks if the flag is set
