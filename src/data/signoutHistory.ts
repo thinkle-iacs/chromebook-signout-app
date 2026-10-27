@@ -8,6 +8,7 @@ export type SignoutHistoryEntry = {
   Status: string;
   "Asset Tag (from Asset)": string[];
   Student: string[];
+  Staff?: string[];
   "Email (from Students)": string[];
   "Email (from Staff)": string[];
   Notes: string;
@@ -66,6 +67,9 @@ export async function lookupSignoutHistory({
   }
   let paramString = new URLSearchParams(params);
   let response = await authedFetch("/.netlify/functions/index?" + paramString);
+  if (!response.ok) {
+    throw new Error(`Signout history lookup failed: ${response.status}`);
+  }
   let json = await response.json();
   return json.map((item) => ({ ...item.fields, _id: item.id }));
 }

@@ -1,5 +1,6 @@
 import type { APIGatewayEvent, Context } from "aws-lambda";
 import { signoutHistoryBase } from "./Airtable";
+import { staffLinkedRecordsFilter } from "./staffLinks";
 
 export async function handler(event: APIGatewayEvent, context: Context) {
   const { assetTag, lasid, staffId, isLatest, onlyOut, status } =
@@ -10,7 +11,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
   } else if (lasid) {
     filterByFormula = `{Student}="${lasid}"`;
   } else if (staffId) {
-    filterByFormula = `{Staff}="${staffId}"`;
+    filterByFormula = await staffLinkedRecordsFilter(staffId, "Student Signout History");
   } else if (isLatest) {
     filterByFormula = `{Is Latest Change}=1`;
   }
@@ -34,6 +35,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     "Status",
     "Asset Tag (from Asset)",
     "Student",
+    "Staff",
     "Email (from Students)",
     "Notes",
     "Time",
