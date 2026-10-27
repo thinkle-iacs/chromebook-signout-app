@@ -62,14 +62,14 @@
         {new Date(item.Time).toLocaleTimeString()}
       </td>
       <td>
-        <AssetDisplay
-          asset={$assetStore[item["Asset Tag (from Asset)"][0]] || {
-            "Asset Tag": item["Asset Tag (from Asset)"][0] || "",
-          }}
-        />
+        {#each item["Asset Tag (from Asset)"] || [] as tag}
+          <AssetDisplay asset={$assetStore[tag] || { "Asset Tag": tag }} />
+        {:else}
+          <span class="w3-opacity">Unknown asset</span>
+        {/each}
       </td>
       <td>
-        {#if item["Email (from Students)"] && item["Email (from Students)"].length}
+        {#if item["Email (from Students)"]?.[0]}
           <a
             href={`mailto:${item["Email (from Students)"][0]}`}
             target="_blank"
@@ -80,7 +80,7 @@
             )}
           </a>
         {/if}
-        {#if item["Email (from Staff)"] && item["Email (from Staff)"].length}
+        {#if item["Email (from Staff)"]?.[0]}
           <a href={`mailto:${item["Email (from Staff)"][0]}`} target="_blank">
             {item["Email (from Staff)"][0].replace(
               "innovationcharter.org",

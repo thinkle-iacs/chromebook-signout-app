@@ -1,7 +1,7 @@
 import { authedFetch } from "@utils/authedFetch";
 import { writable, get } from "svelte/store";
 import { logger } from "@utils/log";
-import { Staff } from "./staff";
+import type { Staff } from "./staff";
 
 export const assetStore = writable({});
 
@@ -52,7 +52,7 @@ export type Asset = {
   "MAC-Wireless": string;
   _id: string;
   Purpose: MachinePurpose;
-  "Staff User": string;
+  "Staff User": string[];
   "Email (from Student (Current))": string;
   "YOG (from Student (Current))": string;
   "Student (Current)": string;
@@ -70,7 +70,9 @@ export async function searchForAsset(
   lasid?,
   serial?,
   staffEmail?,
-  purpose?
+  purpose?,
+  staffName?,
+  staffId?
 ) {
   let params: any = { mode: "asset" };
   if (tag) {
@@ -88,8 +90,17 @@ export async function searchForAsset(
   if (purpose) {
     params.purpose = purpose;
   }
+  if (staffName) {
+    params.staffName = staffName;
+  }
+  if (staffId) {
+    params.staffId = staffId;
+  }
   let paramString = new URLSearchParams(params);
   let response = await authedFetch("/.netlify/functions/index?" + paramString);
+  if (!response.ok) {
+    throw new Error(`Asset lookup failed: ${response.status}`);
+  }
   let json = await response.json();
   logger.logVerbose("Got asset data:", json);
   assetStore.update(($assetStore) => {
@@ -112,8 +123,16 @@ export async function searchForAsset(
   return json;
 }
 
-export async function getCurrentLoansForStaff(staff) {
-  let results = await searchForAsset(null, null, null, staff.Email);
+export async function getCurrentLoansForStaff(staff: Staff): Promise<Asset[]> {
+  let results = await searchForAsset(
+    null,
+    null,
+    null,
+    staff.Email,
+    null,
+    staff["Full Name"],
+    staff._id
+  );
   if (results.length) {
     let $assetStore = get(assetStore);
     return results.map((result) => $assetStore[result.fields["Asset Tag"]]);

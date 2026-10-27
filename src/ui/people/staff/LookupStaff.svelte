@@ -1,7 +1,5 @@
 <script lang="ts">
-  import StudentInfo from "@people/students/StudentInfo.svelte";
   import router from "page";
-  import { onMount } from "svelte";
   import { logger } from "@utils/log";
 
   import type { Staff } from "@data/staff"; // Import Staff type
@@ -13,7 +11,7 @@
   import FormField from "@components/FormField.svelte";
   import SimpleForm from "@components/SimpleForm.svelte";
   import NameDropdown from "@people/components/NameDropdown.svelte";
-  import { searchForStaff, staffStore } from "@data/staff"; // Use staff data functions
+  import { staffStore } from "@data/staff";
   import { getCurrentLoansForStaff } from "@data/inventory"; // Replace student loans with staff loans
   import { lookupSignoutHistory } from "@data/signoutHistory";
   import MessageSender from "@notifications/MessageSender.svelte";
@@ -55,64 +53,38 @@
   let loans: SignoutHistoryEntry[] | null;
   let current: Asset[] | null;
 
-  async function getCurrentLoans() {
-    current = await getCurrentLoansForStaff(staff); // Fetch current loans for staff
-    logger.logVerbose("Current loans for staff:", current);
-  }
+  let currentError = "";
+  let historyError = "";
+  let request = 0;
 
-  async function getSignoutHistory() {
-    let staffResults = await lookupSignoutHistory({ staff });
-    logger.logVerbose("Got staff results", staffResults);
-    staffResults.reverse();
-    loans = staffResults;
-    let recordNumbers = new Set();
-    let assetTags = new Set();
-    staffResults.forEach((r) => {
-      assetTags.add(r["Asset Tag (from Asset)"][0]);
-      recordNumbers.add(r.Num);
+  function loadLoans(selected: Staff | null) {
+    const version = ++request;
+    current = null;
+    loans = null;
+    currentError = "";
+    historyError = "";
+    if (!selected) return;
+
+    getCurrentLoansForStaff(selected).then((results) => {
+      if (version === request) current = results;
+    }).catch((error) => {
+      if (version === request) currentError = "Unable to load current assignments. Please try again.";
+      logger.logError("Staff assignment lookup failed", error);
     });
-    logger.logVerbose("We have tags:", assetTags);
-    for (let tag of Array.from(assetTags)) {
-      logger.logVerbose("Now look up other results for ", tag);
-      let assetResults = await lookupSignoutHistory({
-        asset: { "Asset Tag": tag },
-      });
-      for (let result of assetResults) {
-        if (!recordNumbers.has(result.Num)) {
-          logger.logVerbose("Adding", result);
-          loans = [...loans, result];
-          recordNumbers.add(result.Num);
-        }
-      }
-    }
-    logger.logVerbose("Now sort", loans);
-    loans.sort((a, b) => b.Num - a.Num);
-    loans = loans;
+    lookupSignoutHistory({ staff: selected }).then((results) => {
+      if (version === request) loans = results.sort((a, b) => b.Num - a.Num);
+    }).catch((error) => {
+      if (version === request) historyError = "Unable to load signout history. Please try again.";
+      logger.logError("Staff history lookup failed", error);
+    });
   }
 
-  $: if (staff) {
-    getCurrentLoans();
-    getSignoutHistory();
-  }
+  $: loadLoans(staff);
 
   let nameInput: HTMLInputElement | null;
-  let latestLoan;
-
-  function getLatestLoan(loans: SignoutHistoryEntry[]) {
-    if (!loans) {
-      return;
-    }
-    latestLoan = loans.find((l) => {
-      if (l.LASID == staff.psnOID) {
-        // Match staff identifier
-        if (l.Status == "Out") {
-          return true;
-        }
-      }
-    });
-  }
-
-  $: getLatestLoan(loans);
+  $: latestLoan = loans?.find((loan) =>
+    loan.LASID === staff?.psnOID && loan.Status === "Out"
+  );
   let activeTab: "loans" | "google" = "loans";
 </script>
 
@@ -158,18 +130,23 @@
 
       <div class="w3-container">
         {#if activeTab == "loans"}
-          <h3>Current Loans:</h3>
-          {#if !current}
+          <h3>Current Assignments:</h3>
+          <p class="w3-small">Machines assigned in Airtable, including assignments without a signout entry.</p>
+          {#if currentError}
+            <p role="alert">{currentError}</p>
+          {:else if !current}
             <p class="w3-opacity w3-ital">Fetching...</p>
           {:else}
             {#each current as asset}
               <AssetDisplay {asset} />
             {:else}
-              No current loans
+              No current assignments
             {/each}
           {/if}
           <h3>Signout History:</h3>
-          {#if !loans}
+          {#if historyError}
+            <p role="alert">{historyError}</p>
+          {:else if !loans}
             <p class="w3-opacity w3-ital">Fetching...</p>
           {:else if loans.length}
             {#if latestLoan}
@@ -180,7 +157,7 @@
               studentOnlyMode={false}
             />
           {:else}
-            Never signed anything out.
+            No signout history entries recorded for this teacher. Assignments made directly in Airtable may have no signout entry.
           {/if}
         {/if}
       </div>

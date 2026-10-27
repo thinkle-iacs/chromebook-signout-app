@@ -103,7 +103,7 @@
     router("/staff/:name", (ctx) => {
       params.name = ctx.params.name;
       page = LookupStaff;
-      title = "IACS Chromebook Student Lookup";
+      title = "IACS Chromebook Staff Lookup";
     });
     router("/asset/", (ctx) => {
       params = {};

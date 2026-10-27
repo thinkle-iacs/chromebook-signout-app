@@ -1,5 +1,6 @@
 import type { APIGatewayEvent, Context } from "aws-lambda";
 import { inventoryBase } from "./Airtable";
+import { staffLinkedRecordsFilter } from "./staffLinks";
 
 export async function handler(event: APIGatewayEvent, context: Context) {
   // Handle PUT requests for updates
@@ -26,6 +27,8 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     lasid,
     serial,
     staffEmail,
+    staffName,
+    staffId,
     onlyChromebooks,
     studentLoan,
     staffLoan,
@@ -43,8 +46,20 @@ export async function handler(event: APIGatewayEvent, context: Context) {
     filterByFormula = `ARRAYJOIN({Student (Current)}, "")="${lasid}"`;
   } else if (serial) {
     filterByFormula = `LOWER({Serial}) = "${serial.toLowerCase()}"`;
-  } else if (staffEmail) {
-    filterByFormula = `LOWER(ARRAYJOIN({Staff Email}, "")) = "${staffEmail.toLowerCase()}"`;
+  } else if (staffId) {
+    filterByFormula = await staffLinkedRecordsFilter(staffId, "Inventory");
+  } else if (staffEmail || staffName) {
+    // Compatibility for callers without a staff record ID. Direct assignments
+    // have a name lookup even when the signout-derived email is empty.
+    const quote = (s: string) => s.trim().toLowerCase().replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const matches: string[] = [];
+    if (staffEmail) {
+      matches.push(`LOWER(ARRAYJOIN({Staff Email}, "")) = "${quote(staffEmail)}"`);
+    }
+    if (staffName) {
+      matches.push(`LOWER(ARRAYJOIN({Full Name (from User)}, "")) = "${quote(staffName)}"`);
+    }
+    filterByFormula = `OR(${matches.join(",")})`;
   }
 
   // Add filter for Chromebooks if the flag is set
